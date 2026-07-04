@@ -3,21 +3,31 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
+# Copy frontend package files
 COPY apps/frontend/package.json ./
-COPY package.json package-lock.json turbo.json tsconfig.base.json ./
-COPY packages/shared/package.json ./packages/shared/
-COPY packages/shared/tsconfig.json ./packages/shared/
+COPY apps/frontend/package-lock.json* ./
 
-# Install dependencies
+# Install frontend dependencies (self-contained)
 RUN npm ci
 
-# Copy source code
-COPY apps/frontend/ ./
-COPY packages/shared/ ./packages/shared/
+# Copy shared package source and build it
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/shared/tsconfig.json ./packages/shared/
+COPY packages/shared/src ./packages/shared/src
+COPY tsconfig.base.json ./
 
-# Build shared package
-RUN cd packages/shared && npm run build
+# Install shared package dependencies and build
+RUN cd packages/shared && npm install --install-strategy=nested && npm run build
+
+# Link shared package into frontend's node_modules
+RUN mkdir -p node_modules/@prompt-site-builder && ln -s /app/packages/shared node_modules/@prompt-site-builder/shared
+
+# Copy frontend source
+COPY apps/frontend/src ./src
+COPY apps/frontend/static ./static
+COPY apps/frontend/vite.config.ts ./
+COPY apps/frontend/svelte.config.js ./
+COPY apps/frontend/tsconfig.json ./
 
 # Build frontend
 RUN npm run build
