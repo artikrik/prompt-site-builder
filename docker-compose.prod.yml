@@ -1,22 +1,12 @@
-# Production overrides — avoid port conflicts with existing containers
-# Uses relative paths (runner workspace) — no sudo needed
+# Production overrides — uses env vars for port customization
+# Ports set via deploy.yml env: POSTGRES_PORT, REDIS_PORT, BACKEND_PORT, FRONTEND_PORT, CADDY_HTTP_PORT, CADDY_HTTPS_PORT
 
 services:
   backend:
-    ports:
-      - "3001:3000"
     volumes:
       - ./var/www/client-sites:/var/www/client-sites
 
-  frontend:
-    ports:
-      - "5174:5173"
-
   caddy:
-    ports:
-      - "8080:80"
-      - "8443:443"
-      - "8443:443/udp"
     volumes:
       - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./var/www/client-sites:/var/www/client-sites:ro
