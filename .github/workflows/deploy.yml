@@ -29,6 +29,11 @@ jobs:
     if: ${{ !failure() && !cancelled() }}
     environment: production
     timeout-minutes: 30
+    env:
+      POSTGRES_PORT: "5433"
+      REDIS_PORT: "6380"
+      BACKEND_PORT: "3001"
+      FRONTEND_PORT: "5174"
 
     steps:
       - name: Checkout

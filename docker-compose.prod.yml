@@ -1,14 +1,6 @@
 # Production overrides — avoid port conflicts with existing containers
 
 services:
-  postgres:
-    ports:
-      - "5433:5432"
-
-  redis:
-    ports:
-      - "6380:6379"
-
   backend:
     ports:
       - "3001:3000"
