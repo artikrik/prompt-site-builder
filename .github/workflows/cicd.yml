@@ -70,7 +70,7 @@ jobs:
     if: ${{ !inputs.skip_tests }}
     timeout-minutes: 15
     env:
-      DATABASE_URL: postgresql://promptsite:testpassword@localhost:5432/promptsite_test
+      DATABASE_URL: postgresql://promptsite:testpassword@localhost:5434/promptsite_test
       REDIS_HOST: localhost
       REDIS_PORT: 6379
       JWT_SECRET: test-secret-key-for-ci-environment-32chars
@@ -97,7 +97,7 @@ jobs:
             -e POSTGRES_DB=promptsite_test \
             -e POSTGRES_USER=promptsite \
             -e POSTGRES_PASSWORD=testpassword \
-            -p 5432:5432 \
+            -p 5434:5432 \
             postgres:16-alpine
           for i in $(seq 1 20); do
             if docker exec pg-test pg_isready -U promptsite > /dev/null 2>&1; then
