@@ -54,6 +54,13 @@ jobs:
           cp "$ENV_FILE" .env
           echo "✅ .env copied from $ENV_FILE"
 
+      - name: Setup persistent files
+        run: |
+          mkdir -p /opt/prompt-site-builder/docker
+          mkdir -p /opt/prompt-site-builder/var/www/client-sites
+          cp docker/Caddyfile /opt/prompt-site-builder/docker/Caddyfile
+          echo "✅ Persistent files ready"
+
       - name: Verify Docker
         run: |
           docker --version
