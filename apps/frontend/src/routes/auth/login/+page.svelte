@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from '$app/paths';
   import { goto } from '$app/navigation';
   import { auth } from '$lib/stores/auth';
   import { Button } from '$lib/components/ui/button/index.js';
@@ -16,7 +17,7 @@
     error = '';
     try {
       await auth.login(email, password);
-      goto('/dashboard');
+      goto(resolve('/dashboard'));
     } catch (e) {
       error = e instanceof Error ? e.message : 'Login failed';
     } finally {
@@ -34,7 +35,7 @@
     <Card.Header class="text-center">
       <Card.Title class="text-2xl">Sign in to your account</Card.Title>
       <Card.Description>
-        Or <a href="/auth/register" class="text-primary underline underline-offset-4">create a new account</a>
+        Or <a href={resolve('/auth/register')} class="text-primary underline underline-offset-4">create a new account</a>
       </Card.Description>
     </Card.Header>
     <Card.Content>

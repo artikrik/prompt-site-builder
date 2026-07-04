@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* global console */
   import { onMount } from 'svelte';
   import { Button } from '$lib/components/ui/button/index.js';
   import { Input } from '$lib/components/ui/input/index.js';
@@ -36,8 +37,9 @@
     try {
       const data = await api.get<any>('/settings');
       settings = { ...settings, ...data };
-    } catch (e) {
-      console.error('Failed to load settings:', e);
+    } catch (_e) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to load settings:', _e);
     } finally {
       loading = false;
     }
@@ -49,7 +51,7 @@
     try {
       await api.put('/settings', settings);
       message = 'Settings saved successfully';
-    } catch (e) {
+    } catch {
       message = 'Failed to save settings';
     } finally {
       saving = false;
@@ -76,7 +78,7 @@
           <Select.Root type="single" bind:value={settings.llmProvider}>
             <Select.Trigger class="w-full">{providerLabel}</Select.Trigger>
             <Select.Content>
-              {#each providerOptions as option}
+              {#each providerOptions as option (option.value)}
                 <Select.Item value={option.value}>{option.label}</Select.Item>
               {/each}
             </Select.Content>

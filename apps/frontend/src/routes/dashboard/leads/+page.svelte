@@ -1,5 +1,5 @@
-/* global console, window, alert, document */
 <script lang="ts">
+  /* global console */
   import { onMount } from 'svelte';
   import { leads } from '$lib/stores/leads';
   import { projects } from '$lib/stores/projects';

@@ -24,7 +24,7 @@ interface ProjectsState {
 }
 
 function createProjectsStore() {
-  const { subscribe, set, update } = writable<ProjectsState>({
+  const { subscribe, update } = writable<ProjectsState>({
     projects: [],
     isLoading: false,
     error: null,

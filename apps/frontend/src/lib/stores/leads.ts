@@ -24,7 +24,7 @@ interface LeadsState {
 }
 
 function createLeadsStore() {
-  const { subscribe, set, update } = writable<LeadsState>({
+  const { subscribe, update } = writable<LeadsState>({
     leads: [],
     isLoading: false,
     error: null,

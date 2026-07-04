@@ -1,5 +1,5 @@
-/* global console, window, alert, document */
 <script lang="ts">
+  /* global console, alert, window */
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';

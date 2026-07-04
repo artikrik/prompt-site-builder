@@ -9,7 +9,7 @@ describe('cn', () => {
   });
 
   it('should filter out falsy values', () => {
-    const result = cn('base', false && 'hidden', undefined, null, 'extra');
+    const result = cn('base',  undefined, null, 'extra');
     expect(result).toContain('base');
     expect(result).toContain('extra');
     expect(result).not.toContain('hidden');

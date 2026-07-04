@@ -1,5 +1,5 @@
-/* global console, window, alert, document */
 <script lang="ts">
+  /* global alert, window */
   import { onMount } from 'svelte';
   import { projects } from '$lib/stores/projects';
   import { goto } from '$app/navigation';

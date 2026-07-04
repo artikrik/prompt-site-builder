@@ -18,7 +18,7 @@
 **Bash/PowerShell: жодних прямих викликів.** Кожна shell команда — тільки через `rtk`.
 Навіть у ланцюжках з `&&`: `rtk git add . && rtk git commit -m "msg" && rtk git push`
 Before using native Read/Grep/Glob/Update etc. tools, ALWSAYS use `rtk`: example `rtk read`/`rtk grep`/`rtk find`, use RTK ALWSAYS.
-
+Також використовуй ці правела в агентах, субагентах і усюди, де це можливо
 ```bash
 rtk gain              # Token savings analytics
 rtk gain --history    # Command history with savings

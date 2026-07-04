@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from '$app/paths';
   import { goto } from '$app/navigation';
   import { Button } from '$lib/components/ui/button/index.js';
   import * as Card from '$lib/components/ui/card/index.js';
@@ -19,8 +20,8 @@
           <h1 class="text-xl font-bold">Prompt Site Builder</h1>
         </div>
         <div class="flex items-center space-x-4">
-          <Button variant="ghost" onclick={() => goto('/auth/login')}>Login</Button>
-          <Button onclick={() => goto('/auth/login')}>Get Started</Button>
+          <Button variant="ghost" onclick={() => goto(resolve('/auth/login'))}>Login</Button>
+          <Button onclick={() => goto(resolve('/auth/login'))}>Get Started</Button>
         </div>
       </div>
     </div>
@@ -35,7 +36,7 @@
           SEO-optimized websites with booking and payment integrations.
         </p>
         <div class="flex justify-center space-x-4">
-          <Button size="lg" onclick={() => goto('/dashboard')}>Open Dashboard</Button>
+          <Button size="lg" onclick={() => goto(resolve('/dashboard'))}>Open Dashboard</Button>
           <Button size="lg" variant="outline">Learn More</Button>
         </div>
       </div>
