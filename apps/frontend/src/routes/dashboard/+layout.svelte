@@ -40,7 +40,7 @@
       {#each navItems as item (item.href)}
         {@const Icon = item.icon}
         <a
-          href={item.href}
+          href={resolve(item.href)}
           class="flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors
             {isActive(item.href, $page.url.pathname)
               ? 'bg-primary text-primary-foreground'
