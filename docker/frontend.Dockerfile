@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Copy package files
 COPY apps/frontend/package.json ./
-COPY package.json turbo.json ./
+COPY package.json package-lock.json turbo.json ./
 COPY packages/shared/package.json ./packages/shared/
 
 # Install dependencies

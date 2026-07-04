@@ -13,7 +13,7 @@ RUN apk add --no-cache wget && \
 WORKDIR /app
 
 # Copy root package files
-COPY package.json turbo.json tsconfig.base.json ./
+COPY package.json package-lock.json turbo.json tsconfig.base.json ./
 COPY apps/backend/package.json ./apps/backend/
 COPY packages/shared/package.json ./packages/shared/
 
