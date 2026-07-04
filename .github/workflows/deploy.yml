@@ -38,12 +38,16 @@ jobs:
 
       - name: Verify .env exists
         run: |
-          if [ ! -f .env ]; then
-            echo "❌ ERROR: .env file not found!"
-            echo "Create /opt/prompt-site-builder/.env with production values."
+          ENV_FILE="/opt/prompt-site-builder/.env"
+          if [ ! -f "$ENV_FILE" ]; then
+            echo "❌ ERROR: .env file not found at $ENV_FILE"
+            echo "Create it with production values:"
+            echo "  cp /opt/prompt-site-builder/.env.example /opt/prompt-site-builder/.env"
+            echo "  vim /opt/prompt-site-builder/.env"
             exit 1
           fi
-          echo "✅ .env found"
+          cp "$ENV_FILE" .env
+          echo "✅ .env copied from $ENV_FILE"
 
       - name: Verify Docker
         run: |
@@ -54,17 +58,18 @@ jobs:
       - name: Stop containers
         run: |
           echo "🛑 Stopping containers..."
-          docker compose down --remove-orphans || true
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml down --remove-orphans || true
 
       - name: Build images
         run: |
           echo "🐳 Building Docker images..."
-          docker compose build --no-cache 2>&1
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache 2>&1
 
       - name: Start services
         run: |
           echo "🚀 Starting services..."
-          docker compose up -d --wait --wait-timeout 120
+          mkdir -p /opt/prompt-site-builder/var/www/client-sites
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --wait --wait-timeout 120
 
       - name: Run migrations
         run: |

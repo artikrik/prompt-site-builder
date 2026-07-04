@@ -1,0 +1,15 @@
+# Production overrides — used by deploy.yml on self-hosted runner
+# docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+version: '3.8'
+
+services:
+  backend:
+    volumes:
+      - /opt/prompt-site-builder/var/www/client-sites:/var/www/client-sites
+
+  caddy:
+    volumes:
+      - /opt/prompt-site-builder/docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - /opt/prompt-site-builder/var/www/client-sites:/var/www/client-sites:ro
