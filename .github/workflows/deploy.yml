@@ -80,7 +80,7 @@ jobs:
         run: |
           echo "🏥 Checking backend..."
           for i in $(seq 1 12); do
-            if curl -sf http://localhost:3000/health > /dev/null 2>&1; then
+            if curl -sf http://localhost:3001/health > /dev/null 2>&1; then
               echo "✅ Backend healthy"
               break
             fi
@@ -97,7 +97,7 @@ jobs:
         run: |
           echo "🏥 Checking frontend..."
           for i in $(seq 1 6); do
-            if curl -sf http://localhost:5173/ > /dev/null 2>&1; then
+            if curl -sf http://localhost:5174/ > /dev/null 2>&1; then
               echo "✅ Frontend healthy"
               break
             fi
@@ -112,7 +112,7 @@ jobs:
 
       - name: Check Caddy
         run: |
-          if curl -sf http://localhost:80/ > /dev/null 2>&1; then
+          if curl -sf http://localhost:8080/ > /dev/null 2>&1; then
             echo "✅ Caddy responding"
           else
             echo "⚠️ Caddy not responding (may need DNS)"
