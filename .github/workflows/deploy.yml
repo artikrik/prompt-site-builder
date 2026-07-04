@@ -38,10 +38,16 @@ jobs:
       CADDY_HTTPS_PORT: "8443"
 
     steps:
-      - name: Git checkout (skip root-owned)
+      - name: Git checkout (robust)
         run: |
-          git fetch --depth=1 origin $GITHUB_SHA
-          git checkout -f $GITHUB_SHA
+          if [ -d .git ]; then
+            git fetch --depth=1 origin "$GITHUB_SHA" 2>/dev/null || true
+          else
+            git init
+            git remote add origin "https://github.com/$GITHUB_REPOSITORY.git"
+            git fetch --depth=1 origin "$GITHUB_SHA"
+          fi
+          git checkout -f "$GITHUB_SHA"
           rm -rf node_modules packages/*/dist apps/*/node_modules apps/*/.svelte-kit 2>/dev/null || true
 
       - name: Verify .env exists
