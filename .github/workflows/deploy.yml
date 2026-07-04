@@ -38,10 +38,13 @@ jobs:
       CADDY_HTTPS_PORT: "8443"
 
     steps:
+      - name: Clean workspace (skip root-owned)
+        run: rm -rf node_modules packages/*/dist apps/*/node_modules apps/*/.svelte-kit 2>/dev/null || true
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          clean: true
+          clean: false
 
       - name: Verify .env exists
         run: |
@@ -58,8 +61,12 @@ jobs:
 
       - name: Setup persistent dirs
         run: |
-          mkdir -p var/www/client-sites
-          echo "✅ Client sites dir ready"
+          # Use external paths to avoid root-owned files in runner workspace
+          mkdir -p /opt/prompt-site-builder/var/www/client-sites
+          mkdir -p /opt/prompt-site-builder/docker
+          # Copy Caddyfile to persistent location (Docker would create dir otherwise)
+          cp -f docker/Caddyfile /opt/prompt-site-builder/docker/Caddyfile
+          echo "✅ Persistent dirs ready"
 
       - name: Verify Docker
         run: |
@@ -80,7 +87,6 @@ jobs:
       - name: Start services
         run: |
           echo "🚀 Starting services..."
-          mkdir -p /opt/prompt-site-builder/var/www/client-sites
           docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --wait --wait-timeout 120
 
       - name: Run migrations

@@ -1,12 +1,12 @@
-# Production overrides — uses env vars for port customization
+# Production overrides — uses absolute paths to avoid root-owned files in runner workspace
 # Ports set via deploy.yml env: POSTGRES_PORT, REDIS_PORT, BACKEND_PORT, FRONTEND_PORT, CADDY_HTTP_PORT, CADDY_HTTPS_PORT
 
 services:
   backend:
     volumes:
-      - ./var/www/client-sites:/var/www/client-sites
+      - /opt/prompt-site-builder/var/www/client-sites:/var/www/client-sites
 
   caddy:
     volumes:
-      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./var/www/client-sites:/var/www/client-sites:ro
+      - /opt/prompt-site-builder/docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - /opt/prompt-site-builder/var/www/client-sites:/var/www/client-sites:ro
