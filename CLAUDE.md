@@ -122,16 +122,18 @@ Must produce successful build in `/client-sites/<slug>/public/`.
 ## Testing
 
 ### CI Pipeline — Run Locally Before Push (MANDATORY)
-**Кожен пуш має пройти ті самі кроки, що й GitHub Actions CI.** Перед `git push` завжди запускай:
+**Кожен пуш має пройти ті самі кроки, що й GitHub Actions CI/CD.** Перед `git push` завжди запускай:
 
 ```bash
-rtk turbo lint          # 1. ESLint — 0 errors required
-rtk turbo typecheck     # 2. tsc + svelte-check — 0 errors required
-rtk turbo test          # 3. vitest (backend 112 tests, frontend 17 tests)
-rtk turbo build         # 4. Production build — exit 0 required
+npm run lint             # 1. ESLint — 0 errors required (CI: lint job)
+npm run typecheck        # 2. tsc + svelte-check — 0 errors required (CI: typecheck job)
+npm run test             # 3. vitest (backend 112 tests, frontend 17 tests) (CI: test-backend + test-frontend)
+npm run build            # 4. Production build — exit 0 required (CI: build job)
 ```
 
+**Кроки ідентичні CI/CD пайплайну в `.github/workflows/cicd.yml`.**
 Якщо будь-який крок падає — спочатку виправ, потім пуш.
+Також можна запустити одним скриптом: `bash scripts/ci-local.sh`
 
 - Unit/Integration: `vitest` (backend + frontend)
 - E2E: `playwright test` (frontend)
