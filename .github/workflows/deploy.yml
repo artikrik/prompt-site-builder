@@ -38,13 +38,11 @@ jobs:
       CADDY_HTTPS_PORT: "8443"
 
     steps:
-      - name: Clean workspace (skip root-owned)
-        run: rm -rf node_modules packages/*/dist apps/*/node_modules apps/*/.svelte-kit 2>/dev/null || true
-
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          clean: false
+      - name: Git checkout (skip root-owned)
+        run: |
+          git fetch --depth=1 origin $GITHUB_SHA
+          git checkout -f $GITHUB_SHA
+          rm -rf node_modules packages/*/dist apps/*/node_modules apps/*/.svelte-kit 2>/dev/null || true
 
       - name: Verify .env exists
         run: |

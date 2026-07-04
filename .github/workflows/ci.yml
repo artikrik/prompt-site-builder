@@ -12,17 +12,15 @@ jobs:
     name: Lint
     runs-on: self-hosted
     steps:
-      - name: Clean workspace (skip root-owned)
-        run: rm -rf node_modules packages/*/dist apps/*/node_modules apps/*/.svelte-kit 2>/dev/null || true
-
-      - uses: actions/checkout@v4
-        with:
-          clean: false
+      - name: Git checkout (skip root-owned)
+        run: |
+          git fetch --depth=1 origin $GITHUB_SHA
+          git checkout -f $GITHUB_SHA
+          rm -rf node_modules packages/*/dist apps/*/node_modules apps/*/.svelte-kit 2>/dev/null || true
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
       - run: npm ci
       - run: npm run lint
 
@@ -30,17 +28,15 @@ jobs:
     name: Type Check (Backend)
     runs-on: self-hosted
     steps:
-      - name: Clean workspace (skip root-owned)
-        run: rm -rf node_modules packages/*/dist apps/*/node_modules apps/*/.svelte-kit 2>/dev/null || true
-
-      - uses: actions/checkout@v4
-        with:
-          clean: false
+      - name: Git checkout (skip root-owned)
+        run: |
+          git fetch --depth=1 origin $GITHUB_SHA
+          git checkout -f $GITHUB_SHA
+          rm -rf node_modules packages/*/dist apps/*/node_modules apps/*/.svelte-kit 2>/dev/null || true
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
       - run: npm ci
       - run: npm run build --workspace=packages/shared
       - run: npm run typecheck --workspace=apps/backend
@@ -50,17 +46,15 @@ jobs:
     runs-on: self-hosted
     continue-on-error: true
     steps:
-      - name: Clean workspace (skip root-owned)
-        run: rm -rf node_modules packages/*/dist apps/*/node_modules apps/*/.svelte-kit 2>/dev/null || true
-
-      - uses: actions/checkout@v4
-        with:
-          clean: false
+      - name: Git checkout (skip root-owned)
+        run: |
+          git fetch --depth=1 origin $GITHUB_SHA
+          git checkout -f $GITHUB_SHA
+          rm -rf node_modules packages/*/dist apps/*/node_modules apps/*/.svelte-kit 2>/dev/null || true
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
       - run: npm ci
       - run: npm run build --workspace=packages/shared
       - run: npm run typecheck --workspace=apps/frontend
@@ -78,17 +72,15 @@ jobs:
       OPENAI_API_KEY: test-key
       APIFY_TOKEN: test-token
     steps:
-      - name: Clean workspace (skip root-owned)
-        run: rm -rf node_modules packages/*/dist apps/*/node_modules apps/*/.svelte-kit 2>/dev/null || true
-
-      - uses: actions/checkout@v4
-        with:
-          clean: false
+      - name: Git checkout (skip root-owned)
+        run: |
+          git fetch --depth=1 origin $GITHUB_SHA
+          git checkout -f $GITHUB_SHA
+          rm -rf node_modules packages/*/dist apps/*/node_modules apps/*/.svelte-kit 2>/dev/null || true
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
       - name: Start PostgreSQL
         run: |
@@ -138,17 +130,15 @@ jobs:
     name: Frontend Tests
     runs-on: self-hosted
     steps:
-      - name: Clean workspace (skip root-owned)
-        run: rm -rf node_modules packages/*/dist apps/*/node_modules apps/*/.svelte-kit 2>/dev/null || true
-
-      - uses: actions/checkout@v4
-        with:
-          clean: false
+      - name: Git checkout (skip root-owned)
+        run: |
+          git fetch --depth=1 origin $GITHUB_SHA
+          git checkout -f $GITHUB_SHA
+          rm -rf node_modules packages/*/dist apps/*/node_modules apps/*/.svelte-kit 2>/dev/null || true
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
       - run: npm ci
       - run: npm run build --workspace=packages/shared
       - run: npm run test --workspace=apps/frontend
@@ -158,16 +148,14 @@ jobs:
     runs-on: self-hosted
     needs: [lint, typecheck-backend, test-backend, test-frontend]
     steps:
-      - name: Clean workspace (skip root-owned)
-        run: rm -rf node_modules packages/*/dist apps/*/node_modules apps/*/.svelte-kit 2>/dev/null || true
-
-      - uses: actions/checkout@v4
-        with:
-          clean: false
+      - name: Git checkout (skip root-owned)
+        run: |
+          git fetch --depth=1 origin $GITHUB_SHA
+          git checkout -f $GITHUB_SHA
+          rm -rf node_modules packages/*/dist apps/*/node_modules apps/*/.svelte-kit 2>/dev/null || true
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
       - run: npm ci
       - run: npm run build
