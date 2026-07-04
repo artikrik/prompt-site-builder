@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { CacheService } from '../../shared/redis/cache.service';
 import { CreateLeadDto, UpdateLeadDto, LeadFilter, Lead } from '@prompt-site-builder/shared';
-import { Prisma } from '@prisma/client';
 
 const CACHE_TTL = 60;
 const CACHE_PREFIX = 'leads';
@@ -56,7 +55,7 @@ export class LeadsService {
   }
 
   private async findAllFromDb(filter: LeadFilter): Promise<Lead[]> {
-    const where: Prisma.LeadWhereInput = {};
+    const where: Record<string, unknown> = {};
 
     if (filter.search) {
       where.OR = [
