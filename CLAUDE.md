@@ -1,5 +1,50 @@
 # prompt-site-builder
 
+## RTK (Rust Token Killer) — MANDATORY
+
+**Кожна shell команда — ТІЛЬКИ через `rtk`.** Bash і PowerShell перехоплюються PreToolUse хуком автоматично. Жодних прямих викликів.
+Навіть у ланцюжках: `rtk git add . && rtk git commit -m "msg" && rtk git push`
+Ці правила діють всюди: головний потік, агенти, субагенти, Workflow скрипти.
+
+### RTK Tool Mapping (CRITICAL)
+**Ніколи не використовуй нативні Claude Code інструменти для файлових операцій.**
+Кожен нативний інструмент має RTK-відповідник через Bash із 60-90% економії токенів.
+Нативні інструменти надсилають повний вивід у контекст. RTK фільтрує, групує, дедуплікує.
+
+| Claude Code Tool | RTK Bash Command | Savings | Призначення |
+|-----------------|-----------------|---------|-------------|
+| **Read** | `rtk read <file>` | ~60% | Читання файлів з фільтрацією |
+| **Grep** | `rtk grep <pattern>` | ~75% | Пошук, згрупований по файлах |
+| **Glob** | `rtk find <pattern>` | ~70% | Пошук файлів, згрупований по директоріях |
+| Bash `cat` | `rtk read <file>` | ~60% | Читання файлів |
+| Bash `rg` | `rtk grep <pattern>` | ~75% | Пошук вмісту |
+| Bash `grep` | `rtk grep <pattern>` | ~75% | Пошук вмісту |
+| Bash `find` | `rtk find <pattern>` | ~70% | Пошук файлів |
+| Bash `ls` | `rtk ls <path>` | ~65% | Деревоподібний список |
+| Bash `dir` | `rtk ls <path>` | ~65% | Те саме (PowerShell) |
+
+### RTK Build/Test/Git Commands
+| Пряма команда | RTK Command | Savings |
+|--------------|------------|---------|
+| `git status` | `rtk git status` | ~59% |
+| `git log` | `rtk git log` | ~59% |
+| `git diff` | `rtk git diff` | ~80% |
+| `git show` | `rtk git show` | ~80% |
+| `npm install` | `rtk npm install` | ~90% |
+| `npm test` | `rtk npm test` | ~90% |
+| `pnpm install` | `rtk pnpm install` | ~90% |
+| `turbo build` | `rtk turbo build` | ~70% |
+| `turbo test` | `rtk turbo test` | ~90% |
+| `docker ps` | `rtk docker ps` | ~85% |
+| `docker logs` | `rtk docker logs <c>` | ~85% |
+| `curl <url>` | `rtk curl <url>` | ~70% |
+
+### Винятки (RTK не потрібен)
+- **Write/Edit** — і так мінімальний вивід, RTK не дасть економії
+- **Bash з `cd`/`export`/`mkdir`** — службові команди без виводу
+- **Bash з `&&`** — використовуй `rtk` на початку ланцюжка, всі наступні команди теж пройдуть через RTK
+- **Читання зображень/PDF/notebook** — для цих форматів Read tool обов'язковий
+
 ## Architecture Overview
 - **Admin Dashboard:** NestJS 11 + SvelteKit 2 — lead management, site generation, settings
 - **Site Engine:** Hugo SSG — generates client websites from AI-produced content + themes
@@ -12,130 +57,6 @@
 - **Site Generator:** Hugo (extended), git submodules for themes
 - **Infra:** Docker Compose, Caddy (On-Demand TLS), GitHub Actions
 - **Monorepo:** Turborepo (apps/backend, apps/frontend, packages/shared)
-
-## RTK (Rust Token Killer)
-**ALL console commands MUST use `rtk` proxy.** Saves 60-90% tokens on dev operations.
-**Bash/PowerShell: жодних прямих викликів.** Кожна shell команда — тільки через `rtk`.
-Навіть у ланцюжках з `&&`: `rtk git add . && rtk git commit -m "msg" && rtk git push`
-Before using native Read/Grep/Glob/Update etc. tools, ALWSAYS use `rtk`: example `rtk read`/`rtk grep`/`rtk find`, use RTK ALWSAYS.
-Також використовуй ці правела в агентах, субагентах і усюди, де це можливо
-```bash
-rtk gain              # Token savings analytics
-rtk gain --history    # Command history with savings
-rtk discover          # Find missed opportunities
-rtk proxy <cmd>       # Raw command (debugging)
-```
-
-Examples: `rtk git status`, `rtk npm install`, `rtk turbo build`
-
-### RTK File Operations (CRITICAL)
-**Prefer `rtk` shell equivalents over native Claude tools.** Native tools (Read, Grep, Glob) bypass the RTK hook — use `rtk read`/`rtk grep`/`rtk find` for 60-75% token savings.
-
-| Native Tool | RTK Equivalent | Savings |
-|-------------|---------------|---------|
-| Read (tool) | `rtk read <file>` | ~60% |
-| Grep (tool) | `rtk grep <pattern>` | ~75% |
-| Glob (tool) | `rtk find <pattern>` | ~70% |
-| Bash `cat`  | `rtk read <file>` | ~60% |
-| Bash `rg`   | `rtk grep <pattern>` | ~75% |
-| Bash `ls`   | `rtk ls <path>` | ~65% |
-
-## Plugin Stack
-
-| Plugin | Version | Purpose |
-|--------|---------|---------|
-| **ECC** | 2.0.0 | 67 agents, 271 skills, 92 commands, 6 MCP |
-| **Superpowers** | 6.1.1 | 14 skills, auto-triggered workflow |
-| **claude-mem** | 13.10.1 | Persistent memory between sessions |
-| **Claude HUD** | 0.1.0 | Status line |
-| **Caveman** | active | Response style |
-
-## Development Workflow (Superpowers + ECC)
-
-**Philosophy: TDD + plan + review = MANDATORY. Not optional.**
-
-Superpowers = methodology (development process). ECC = tools (agents for specific tasks).
-
-### 7-Phase Auto-Triggered Workflow
-
-Each phase triggers automatically via SessionStart hook. No manual invocation needed.
-
-```
-1. /brainstorm              ← Superpowers (Socratic dialogue, design doc)
-2. worktree isolate         ← Superpowers (clean environment + baseline)
-3. /write-plan              ← Superpowers (2-5 min tasks, exact files, verification)
-4. /execute-plan            ← Superpowers (batches with human checkpoints)
-   ├─ ecc:architect         ← ECC (architectural decisions)
-   ├─ ecc:code-reviewer     ← ECC (after every file)
-   ├─ ecc:security-reviewer ← ECC (sensitive code)
-   ├─ ecc:tdd-guide         ← ECC (write tests first)
-   └─ ecc:e2e-runner        ← ECC (E2E tests)
-5. code review              ← Superpowers (pre-merge, against plan)
-6. merge / PR               ← Superpowers (merge/keep/discard decision)
-```
-
-### Superpowers Skills (auto-trigger)
-
-| Skill | When It Fires |
-|-------|---------------|
-| **brainstorming** | Before any code — Socratic dialogue, design doc |
-| **using-git-worktrees** | Creates isolated worktree + clean baseline |
-| **writing-plans** | Breaks into 2-5 min tasks, exact files, verification |
-| **executing-plans** | Executes in batches with human checkpoints |
-| **subagent-driven-development** | Parallel sub-agents + two-level review |
-| **test-driven-development** | RED-GREEN-REFACTOR. Test first, code second |
-| **requesting-code-review** | Pre-merge review against plan |
-| **receiving-code-review** | Processing review feedback |
-| **finishing-a-development-branch** | Merge/PR/keep/discard decision |
-| **systematic-debugging** | 4-phase root cause analysis |
-| **verification-before-completion** | Proof that fix works |
-| **dispatching-parallel-agents** | Parallel sub-agents |
-| **writing-skills** | Creating new skills |
-| **using-superpowers** | Intro to the system |
-
-### Key ECC Agents for This Project
-
-| Agent | Purpose |
-|-------|---------|
-| **ecc:code-reviewer** | After every file — quality, patterns, bugs |
-| **ecc:security-reviewer** | Auth, payments, API endpoints, user input |
-| **ecc:typescript-reviewer** | TS/JS type safety, async correctness |
-| **ecc:architect** | Architectural decisions, system design |
-| **ecc:build-error-resolver** | When build fails — minimal diffs, fast fix |
-| **ecc:database-reviewer** | Prisma schemas, SQL queries, migrations |
-| **ecc:performance-optimizer** | Bottlenecks, bundle size, N+1 queries |
-| **ecc:silent-failure-hunter** | Swallowed errors, bad fallbacks, missing propagation |
-| **ecc:refactor-cleaner** | Dead code, duplicates, unused deps |
-| **ecc:doc-updater** | Documentation, codemaps, README updates |
-
-### Agent Usage Rules
-- **ecc:code-reviewer** — MANDATORY after every file write/edit
-- **ecc:security-reviewer** — MANDATORY for auth, payment, API, file system code
-- **ecc:tdd-guide** — MANDATORY for new features and bug fixes (write tests first)
-- **ecc:architect** — Before major refactoring or new modules
-- **ecc:build-error-resolver** — Immediately when build/typecheck fails
-- All other agents — use PROACTIVELY when relevant domain code changes
-
-### How to Start
-
-**New feature:**
-```
-/brainstorm   → discuss design, get design doc
-/write-plan   → get plan with small tasks
-/execute-plan → execute plan (ECC agents auto-attach)
-```
-
-**Bug fix (from AUDIT_REPORT.md):**
-Say: "fix B1 — path.dirname in site-publisher.service.ts"
-Superpowers auto: worktree → plan → TDD fix → test → review
-
-**Code review:**
-```
-/request-code-review          → Superpowers review
-ecc:code-reviewer (direct)    → single file review
-```
-
-Superpowers via SessionStart hook automatically checks relevant skills before any task. No need to think "should I enable brainstorming now" — it asks if needed.
 
 ## Commands
 - `turbo dev` — run all dev servers

@@ -7,6 +7,10 @@ on:
     branches: [main]
   workflow_call:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # ── Sequential pipeline: each job depends on previous ──
   # Any failure skips all downstream jobs (fail-fast)
@@ -34,11 +38,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
       - run: npm ci
       - run: npm run lint
 
-  typecheck-backend:
-    name: Type Check (Backend)
+  typecheck-shared:
+    name: Type Check (Shared)
     runs-on: self-hosted
     needs: [lint]
     steps:
@@ -57,6 +62,31 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck --workspace=packages/shared
+
+  typecheck-backend:
+    name: Type Check (Backend)
+    runs-on: self-hosted
+    needs: [typecheck-shared]
+    steps:
+      - name: Git checkout (robust)
+        run: |
+          if [ -d .git ]; then
+            git fetch --depth=1 origin "$GITHUB_SHA" 2>/dev/null || true
+          else
+            git init
+            git remote add origin "https://github.com/$GITHUB_REPOSITORY.git"
+            git fetch --depth=1 origin "$GITHUB_SHA"
+          fi
+          git checkout -f "$GITHUB_SHA"
+          rm -rf node_modules packages/*/dist apps/*/node_modules apps/*/.svelte-kit 2>/dev/null || true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
       - run: npm ci
       - run: npm run build --workspace=packages/shared
       - run: npm run typecheck --workspace=apps/backend
@@ -81,6 +111,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
       - run: npm ci
       - run: npm run build --workspace=packages/shared
       - run: npm run typecheck --workspace=apps/frontend
@@ -114,6 +145,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
       - name: Start PostgreSQL
         run: |
@@ -179,6 +211,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
       - run: npm ci
       - run: npm run build --workspace=packages/shared
       - run: npm run test --workspace=apps/frontend
@@ -203,5 +236,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
       - run: npm ci
       - run: npm run build
