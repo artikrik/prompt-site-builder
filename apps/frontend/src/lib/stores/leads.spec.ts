@@ -49,7 +49,7 @@ describe('Leads Store', () => {
     const mockApi = api as unknown as { post: ReturnType<typeof vi.fn> };
     mockApi.post.mockResolvedValueOnce({ id: '3', businessName: 'New Biz', slug: 'new-biz', phone: null, email: null, address: null, city: 'Kyiv', category: 'salon', description: null, source: 'manual', status: 'NEW', tags: [], createdAt: '2026-01-03' });
 
-    await leads.create({ businessName: 'New Biz', category: 'salon' });
+    await leads.create({ businessName: 'New Biz', source: 'manual', category: 'salon' });
 
     expect(mockApi.post).toHaveBeenCalledWith('/leads', expect.objectContaining({ businessName: 'New Biz' }));
   });

@@ -10,7 +10,7 @@ on:
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,7 +22,7 @@ jobs:
 
   typecheck-backend:
     name: Type Check (Backend)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -35,7 +35,7 @@ jobs:
 
   typecheck-frontend:
     name: Type Check (Frontend)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
@@ -49,35 +49,13 @@ jobs:
 
   test-backend:
     name: Backend Tests
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: promptsite_test
-          POSTGRES_USER: promptsite
-          POSTGRES_PASSWORD: testpassword
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    runs-on: self-hosted
     env:
       DATABASE_URL: postgresql://promptsite:testpassword@localhost:5432/promptsite_test
       REDIS_HOST: localhost
       REDIS_PORT: 6379
       JWT_SECRET: test-secret-key-for-ci-environment-32chars
+      JWT_REFRESH_SECRET: test-refresh-secret-key-for-ci-environment-32chars
       ANTHROPIC_API_KEY: test-key
       OPENAI_API_KEY: test-key
       APIFY_TOKEN: test-token
@@ -87,15 +65,54 @@ jobs:
         with:
           node-version: 20
           cache: npm
+
+      - name: Start PostgreSQL
+        run: |
+          docker rm -f pg-test 2>/dev/null || true
+          docker run -d --name pg-test \
+            -e POSTGRES_DB=promptsite_test \
+            -e POSTGRES_USER=promptsite \
+            -e POSTGRES_PASSWORD=testpassword \
+            -p 5432:5432 \
+            postgres:16-alpine
+          for i in $(seq 1 20); do
+            if docker exec pg-test pg_isready -U promptsite > /dev/null 2>&1; then
+              echo "✅ PostgreSQL ready"
+              break
+            fi
+            echo "⏳ Waiting for PostgreSQL ($i/20)..."
+            sleep 1
+          done
+
+      - name: Start Redis
+        run: |
+          docker rm -f redis-test 2>/dev/null || true
+          docker run -d --name redis-test \
+            -p 6379:6379 \
+            redis:7-alpine
+          for i in $(seq 1 10); do
+            if docker exec redis-test redis-cli ping | grep -q PONG; then
+              echo "✅ Redis ready"
+              break
+            fi
+            echo "⏳ Waiting for Redis ($i/10)..."
+            sleep 1
+          done
+
       - run: npm ci
       - run: npm run build --workspace=packages/shared
       - run: npx prisma generate --schema=apps/backend/prisma/schema.prisma
       - run: npx prisma migrate deploy --schema=apps/backend/prisma/schema.prisma
       - run: npm run test --workspace=apps/backend
 
+      - name: Cleanup
+        if: always()
+        run: |
+          docker rm -f pg-test redis-test 2>/dev/null || true
+
   test-frontend:
     name: Frontend Tests
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -108,7 +125,7 @@ jobs:
 
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: [lint, typecheck-backend, test-backend, test-frontend]
     steps:
       - uses: actions/checkout@v4

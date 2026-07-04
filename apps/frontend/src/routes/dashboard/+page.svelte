@@ -95,7 +95,7 @@
                   {project.status}
                 </Badge>
                 {#if project.publishedUrl}
-                  <a href={resolve(project.publishedUrl)} target="_blank" rel="noopener noreferrer" class="text-sm text-primary underline">View Site</a>
+                  <a href={project.publishedUrl ?? '#'} target="_blank" rel="noopener noreferrer" class="text-sm text-primary underline">View Site</a>
                 {/if}
               </div>
             </div>
