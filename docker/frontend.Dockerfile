@@ -16,7 +16,6 @@ RUN npm ci
 
 # Copy source code
 COPY apps/frontend/src ./apps/frontend/src
-COPY apps/frontend/static ./apps/frontend/static
 COPY apps/frontend/vite.config.ts ./apps/frontend/
 COPY apps/frontend/svelte.config.js ./apps/frontend/
 COPY apps/frontend/tsconfig.json ./apps/frontend/
