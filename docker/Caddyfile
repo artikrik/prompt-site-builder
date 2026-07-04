@@ -1,0 +1,61 @@
+{
+  # Global options
+  admin off
+  log {
+    output stdout
+    format json
+  }
+}
+
+# Dashboard / Admin panel
+sitenow.pp.ua {
+  reverse_proxy frontend:5173
+
+  header {
+    X-Content-Type-Options nosniff
+    X-Frame-Options DENY
+    Referrer-Policy strict-origin-when-cross-origin
+  }
+}
+
+# API backend
+api.sitenow.pp.ua {
+  reverse_proxy backend:3000
+
+  header {
+    X-Content-Type-Options nosniff
+    X-Frame-Options DENY
+    Referrer-Policy strict-origin-when-cross-origin
+  }
+}
+
+# On-Demand TLS for client subdomains
+# Wildcard: *.sitenow.pp.ua
+https://*.sitenow.pp.ua {
+  tls {
+    on_demand
+  }
+
+  root * /var/www/client-sites/{labels.1}
+
+  file_server {
+    precompressed gzip br
+  }
+
+  header {
+    X-Content-Type-Options nosniff
+    X-Frame-Options SAMEORIGIN
+    Referrer-Policy strict-origin-when-cross-origin
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:"
+  }
+
+  # SPA fallback for client sites
+  try_files {path} {path}/ /index.html
+
+  # Cache static assets
+  @static {
+    path /images/* /css/* /js/*
+  }
+  header @static Cache-Control "public, max-age=31536000, immutable"
+}

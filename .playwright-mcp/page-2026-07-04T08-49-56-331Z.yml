@@ -1,0 +1,20 @@
+- generic [ref=e2]:
+  - generic [ref=e45]:
+    - generic [ref=e46]:
+      - heading "Sign in to your account" [level=2] [ref=e47]
+      - paragraph [ref=e48]:
+        - text: Or
+        - link "create a new account" [ref=e49] [cursor=pointer]:
+          - /url: /auth/register
+    - generic [ref=e50]:
+      - generic [ref=e51]:
+        - generic [ref=e52]:
+          - generic [ref=e53]: Email address
+          - textbox "Email address" [ref=e54]:
+            - /placeholder: admin@promptsite.com
+        - generic [ref=e55]:
+          - generic [ref=e56]: Password
+          - textbox "Password" [ref=e57]:
+            - /placeholder: ••••••••
+      - button "Sign in" [ref=e59] [cursor=pointer]
+  - generic [ref=e43]: Login - Prompt Site Builder

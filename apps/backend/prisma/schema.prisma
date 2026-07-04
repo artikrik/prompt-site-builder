@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  CONVERTED
+  REJECTED
+}
+
+enum ProjectStatus {
+  DRAFT
+  GENERATING
+  GENERATED
+  PUBLISHING
+  PUBLISHED
+  FAILED
+}
+
+enum JobType {
+  SCRAPE_LEAD
+  ENRICH_LEAD
+  GENERATE_SITE
+  PUBLISH_SITE
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum WidgetType {
+  BOOKING
+  PAYMENT
+}
+
+enum ImageAssetType {
+  HERO
+  LOGO
+  THUMBNAIL
+  GALLERY
+}
+
+enum UserRole {
+  ADMIN
+  OPERATOR
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         UserRole @default(OPERATOR)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  projects Project[]
+}
+
+model Lead {
+  id           String     @id @default(uuid())
+  businessName String
+  slug         String     @unique
+  phone        String?
+  email        String?
+  address      String?
+  city         String?
+  category     String?
+  description  String?
+  website      String?
+  socialUrl    String?
+  source       String
+  status       LeadStatus @default(NEW)
+  tags         String[]
+  scrapedData  Json       @default("{}")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  projects Project[]
+}
+
+model Project {
+  id           String        @id @default(uuid())
+  leadId       String
+  slug         String        @unique
+  status       ProjectStatus @default(DRAFT)
+  hugoConfig   Json          @default("{}")
+  generatedAt  DateTime?
+  publishedAt  DateTime?
+  publishedUrl String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  lead         Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  user         User?         @relation(fields: [userId], references: [id])
+  userId       String?
+  jobs         GenerationJob[]
+  assets       SiteAsset[]
+  widgets      ClientWidget[]
+}
+
+model GenerationJob {
+  id          String    @id @default(uuid())
+  projectId   String
+  type        JobType
+  status      JobStatus @default(PENDING)
+  result      Json?
+  error       String?
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model SiteAsset {
+  id        String         @id @default(uuid())
+  projectId String
+  filePath  String
+  assetType ImageAssetType
+  sourceUrl String?
+  createdAt DateTime       @default(now())
+
+  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ClientWidget {
+  id        String     @id @default(uuid())
+  projectId String
+  type      WidgetType
+  config    Json       @default("{}")
+  enabled   Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}

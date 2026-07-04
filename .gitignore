@@ -1,0 +1,38 @@
+node_modules/
+dist/
+.svelte-kit/
+*.log
+.env
+.env.local
+.env.*.local
+.turbo/
+coverage/
+playwright-report/
+test-results/
+
+# Docker
+docker-compose.override.yml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Cache
+.cache/
+*.tsbuildinfo
+
+# Generated
+/client-sites/
+/var/
+
+# Graphify output
+graphify-out/
+
+# Skills lock
+skills-lock.json

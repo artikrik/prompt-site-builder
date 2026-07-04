@@ -1,0 +1,71 @@
+- generic [ref=e2]:
+  - generic [ref=e60]:
+    - generic [ref=e62]:
+      - heading "Prompt Site Builder" [level=1] [ref=e64]
+      - navigation [ref=e65]:
+        - link "Overview" [ref=e66] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e67]
+          - text: Overview
+        - link "Leads" [ref=e69] [cursor=pointer]:
+          - /url: /dashboard/leads
+          - img [ref=e70]
+          - text: Leads
+        - link "Projects" [ref=e72] [cursor=pointer]:
+          - /url: /dashboard/projects
+          - img [ref=e73]
+          - text: Projects
+        - link "Settings" [ref=e75] [cursor=pointer]:
+          - /url: /dashboard/settings
+          - img [ref=e76]
+          - text: Settings
+      - button "Logout" [ref=e79] [cursor=pointer]:
+        - img [ref=e80]
+        - text: Logout
+    - generic [ref=e124]:
+      - generic [ref=e125]:
+        - heading "Leads" [level=1] [ref=e126]
+        - button "Add Lead" [ref=e127] [cursor=pointer]:
+          - img [ref=e128]
+          - text: Add Lead
+      - generic [ref=e131]:
+        - textbox "Search leads..." [ref=e132]
+        - combobox [ref=e133]:
+          - option "All Status" [selected]
+          - option "New"
+          - option "Contacted"
+          - option "Qualified"
+          - option "Converted"
+          - option "Rejected"
+      - table [ref=e135]:
+        - rowgroup [ref=e136]:
+          - row "Business Contact Location Status Actions" [ref=e137]:
+            - columnheader "Business" [ref=e138]
+            - columnheader "Contact" [ref=e139]
+            - columnheader "Location" [ref=e140]
+            - columnheader "Status" [ref=e141]
+            - columnheader "Actions" [ref=e142]
+        - rowgroup [ref=e143]:
+          - row "Кав'ярня Sunrise Restaurant N/A N/A N/A NEW Create Site" [ref=e172]:
+            - cell "Кав'ярня Sunrise Restaurant" [ref=e173]:
+              - generic [ref=e146]: Кав'ярня Sunrise
+              - generic [ref=e147]: Restaurant
+            - cell "N/A N/A" [ref=e148]:
+              - generic [ref=e149]: N/A
+              - generic [ref=e150]: N/A
+            - cell "N/A" [ref=e151]
+            - cell "NEW" [ref=e152]
+            - cell "Create Site" [ref=e153]:
+              - button "Create Site" [ref=e154] [cursor=pointer]
+          - row "Салон Краси Beauty N/A N/A N/A NEW Create Site" [ref=e174]:
+            - cell "Салон Краси Beauty" [ref=e175]:
+              - generic [ref=e176]: Салон Краси
+              - generic [ref=e177]: Beauty
+            - cell "N/A N/A" [ref=e178]:
+              - generic [ref=e179]: N/A
+              - generic [ref=e180]: N/A
+            - cell "N/A" [ref=e181]
+            - cell "NEW" [ref=e182]
+            - cell "Create Site" [ref=e183]:
+              - button "Create Site" [ref=e184] [cursor=pointer]
+  - generic [ref=e43]: Leads - Prompt Site Builder

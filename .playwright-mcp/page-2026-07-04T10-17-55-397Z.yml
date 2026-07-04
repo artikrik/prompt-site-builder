@@ -1,0 +1,52 @@
+- generic [ref=f6e2]:
+  - generic [ref=f6e20]:
+    - complementary [ref=f6e21]:
+      - heading "Prompt Site Builder" [level=1] [ref=f6e23]
+      - navigation [ref=f6e24]:
+        - link "Overview" [ref=f6e25] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=f6e26]
+          - text: Overview
+        - link "Leads" [active] [ref=f6e27] [cursor=pointer]:
+          - /url: /dashboard/leads
+          - img [ref=f6e28]
+          - text: Leads
+        - link "Projects" [ref=f6e29] [cursor=pointer]:
+          - /url: /dashboard/projects
+          - img [ref=f6e30]
+          - text: Projects
+        - link "Settings" [ref=f6e31] [cursor=pointer]:
+          - /url: /dashboard/settings
+          - img [ref=f6e32]
+          - text: Settings
+      - button "Logout" [ref=f6e34]:
+        - img
+        - text: Logout
+    - main [ref=f6e35]:
+      - generic [ref=f6e37]:
+        - heading "Dashboard Overview" [level=1] [ref=f6e38]
+        - generic [ref=f6e39]:
+          - generic [ref=f6e40]:
+            - generic [ref=f6e41]:
+              - generic [ref=f6e42]: Total Leads
+              - img [ref=f6e43]
+            - generic [ref=f6e45]: "2"
+          - generic [ref=f6e46]:
+            - generic [ref=f6e47]:
+              - generic [ref=f6e48]: New Leads
+              - img [ref=f6e49]
+            - generic [ref=f6e51]: "2"
+          - generic [ref=f6e52]:
+            - generic [ref=f6e53]:
+              - generic [ref=f6e54]: Active Projects
+              - img [ref=f6e55]
+            - generic [ref=f6e57]: "0"
+          - generic [ref=f6e58]:
+            - generic [ref=f6e59]:
+              - generic [ref=f6e60]: Published Sites
+              - img [ref=f6e61]
+            - generic [ref=f6e63]: "0"
+        - generic [ref=f6e64]:
+          - generic [ref=f6e66]: Recent Projects
+          - paragraph [ref=f6e68]: No projects yet. Create your first project from the Leads page.
+  - generic [ref=f6e19]: Dashboard - Prompt Site Builder

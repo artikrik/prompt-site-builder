@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.svelte-kit/
+.turbo/
+coverage/
+.git/
+.idea/
+.vscode/
+*.log
+.env
+.env.*
+.gitignore
+.dockerignore
+Dockerfile
+docker-compose.override.yml
+README.md
+LICENSE

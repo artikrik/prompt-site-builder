@@ -1,0 +1,42 @@
+export enum LeadStatus {
+  NEW = 'NEW',
+  CONTACTED = 'CONTACTED',
+  QUALIFIED = 'QUALIFIED',
+  CONVERTED = 'CONVERTED',
+  REJECTED = 'REJECTED',
+}
+
+export enum ProjectStatus {
+  DRAFT = 'DRAFT',
+  GENERATING = 'GENERATING',
+  GENERATED = 'GENERATED',
+  PUBLISHING = 'PUBLISHING',
+  PUBLISHED = 'PUBLISHED',
+  FAILED = 'FAILED',
+}
+
+export enum JobType {
+  SCRAPE_LEAD = 'SCRAPE_LEAD',
+  ENRICH_LEAD = 'ENRICH_LEAD',
+  GENERATE_SITE = 'GENERATE_SITE',
+  PUBLISH_SITE = 'PUBLISH_SITE',
+}
+
+export enum JobStatus {
+  PENDING = 'PENDING',
+  PROCESSING = 'PROCESSING',
+  COMPLETED = 'COMPLETED',
+  FAILED = 'FAILED',
+}
+
+export enum WidgetType {
+  BOOKING = 'BOOKING',
+  PAYMENT = 'PAYMENT',
+}
+
+export enum ImageAssetType {
+  HERO = 'HERO',
+  LOGO = 'LOGO',
+  THUMBNAIL = 'THUMBNAIL',
+  GALLERY = 'GALLERY',
+}

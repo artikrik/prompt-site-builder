@@ -1,0 +1,134 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      skip_ci:
+        description: 'Skip CI tests (emergency only)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  # CI gate — must pass before deploy (cloud runners)
+  ci-gate:
+    name: CI Gate
+    if: ${{ !inputs.skip_ci }}
+    uses: ./.github/workflows/ci.yml
+    secrets: inherit
+
+  deploy:
+    name: Deploy to Production
+    runs-on: self-hosted
+    needs: [ci-gate]
+    if: ${{ !failure() && !cancelled() }}
+    environment: production
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          clean: true
+
+      - name: Verify .env exists
+        run: |
+          if [ ! -f .env ]; then
+            echo "❌ ERROR: .env file not found!"
+            echo "Create /opt/prompt-site-builder/.env with production values."
+            exit 1
+          fi
+          echo "✅ .env found"
+
+      - name: Verify Docker
+        run: |
+          docker --version
+          docker compose version
+          echo "✅ Docker ready"
+
+      - name: Stop containers
+        run: |
+          echo "🛑 Stopping containers..."
+          docker compose down --remove-orphans || true
+
+      - name: Build images
+        run: |
+          echo "🐳 Building Docker images..."
+          docker compose build --no-cache 2>&1
+
+      - name: Start services
+        run: |
+          echo "🚀 Starting services..."
+          docker compose up -d --wait --wait-timeout 120
+
+      - name: Run migrations
+        run: |
+          echo "🗄️ Running migrations..."
+          docker compose exec -T backend npx prisma migrate deploy
+
+      - name: Health check — Backend
+        run: |
+          echo "🏥 Checking backend..."
+          for i in $(seq 1 12); do
+            if curl -sf http://localhost:3000/health > /dev/null 2>&1; then
+              echo "✅ Backend healthy"
+              break
+            fi
+            if [ "$i" -eq 12 ]; then
+              echo "❌ Backend failed"
+              docker compose logs backend --tail=50
+              exit 1
+            fi
+            echo "⏳ Waiting ($i/12)..."
+            sleep 5
+          done
+
+      - name: Health check — Frontend
+        run: |
+          echo "🏥 Checking frontend..."
+          for i in $(seq 1 6); do
+            if curl -sf http://localhost:5173/ > /dev/null 2>&1; then
+              echo "✅ Frontend healthy"
+              break
+            fi
+            if [ "$i" -eq 6 ]; then
+              echo "❌ Frontend failed"
+              docker compose logs frontend --tail=50
+              exit 1
+            fi
+            echo "⏳ Waiting ($i/6)..."
+            sleep 5
+          done
+
+      - name: Check Caddy
+        run: |
+          if curl -sf http://localhost:80/ > /dev/null 2>&1; then
+            echo "✅ Caddy responding"
+          else
+            echo "⚠️ Caddy not responding (may need DNS)"
+            docker compose logs caddy --tail=20
+          fi
+
+      - name: Cleanup old images
+        if: always()
+        run: |
+          echo "🧹 Cleaning old images..."
+          docker image prune -f
+
+      - name: Summary
+        if: always()
+        run: |
+          echo ""
+          echo "============================================"
+          echo "  Deploy finished"
+          echo "============================================"
+          echo "  Dashboard:  https://sitenow.pp.ua"
+          echo "  API:        https://api.sitenow.pp.ua"
+          echo "  Server:     $(hostname) ($(hostname -I | awk '{print $1}'))"
+          echo "  Time:       $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+          echo "============================================"

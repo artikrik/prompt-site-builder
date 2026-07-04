@@ -1,0 +1,34 @@
+- generic [ref=e4]:
+  - banner [ref=e5]:
+    - generic [ref=e7]:
+      - heading "Prompt Site Builder" [level=1] [ref=e9]
+      - generic [ref=e10]:
+        - button "Login" [ref=e11]
+        - button "Get Started" [ref=e12]
+  - main [ref=e13]:
+    - generic [ref=e14]:
+      - generic [ref=e15]:
+        - heading "AI-Powered B2B Website Generation" [level=2] [ref=e16]
+        - paragraph [ref=e17]: Automatically discover businesses without online presence and generate SEO-optimized websites with booking and payment integrations.
+        - generic [ref=e18]:
+          - button "Open Dashboard" [ref=e19]
+          - button "Learn More" [ref=e20]
+      - separator [ref=e21]
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - generic [ref=e24]:
+            - img [ref=e26]
+            - generic [ref=e29]: Lead Discovery
+          - paragraph [ref=e31]: Find businesses without websites using Google Maps and social media scraping.
+        - generic [ref=e32]:
+          - generic [ref=e33]:
+            - img [ref=e35]
+            - generic [ref=e37]: AI Generation
+          - paragraph [ref=e39]: Generate complete Hugo websites with SEO content and custom images using AI.
+        - generic [ref=e40]:
+          - generic [ref=e41]:
+            - img [ref=e43]
+            - generic [ref=e46]: One-Click Publish
+          - paragraph [ref=e48]: Deploy to custom subdomains with automatic SSL and booking/payment widgets.
+  - contentinfo [ref=e49]:
+    - paragraph [ref=e51]: © 2024 Prompt Site Builder. All rights reserved.

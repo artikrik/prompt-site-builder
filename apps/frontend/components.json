@@ -1,0 +1,19 @@
+{
+  "$schema": "https://next.shadcn.com/schema/components.json",
+  "style": "default",
+  "rsc": false,
+  "tsx": false,
+  "aliases": {
+    "components": "$lib/components",
+    "utils": "$lib/utils",
+    "ui": "$lib/components/ui",
+    "lib": "$lib",
+    "hooks": "$lib/hooks"
+  },
+  "tailwind": {
+    "config": "",
+    "css": "src/app.css",
+    "baseColor": "zinc",
+    "cssVariables": true
+  }
+}
