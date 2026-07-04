@@ -49,7 +49,7 @@ WORKDIR /app
 
 # Copy built artifacts
 COPY --from=builder /app/apps/backend/dist ./dist
-COPY --from=builder /app/apps/backend/node_modules ./node_modules
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/backend/package.json ./
 COPY --from=builder /app/apps/backend/prisma ./prisma
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
