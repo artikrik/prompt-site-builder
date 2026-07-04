@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ApifyProvider, ApifyScrapedBusiness } from './providers/apify.provider';
+import { ApifyProvider } from './providers/apify.provider';
 import { InstagramProvider } from './providers/instagram.provider';
 import { LeadsService } from '../leads/leads.service';
 import { CreateLeadDto } from '@prompt-site-builder/shared';

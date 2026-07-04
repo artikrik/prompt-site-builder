@@ -33,7 +33,7 @@ export class SettingsService {
     };
   }
 
-  updateSettings(updates: Partial<AppSettings>): AppSettings {
+  updateSettings(_updates: Partial<AppSettings>): AppSettings {
     this.logger.log('Settings update requested (env-based config, changes require restart)');
     return this.getSettings();
   }

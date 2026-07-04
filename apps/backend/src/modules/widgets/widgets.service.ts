@@ -137,7 +137,7 @@ export class WidgetsService {
         }
       })
       .catch(function(err) {
-        status.textContent = 'Помилка з\'єднання';
+        status.textContent = 'Помилка з'єднання';
         btn.disabled = false;
       });
   });

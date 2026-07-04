@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createHash, createHmac } from 'crypto';
+import { createHmac } from 'crypto';
 
 export interface PaymentConfig {
   provider: 'wayforpay' | 'monobank';

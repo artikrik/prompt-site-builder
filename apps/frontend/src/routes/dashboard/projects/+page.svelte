@@ -1,7 +1,9 @@
+/* global console, window, alert, document */
 <script lang="ts">
   import { onMount } from 'svelte';
   import { projects } from '$lib/stores/projects';
   import { goto } from '$app/navigation';
+  import { resolve } from '$app/paths';
   import { Button } from '$lib/components/ui/button/index.js';
   import { Badge } from '$lib/components/ui/badge/index.js';
   import * as Card from '$lib/components/ui/card/index.js';
@@ -47,7 +49,7 @@
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {#each $projects.projects as project}
+            {#each $projects.projects as project (project.id)}
               <Table.Row>
                 <Table.Cell>
                   <div class="font-medium">{project.lead?.businessName || project.slug}</div>
@@ -68,7 +70,7 @@
                       View Site
                     </Button>
                   {/if}
-                  <Button variant="ghost" size="sm" onclick={() => goto(`/dashboard/projects/${project.id}`)}>
+                  <Button variant="ghost" size="sm" onclick={() => goto(resolve(`/dashboard/projects/${project.id}`))}>
                     <Eye class="size-4" />
                   </Button>
                 </Table.Cell>

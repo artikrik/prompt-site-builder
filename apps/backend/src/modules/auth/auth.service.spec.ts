@@ -28,11 +28,18 @@ describe('AuthService', () => {
       sign: vi.fn().mockReturnValue('mock-token'),
       verify: vi.fn(),
     };
+    const secretMap: Record<string, string> = {
+      JWT_SECRET: 'test-secret-key-for-jwt-signing-32chars',
+      JWT_REFRESH_SECRET: 'test-refresh-secret-key-for-jwt-signing',
+      JWT_REFRESH_EXPIRATION: '7d',
+    };
     configService = {
-      get: vi.fn().mockImplementation((key: string) => {
-        if (key === 'JWT_SECRET') return 'test-secret-key-for-jwt-signing-32chars';
-        if (key === 'JWT_REFRESH_EXPIRATION') return '7d';
-        return null;
+      get: vi.fn().mockImplementation((key: string, defaultValue?: unknown) => {
+        return secretMap[key] ?? defaultValue ?? null;
+      }),
+      getOrThrow: vi.fn().mockImplementation((key: string) => {
+        if (secretMap[key]) return secretMap[key];
+        throw new Error(`Config key ${key} not found`);
       }),
     };
 
@@ -150,7 +157,7 @@ describe('AuthService', () => {
         refreshToken: 'mock-token',
       });
       expect(jwtService.verify).toHaveBeenCalledWith('valid-refresh-token', {
-        secret: 'test-secret-key-for-jwt-signing-32chars',
+        secret: 'test-refresh-secret-key-for-jwt-signing',
       });
     });
 

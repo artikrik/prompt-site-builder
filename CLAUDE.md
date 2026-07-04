@@ -17,6 +17,7 @@
 **ALL console commands MUST use `rtk` proxy.** Saves 60-90% tokens on dev operations.
 **Bash/PowerShell: жодних прямих викликів.** Кожна shell команда — тільки через `rtk`.
 Навіть у ланцюжках з `&&`: `rtk git add . && rtk git commit -m "msg" && rtk git push`
+Before using native Read/Grep/Glob/Update etc. tools, ALWSAYS use `rtk`: example `rtk read`/`rtk grep`/`rtk find`, use RTK ALWSAYS.
 
 ```bash
 rtk gain              # Token savings analytics
@@ -38,8 +39,6 @@ Examples: `rtk git status`, `rtk npm install`, `rtk turbo build`
 | Bash `cat`  | `rtk read <file>` | ~60% |
 | Bash `rg`   | `rtk grep <pattern>` | ~75% |
 | Bash `ls`   | `rtk ls <path>` | ~65% |
-
-**Rule**: Before using native Read/Grep/Glob tools, ask: can `rtk read`/`rtk grep`/`rtk find` do this? If yes, use RTK.
 
 ## Plugin Stack
 

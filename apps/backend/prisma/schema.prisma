@@ -135,6 +135,15 @@ model SiteAsset {
   project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
+model Setting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  category  String   @default("general")
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
 model ClientWidget {
   id        String     @id @default(uuid())
   projectId String

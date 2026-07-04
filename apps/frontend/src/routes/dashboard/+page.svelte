@@ -1,3 +1,4 @@
+/* global console, window, alert, document */
 <script lang="ts">
   import { onMount } from 'svelte';
   import { leads } from '$lib/stores/leads';
@@ -82,7 +83,7 @@
         <p class="text-muted-foreground text-center py-8">No projects yet. Create your first project from the Leads page.</p>
       {:else}
         <div class="space-y-4">
-          {#each $projects.projects.slice(0, 5) as project}
+          {#each $projects.projects.slice(0, 5) as project (project.id)}
             <div class="flex items-center justify-between p-4 border border-border rounded-lg">
               <div>
                 <p class="font-medium">{project.lead?.businessName || project.slug}</p>

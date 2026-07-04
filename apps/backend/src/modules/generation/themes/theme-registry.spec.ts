@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
   HUGO_THEMES,
-  HugoTheme,
   getThemesByCategory,
   getThemeByName,
   getThemeNames,

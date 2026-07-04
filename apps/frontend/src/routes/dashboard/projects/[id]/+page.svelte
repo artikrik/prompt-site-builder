@@ -1,6 +1,8 @@
+/* global console, window, alert, document */
 <script lang="ts">
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
+  import { resolve } from '$app/paths';
   import { onMount } from 'svelte';
   import { projects, type Project } from '$lib/stores/projects';
   import { api } from '$lib/api/client.js';
@@ -25,8 +27,9 @@
       project = await projects.fetchOne($page.params.id);
       const themeList = await api.get<any[]>('/generation/themes');
       themes = themeList;
-    } catch (e) {
-      console.error('Failed to load:', e);
+    } catch (_e) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to load:', _e);
     } finally {
       isLoading = false;
     }
@@ -56,7 +59,7 @@
 
 <div class="space-y-6">
   <div>
-    <Button variant="ghost" size="sm" onclick={() => goto('/dashboard/projects')} class="mb-4">
+    <Button variant="ghost" size="sm" onclick={() => goto(resolve('/dashboard/projects'))} class="mb-4">
       <ArrowLeft class="w-4 h-4 mr-2" />
       Back to Projects
     </Button>
@@ -80,7 +83,7 @@
               <Select.Trigger class="w-48">{themeLabel}</Select.Trigger>
               <Select.Content>
                 <Select.Item value="auto">AI Auto-Select</Select.Item>
-                {#each themes as theme}
+                {#each themes as theme (theme.name)}
                   <Select.Item value={theme.name}>{theme.name}</Select.Item>
                 {/each}
               </Select.Content>

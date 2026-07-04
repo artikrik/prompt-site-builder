@@ -99,7 +99,7 @@ describe('SitePublisherService', () => {
 
       expect(fsAsync.mkdir).toHaveBeenCalled();
       expect(fsAsync.writeFile).toHaveBeenCalledWith(
-        expect.stringContaining('/tmp/test-sites/test-site/index.html'),
+        expect.stringMatching(/[/\\]tmp[/\\]test-sites[/\\]test-site[/\\]index\.html$/),
         '<html></html>',
       );
     });

@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { mkdir, writeFile, rm, access } from 'fs/promises';
+import { mkdir, writeFile, rm } from 'fs/promises';
 import { join } from 'path';
 import { HugoBuildResult, GeneratedSiteStructure } from '@prompt-site-builder/shared';
 import { getThemeByName } from '../themes/theme-registry';
@@ -294,7 +294,7 @@ draft: true
   }
 
   private async copyDirectory(src: string, dest: string): Promise<void> {
-    const { mkdir: mkdirAsync, readdir, stat, copyFile } = await import('fs/promises');
+    const { mkdir: mkdirAsync, readdir, copyFile } = await import('fs/promises');
     const { join: joinPath } = await import('path');
 
     await mkdirAsync(dest, { recursive: true });

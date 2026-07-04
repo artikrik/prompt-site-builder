@@ -104,7 +104,6 @@ theme = "${data.theme || 'hugo-theme-zen'}"
   }
 
   private generateDefaultStructure(data: BusinessData): HugoGeneratedContent {
-    const slug = data.businessName.toLowerCase().replace(/\s+/g, '-');
     return {
       hugoToml: this.getDefaultHugoToml(data),
       indexMd: `---

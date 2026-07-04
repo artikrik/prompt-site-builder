@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { SettingsService, AppSettings } from './settings.service';
+import { SettingsService } from './settings.service';
 import { ConfigService } from '@nestjs/config';
 
 describe('SettingsService', () => {
@@ -38,7 +38,7 @@ describe('SettingsService', () => {
     });
 
     it('should use defaults when env vars are missing', () => {
-      configService.get.mockReturnValue(null);
+      configService.get.mockImplementation((_key: string, defaultVal?: unknown) => defaultVal ?? null);
       const settings = service.getSettings();
       expect(settings.llmProvider).toBe('openai');
       expect(settings.baseDomain).toBe('sitenow.pp.ua');

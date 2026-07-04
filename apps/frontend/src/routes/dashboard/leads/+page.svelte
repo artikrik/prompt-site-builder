@@ -1,8 +1,10 @@
+/* global console, window, alert, document */
 <script lang="ts">
   import { onMount } from 'svelte';
   import { leads } from '$lib/stores/leads';
   import { projects } from '$lib/stores/projects';
   import { goto } from '$app/navigation';
+  import { resolve } from '$app/paths';
   import { Button } from '$lib/components/ui/button/index.js';
   import { Input } from '$lib/components/ui/input/index.js';
   import { Label } from '$lib/components/ui/label/index.js';
@@ -17,7 +19,6 @@
   let statusFilter = $state('');
   let showCreateModal = $state(false);
   let newLead = $state({ businessName: '', source: 'manual', category: '' });
-  let errorMessage = $state('');
 
   const sourceOptions = [
     { value: 'manual', label: 'Manual' },
@@ -49,7 +50,7 @@
       showCreateModal = false;
       newLead = { businessName: '', source: 'manual', category: '' };
     } catch {
-      errorMessage = 'Failed to create lead';
+      // eslint-disable-next-line no-console
       console.error('Failed to create lead');
     }
   }
@@ -57,9 +58,9 @@
   async function createProject(leadId: string) {
     try {
       const project = await projects.create(leadId);
-      goto(`/dashboard/projects/${project.id}`);
+      goto(resolve(`/dashboard/projects/${project.id}`));
     } catch {
-      errorMessage = 'Failed to create project';
+      // eslint-disable-next-line no-console
       console.error('Failed to create project');
     }
   }
@@ -107,7 +108,7 @@
             <Select.Root type="single" bind:value={newLead.source}>
               <Select.Trigger class="w-full">{sourceLabel}</Select.Trigger>
               <Select.Content>
-                {#each sourceOptions as option}
+                {#each sourceOptions as option (option.value)}
                   <Select.Item value={option.value}>{option.label}</Select.Item>
                 {/each}
               </Select.Content>
@@ -132,7 +133,7 @@
         <Select.Root type="single" bind:value={statusFilter} onValueChange={handleSearch}>
           <Select.Trigger class="w-40">{statusLabel}</Select.Trigger>
           <Select.Content>
-            {#each statusOptions as option}
+            {#each statusOptions as option (option.value)}
               <Select.Item value={option.value}>{option.label}</Select.Item>
             {/each}
           </Select.Content>
@@ -155,7 +156,7 @@
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {#each $leads.leads as lead}
+            {#each $leads.leads as lead (lead.id)}
               <Table.Row>
                 <Table.Cell>
                   <div class="font-medium">{lead.businessName}</div>

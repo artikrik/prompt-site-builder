@@ -23,7 +23,7 @@ export class HealthController {
       const start = Date.now();
       await this.prisma.$queryRaw`SELECT 1`;
       checks.database = { status: 'ok', latency: Date.now() - start };
-    } catch (error) {
+    } catch {
       checks.database = { status: 'error', error: String(error) };
       overallStatus = 'error';
     }
@@ -34,7 +34,7 @@ export class HealthController {
       const client = this.redis.getClient();
       await client.ping();
       checks.redis = { status: 'ok', latency: Date.now() - start };
-    } catch (error) {
+    } catch {
       checks.redis = { status: 'error', error: String(error) };
       overallStatus = 'error';
     }
@@ -47,7 +47,7 @@ export class HealthController {
       const start = Date.now();
       await execAsync('hugo version');
       checks.hugo = { status: 'ok', latency: Date.now() - start };
-    } catch (error) {
+    } catch {
       checks.hugo = { status: 'warning', error: 'Hugo not found in PATH' };
     }
 

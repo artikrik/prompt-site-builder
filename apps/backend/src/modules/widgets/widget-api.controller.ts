@@ -85,7 +85,7 @@ export class WidgetApiController {
     @Body() body: Record<string, unknown>,
     @Query('signature') signature?: string,
   ) {
-    const provider = String(body.merchantAccount ?? body.invoiceId ?? '');
+    void (body.merchantAccount ?? body.invoiceId ?? '');
     const sig = signature ?? String(body.merchantSignature ?? body.sign ?? '');
 
     const valid = await this.paymentService.verifyCallback(
