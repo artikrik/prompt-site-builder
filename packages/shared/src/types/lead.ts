@@ -15,7 +15,7 @@ export interface Lead {
   source: string;
   status: LeadStatus;
   tags: string[];
-  scrapedData: Record<string, unknown>;
+  scrapedData: any;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -32,7 +32,7 @@ export interface CreateLeadDto {
   socialUrl?: string;
   source: string;
   tags?: string[];
-  scrapedData?: Record<string, unknown>;
+  scrapedData?: any;
 }
 
 export interface UpdateLeadDto {
@@ -46,6 +46,7 @@ export interface UpdateLeadDto {
   website?: string;
   socialUrl?: string;
   status?: LeadStatus;
+  scrapedData?: any;
   tags?: string[];
 }
 

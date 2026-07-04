@@ -1,4 +1,3 @@
-// @ts-nocheck — Prisma JsonValue vs shared types (pre-existing)
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { CreateWidgetDto, ClientWidget, WidgetType } from '@prompt-site-builder/shared';
