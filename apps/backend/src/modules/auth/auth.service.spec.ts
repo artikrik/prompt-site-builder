@@ -15,7 +15,7 @@ describe('AuthService', () => {
   let service: AuthService;
   let prisma: { user: { findUnique: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn> } };
   let jwtService: { sign: ReturnType<typeof vi.fn>; verify: ReturnType<typeof vi.fn> };
-  let configService: { get: ReturnType<typeof vi.fn> };
+  let configService: { get: ReturnType<typeof vi.fn>; getOrThrow: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     prisma = {

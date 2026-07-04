@@ -3,6 +3,8 @@ import { LLMStrategyFactory } from './llm-strategy.factory';
 import { ConfigService } from '@nestjs/config';
 import { AnthropicStrategy } from './anthropic.strategy';
 import { OpenAIStrategy } from './openai.strategy';
+import { DeepseekStrategy } from './deepseek.strategy';
+import { MimoStrategy } from './mimo.strategy';
 
 describe('LLMStrategyFactory', () => {
   let factory: LLMStrategyFactory;
@@ -19,6 +21,8 @@ describe('LLMStrategyFactory', () => {
       configService as unknown as ConfigService,
       anthropicStrategy,
       openaiStrategy,
+      {} as DeepseekStrategy,
+      {} as MimoStrategy,
     );
   });
 
