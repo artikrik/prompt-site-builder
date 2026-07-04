@@ -120,6 +120,19 @@ node scripts/test-pipeline.js  # Simulate lead → pull theme → generate → h
 Must produce successful build in `/client-sites/<slug>/public/`.
 
 ## Testing
+
+### CI Pipeline — Run Locally Before Push (MANDATORY)
+**Кожен пуш має пройти ті самі кроки, що й GitHub Actions CI.** Перед `git push` завжди запускай:
+
+```bash
+rtk turbo lint          # 1. ESLint — 0 errors required
+rtk turbo typecheck     # 2. tsc + svelte-check — 0 errors required
+rtk turbo test          # 3. vitest (backend 112 tests, frontend 17 tests)
+rtk turbo build         # 4. Production build — exit 0 required
+```
+
+Якщо будь-який крок падає — спочатку виправ, потім пуш.
+
 - Unit/Integration: `vitest` (backend + frontend)
 - E2E: `playwright test` (frontend)
 - E2E backend: `vitest run --config vitest.e2e.config.ts`
