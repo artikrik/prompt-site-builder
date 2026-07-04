@@ -1,11 +1,12 @@
 # Production overrides — avoid port conflicts with existing containers
+# Uses relative paths (runner workspace) — no sudo needed
 
 services:
   backend:
     ports:
       - "3001:3000"
     volumes:
-      - /opt/prompt-site-builder/var/www/client-sites:/var/www/client-sites
+      - ./var/www/client-sites:/var/www/client-sites
 
   frontend:
     ports:
@@ -17,5 +18,5 @@ services:
       - "8443:443"
       - "8443:443/udp"
     volumes:
-      - /opt/prompt-site-builder/docker/Caddyfile:/etc/caddy/Caddyfile:ro
-      - /opt/prompt-site-builder/var/www/client-sites:/var/www/client-sites:ro
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./var/www/client-sites:/var/www/client-sites:ro
