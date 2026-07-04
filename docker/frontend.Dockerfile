@@ -5,8 +5,9 @@ WORKDIR /app
 
 # Copy package files
 COPY apps/frontend/package.json ./
-COPY package.json package-lock.json turbo.json ./
+COPY package.json package-lock.json turbo.json tsconfig.base.json ./
 COPY packages/shared/package.json ./packages/shared/
+COPY packages/shared/tsconfig.json ./packages/shared/
 
 # Install dependencies
 RUN npm ci
