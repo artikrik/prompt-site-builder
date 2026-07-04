@@ -41,4 +41,4 @@ EXPOSE 5173
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:5173/ || exit 1
 
-CMD ["node", "build/index.js"]
+CMD ["npm", "run", "preview", "--", "--port", "5173", "--host"]
