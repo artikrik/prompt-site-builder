@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   # ═══════════════════════════════════════════════════════════
-  #  Quality Gates
+  #  Quality Gates (all parallel — no inter-dependencies)
   # ═══════════════════════════════════════════════════════════
 
   lint:
@@ -34,7 +34,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.22.3
           cache: npm
 
       - run: npm ci
@@ -43,14 +43,17 @@ jobs:
   typecheck:
     name: Type Check
     runs-on: self-hosted
-    needs: [lint]
     timeout-minutes: 10
     steps:
+      - name: Clean root-owned files (Docker residue)
+        run: |
+          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var/www /ws/node_modules 2>/dev/null; true'
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.22.3
           cache: npm
 
       - run: npm ci
@@ -58,13 +61,12 @@ jobs:
       - run: npm run typecheck
 
   # ═══════════════════════════════════════════════════════════
-  #  Tests (parallel — both depend on typecheck)
+  #  Tests (parallel — all quality gates run independently)
   # ═══════════════════════════════════════════════════════════
 
   test-backend:
     name: Backend Tests
     runs-on: self-hosted
-    needs: [typecheck]
     if: ${{ !inputs.skip_tests }}
     timeout-minutes: 15
     env:
@@ -77,11 +79,15 @@ jobs:
       OPENAI_API_KEY: test-key
       APIFY_TOKEN: test-token
     steps:
+      - name: Clean root-owned files (Docker residue)
+        run: |
+          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var/www /ws/node_modules 2>/dev/null; true'
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.22.3
           cache: npm
 
       - name: Start PostgreSQL
@@ -130,15 +136,18 @@ jobs:
   test-frontend:
     name: Frontend Tests
     runs-on: self-hosted
-    needs: [typecheck]
     if: ${{ !inputs.skip_tests }}
     timeout-minutes: 10
     steps:
+      - name: Clean root-owned files (Docker residue)
+        run: |
+          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var/www /ws/node_modules 2>/dev/null; true'
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.22.3
           cache: npm
 
       - run: npm ci
@@ -152,16 +161,20 @@ jobs:
   build:
     name: Build
     runs-on: self-hosted
-    needs: [lint, test-backend, test-frontend]
+    needs: [lint, typecheck, test-backend, test-frontend]
     # always() needed so build runs even when tests are skipped (skip_tests=true)
     if: ${{ always() && !cancelled() && !contains(needs.*.result, 'failure') }}
     timeout-minutes: 15
     steps:
+      - name: Clean root-owned files (Docker residue)
+        run: |
+          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var/www /ws/node_modules 2>/dev/null; true'
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.22.3
           cache: npm
 
       - run: npm ci
