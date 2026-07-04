@@ -291,3 +291,9 @@ jobs:
           echo "  Server:     $(hostname) ($(hostname -I | awk '{print $1}'))"
           echo "  Time:       $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
           echo "============================================"
+
+      - name: Clean root-owned files (post-job)
+        if: always()
+        run: |
+          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var/www /ws/node_modules 2>/dev/null; true'
+          echo "✅ Root-owned files cleaned"
