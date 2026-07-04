@@ -28,7 +28,7 @@ jobs:
     steps:
       - name: Clean root-owned files (Docker residue)
         run: |
-          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var/www /ws/node_modules 2>/dev/null; true'
+          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var /ws/node_modules 2>/dev/null; true'
 
       - uses: actions/checkout@v4
 
@@ -47,7 +47,7 @@ jobs:
     steps:
       - name: Clean root-owned files (Docker residue)
         run: |
-          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var/www /ws/node_modules 2>/dev/null; true'
+          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var /ws/node_modules 2>/dev/null; true'
 
       - uses: actions/checkout@v4
 
@@ -81,7 +81,7 @@ jobs:
     steps:
       - name: Clean root-owned files (Docker residue)
         run: |
-          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var/www /ws/node_modules 2>/dev/null; true'
+          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var /ws/node_modules 2>/dev/null; true'
 
       - uses: actions/checkout@v4
 
@@ -141,7 +141,7 @@ jobs:
     steps:
       - name: Clean root-owned files (Docker residue)
         run: |
-          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var/www /ws/node_modules 2>/dev/null; true'
+          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var /ws/node_modules 2>/dev/null; true'
 
       - uses: actions/checkout@v4
 
@@ -168,7 +168,7 @@ jobs:
     steps:
       - name: Clean root-owned files (Docker residue)
         run: |
-          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var/www /ws/node_modules 2>/dev/null; true'
+          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var /ws/node_modules 2>/dev/null; true'
 
       - uses: actions/checkout@v4
 
@@ -202,7 +202,7 @@ jobs:
     steps:
       - name: Clean root-owned files (Docker residue)
         run: |
-          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var/www /ws/node_modules 2>/dev/null; true'
+          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var /ws/node_modules 2>/dev/null; true'
 
       - uses: actions/checkout@v4
 
@@ -308,5 +308,5 @@ jobs:
       - name: Clean root-owned files (post-job)
         if: always()
         run: |
-          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var/www /ws/node_modules 2>/dev/null; true'
+          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var /ws/node_modules 2>/dev/null; true'
           echo "✅ Root-owned files cleaned"
