@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Clean root-owned files (Docker as root)
         run: |
-          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker/Caddyfile /ws/var/www /ws/node_modules 2>/dev/null; true'
+          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var/www /ws/node_modules 2>/dev/null; true'
 
       - name: Git checkout (robust)
         run: |
