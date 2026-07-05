@@ -19,13 +19,13 @@ concurrency:
 
 jobs:
   # ═══════════════════════════════════════════════════════════
-  #  Quality Gates (push + workflow_dispatch only)
+  #  Quality Gates (push, PR checks, workflow_dispatch)
   # ═══════════════════════════════════════════════════════════
 
   lint:
     name: Lint
     runs-on: self-hosted
-    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed') }}
     timeout-minutes: 10
     steps:
       - name: Clean root-owned files (Docker residue)
@@ -45,7 +45,7 @@ jobs:
   typecheck:
     name: Type Check
     runs-on: self-hosted
-    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed') }}
     timeout-minutes: 10
     steps:
       - name: Clean root-owned files (Docker residue)
@@ -70,7 +70,7 @@ jobs:
   test-backend:
     name: Backend Tests
     runs-on: self-hosted
-    if: ${{ !inputs.skip_tests && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+    if: ${{ !inputs.skip_tests && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed')) }}
     timeout-minutes: 15
     env:
       DATABASE_URL: postgresql://promptsite:testpassword@localhost:5434/promptsite_test
@@ -139,7 +139,7 @@ jobs:
   test-frontend:
     name: Frontend Tests
     runs-on: self-hosted
-    if: ${{ !inputs.skip_tests && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+    if: ${{ !inputs.skip_tests && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed')) }}
     timeout-minutes: 10
     steps:
       - name: Clean root-owned files (Docker residue)
