@@ -96,6 +96,46 @@ export class VariantsService {
     await this.prisma.siteVariant.delete({ where: { id: variantId } });
   }
 
+  async migrateExistingProjects(): Promise<{ migrated: number; skipped: number }> {
+    const projectsWithoutVariants = await this.prisma.project.findMany({
+      where: { variants: { none: {} } },
+      select: { id: true, status: true, hugoConfig: true },
+    });
+
+    let migrated = 0;
+    let skipped = 0;
+
+    for (const project of projectsWithoutVariants) {
+      try {
+        const variantStatus = project.status === 'PUBLISHED' ? 'GENERATED' : 'DRAFT';
+        const themeName = (project.hugoConfig as any)?.theme || undefined;
+
+        const variant = await this.prisma.siteVariant.create({
+          data: {
+            projectId: project.id,
+            variantName: `default + default + ${themeName || 'auto'}`,
+            status: variantStatus,
+            themeName,
+            hugoConfig: project.hugoConfig as any,
+          },
+        });
+
+        await this.prisma.project.update({
+          where: { id: project.id },
+          data: { activeVariantId: variant.id },
+        });
+
+        migrated++;
+        this.logger.log(`Migrated project ${project.id} → variant ${variant.id}`);
+      } catch (error) {
+        this.logger.warn(`Skipping project ${project.id}: ${error}`);
+        skipped++;
+      }
+    }
+
+    return { migrated, skipped };
+  }
+
   private generateVariantName(model?: string, imageModel?: string, theme?: string): string {
     const parts = [model || 'default', imageModel || 'default', theme || 'auto'].filter(Boolean);
     return parts.join(' + ');

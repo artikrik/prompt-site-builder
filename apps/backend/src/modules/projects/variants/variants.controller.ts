@@ -39,6 +39,12 @@ export class VariantsController {
     return { message: 'Variant deleted' };
   }
 
+  @Post('projects/migrate-to-variants')
+  async migrateProjects() {
+    const result = await this.variantsService.migrateExistingProjects();
+    return { message: 'Migration complete', ...result };
+  }
+
   @Get('variants/:variantId/preview')
   async preview(@Param('variantId') variantId: string, @Res() res: Response) {
     const variant = await this.variantsService.findById(variantId);
