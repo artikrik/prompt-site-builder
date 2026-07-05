@@ -2,7 +2,7 @@ name: CI/CD
 
 on:
   push:
-    branches: ["**"]
+    branches-ignore: [main]
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, closed]
@@ -222,6 +222,8 @@ jobs:
         run: |
           mkdir -p /opt/prompt-site-builder/var/www/client-sites
           mkdir -p /opt/prompt-site-builder/docker
+          # Remove before copy — Docker may have created Caddyfile as a directory on failed mount
+          rm -rf /opt/prompt-site-builder/docker/Caddyfile
           cp -f docker/Caddyfile /opt/prompt-site-builder/docker/Caddyfile
           echo "✅ Persistent dirs ready"
 
