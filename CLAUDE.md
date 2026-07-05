@@ -42,41 +42,74 @@ Examples: `rtk git status`, `rtk npm install`, `rtk turbo build`
 
 ## Development Workflow (Superpowers)
 
-**Philosophy: TDD + plan + review = MANDATORY.**
+**Philosophy: TDD + plan + review = MANDATORY. Not optional.**
 
-### Superpowers Skills
+Every task flows through these phases in order. Each phase activates automatically via `using-superpowers` skill.
+Не вимагай ручного виклику — система сама пропонує потрібний скіл на кожному етапі.
 
-| Skill | When It Fires |
-|-------|---------------|
-| **brainstorming** | Before any code — design discussion, design doc |
-| **using-git-worktrees** | Creates isolated worktree + clean baseline |
-| **writing-plans** | Breaks into 2-5 min tasks, exact files, verification |
-| **executing-plans** | Executes in batches with human checkpoints |
-| **test-driven-development** | RED-GREEN-REFACTOR. Test first, code second |
-| **requesting-code-review** | Pre-merge review against plan |
-| **receiving-code-review** | Processing review feedback |
-| **finishing-a-development-branch** | Merge/PR/keep/discard decision |
-| **verification-before-completion** | Proof that fix works |
-| **systematic-debugging** | 4-phase root cause analysis |
-| **dispatching-parallel-agents** | Parallel sub-agents for independent tasks |
-| **subagent-driven-development** | Multi-agent orchestration |
+### 1. brainstorming
+Activates **before writing any code**. Refines rough ideas through Socratic dialogue:
+- Explores alternatives and edge cases
+- Presents design in sections for validation
+- Saves design document to `docs/design/`
 
-### Standard Flow
+### 2. using-git-worktrees
+Activates **after design approval**. Creates isolated workspace:
+- New branch via `EnterWorktree`
+- Runs `npm install` + project setup
+- Verifies clean test baseline (all tests pass before start)
+
+### 3. writing-plans
+Activates **with approved design**. Breaks work into bite-sized tasks:
+- Each task: 2-5 minutes
+- Every task has: exact file paths, complete code, verification steps
+- Output: ordered task list with dependencies
+
+### 4. subagent-driven-development OR executing-plans
+Activates **with plan ready**:
+- `subagent-driven-development`: fresh subagent per task, two-stage review (spec compliance → code quality)
+- `executing-plans`: executes in batches with human checkpoints between batches
+- Default: `subagent-driven-development` для складних задач, `executing-plans` для простих
+
+### 5. test-driven-development
+Activates **during implementation**. Enforces RED-GREEN-REFACTOR:
+1. RED: Write failing test first
+2. Watch it fail (proof test catches bug)
+3. GREEN: Write minimal code to pass
+4. Watch it pass (proof fix works)
+5. REFACTOR: Clean up while green
+6. Commit
+**Жоден код не пишеться перед тестами.** Code written before tests is deleted.
+
+### 6. requesting-code-review
+Activates **between tasks** (after each file/task completion):
+- Reviews against plan (not generic critique)
+- Reports issues by severity: CRITICAL (block) → HIGH (warn) → MEDIUM (info) → LOW (note)
+- CRITICAL issues block progress to next task
+
+### 7. finishing-a-development-branch
+Activates **when all tasks complete**:
+1. Verifies all tests pass
+2. Presents 4 options: merge locally / push + create PR / keep as-is / discard
+3. Cleans up worktree (for merge/discard options)
+4. Deletes branch after merge
+
+### Quick Reference
 
 ```
 Нова фіча:
-  /brainstorm   → design doc
-  worktree      → isolate
-  /write-plan   → small tasks
-  /execute-plan → implement (TDD per task)
-  review        → pre-merge check
-  finish        → merge/PR
+  brainstorm → design doc
+  worktree   → isolate + baseline
+  write-plan → tasks (2-5 min each)
+  execute    → subagent per task + TDD
+  review     → against plan, block on CRITICAL
+  finish     → merge/PR + cleanup
 
 Баг-фікс:
-  worktree      → isolate
-  TDD           → write failing test → fix → verify
-  review        → pre-merge check
-  finish        → merge/PR
+  worktree   → isolate + baseline
+  TDD        → RED-GREEN-REFACTOR
+  review     → against expected behavior
+  finish     → merge/PR + cleanup
 ```
 
 ## Commands
