@@ -70,6 +70,34 @@ SettingsService.get(key):
   3. If missing → default (for providers/models) or null (for keys)
 ```
 
+**Defaults table:**
+
+| Key | Default | Source |
+|-----|---------|--------|
+| `llm_provider` | `"openai"` | env.validation.ts |
+| `llm_model` | `"gpt-4o"` | per-provider top model |
+| `image_provider` | `"openai"` | env.validation.ts |
+| `image_model` | `"dall-e-3"` | per-provider top model |
+| `openai_api_key` | `null` | none |
+| `anthropic_api_key` | `null` | none |
+| `google_api_key` | `null` | none |
+| `deepseek_api_key` | `null` | none |
+| `mimo_api_key` | `null` | none |
+| `bfl_api_key` | `null` | none |
+
+**Per-provider default models (from MODEL_REGISTRY first entry per provider):**
+
+| Provider | Default Content Model | Default Image Model |
+|----------|----------------------|---------------------|
+| `openai` | `gpt-4o` | `dall-e-3` |
+| `anthropic` | `claude-sonnet-4` | — |
+| `google` | `gemini-2.5-pro` | `imagen-4` |
+| `deepseek` | `deepseek-chat` | — |
+| `mimo` | `mimo-v2.5` | — |
+| `bfl` | — | `flux-1-pro` |
+
+When provider is changed in WebUI, model auto-resets to that provider's default.
+
 ### Encryption
 
 - `EncryptionService` — AES-256-GCM using `ENCRYPTION_KEY` from `.env`
