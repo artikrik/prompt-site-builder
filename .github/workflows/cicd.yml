@@ -1,6 +1,8 @@
 name: CI/CD
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, closed]
@@ -194,7 +196,7 @@ jobs:
     runs-on: self-hosted
     # Build only runs if ALL quality gates pass — failing test cancels workflow
     needs: [lint, typecheck, test-backend, test-frontend]
-    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || (github.event_name == 'workflow_dispatch' && inputs.deploy) }}
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || (github.event_name == 'workflow_dispatch' && inputs.deploy) }}
     timeout-minutes: 15
     steps:
       - name: Clean root-owned files (Docker residue)
@@ -212,14 +214,14 @@ jobs:
       - run: npm run build
 
   # ═══════════════════════════════════════════════════════════
-  #  Deploy (on PR merge to main or manual trigger)
+  #  Deploy (on push to main, PR merge, or manual trigger)
   # ═══════════════════════════════════════════════════════════
 
   deploy:
     name: Deploy to Production
     runs-on: self-hosted
     needs: [build]
-    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || github.event_name == 'workflow_dispatch' }}
     environment: production
     timeout-minutes: 30
     env:
