@@ -55,11 +55,11 @@ model Setting {
 | `image_provider` | string | No | `"openai"` |
 | `image_model` | string | No | `"dall-e-3"` |
 | `openai_api_key` | string | **Yes** (AES-256-GCM) | `"sk-..."` |
-| `anthropic_api_key` | string | **Yes** | `"sk-ant-..."` |
-| `google_api_key` | string | **Yes** | `"AIza..."` |
-| `deepseek_api_key` | string | **Yes** | `"sk-..."` |
-| `mimo_api_key` | string | **Yes** | `"..."` |
-| `bfl_api_key` | string | **Yes** | `"..."` |
+| `anthropic_api_key` | string | **Yes** (AES-256-GCM) | `"sk-ant-..."` |
+| `google_api_key` | string | **Yes** (AES-256-GCM) | `"AIza..."` |
+| `deepseek_api_key` | string | **Yes** (AES-256-GCM) | `"sk-..."` |
+| `mimo_api_key` | string | **Yes** (AES-256-GCM) | `"..."` |
+| `bfl_api_key` | string | **Yes** (AES-256-GCM) | `"..."` |
 
 ### Settings Read Logic
 
