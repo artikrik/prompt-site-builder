@@ -3,7 +3,6 @@
   admin off
   on_demand_tls {
     ask http://backend:3000/health
-    burst 5
   }
   log {
     output stdout
