@@ -9,6 +9,9 @@ export default defineConfig({
   server: {
     host: true,
   },
+  preview: {
+    allowedHosts: ['sitenow.pp.ua', 'www.sitenow.pp.ua', 'api.sitenow.pp.ua'],
+  },
   resolve: {
     alias: {
       '$lib': path.resolve('./src/lib'),

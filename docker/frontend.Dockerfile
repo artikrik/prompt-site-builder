@@ -24,7 +24,7 @@ COPY packages/shared/src ./packages/shared/src
 # Build shared package
 RUN cd packages/shared && npm run build
 
-# Build frontend
+# Build frontend (adapter-auto → adapter-node → output at build/)
 RUN cd apps/frontend && npm run build
 
 # Stage 2: Production
@@ -35,13 +35,17 @@ RUN apk add --no-cache curl
 
 WORKDIR /app
 
-COPY --from=builder /app/apps/frontend/.svelte-kit/output ./build
+# Copy adapter-node output (build/ directory with index.js)
+COPY --from=builder /app/apps/frontend/build ./build
 COPY --from=builder /app/apps/frontend/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 5173
 
+ENV HOST=0.0.0.0
+ENV PORT=5173
+
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl --max-time 5 http://localhost:5173/ || exit 1
 
-CMD ["npm", "run", "preview", "--", "--port", "5173", "--host"]
+CMD ["node", "build/index.js"]

@@ -10,8 +10,8 @@
   }
 }
 
-# Dashboard / Admin panel
-sitenow.pp.ua {
+# Dashboard — HTTP only (TLS terminated by Nginx)
+http://sitenow.pp.ua, http://www.sitenow.pp.ua {
   reverse_proxy frontend:5173
 
   header {
@@ -21,8 +21,8 @@ sitenow.pp.ua {
   }
 }
 
-# API backend
-api.sitenow.pp.ua {
+# API — HTTP only (TLS terminated by Nginx)
+http://api.sitenow.pp.ua {
   reverse_proxy backend:3000
 
   header {
