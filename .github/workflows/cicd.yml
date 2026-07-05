@@ -12,6 +12,10 @@ on:
         description: 'Skip tests (emergency deploy only)'
         type: boolean
         default: false
+      deploy:
+        description: 'Deploy to production after build'
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -185,7 +189,7 @@ jobs:
     runs-on: self-hosted
     # Build only runs if ALL quality gates pass — failing test cancels workflow
     needs: [lint, typecheck, test-backend, test-frontend]
-    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || github.event_name == 'workflow_dispatch' }}
+    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || (github.event_name == 'workflow_dispatch' && inputs.deploy) }}
     timeout-minutes: 15
     steps:
       - name: Clean root-owned files (Docker residue)
