@@ -7,19 +7,21 @@ export class WidgetsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateWidgetDto): Promise<ClientWidget> {
-    return this.prisma.clientWidget.create({
+    const widget = await this.prisma.clientWidget.create({
       data: {
         projectId: dto.projectId,
         type: dto.type,
-        config: dto.config,
+        config: dto.config as object,
       },
     });
+    return widget as unknown as ClientWidget;
   }
 
   async findByProject(projectId: string): Promise<ClientWidget[]> {
-    return this.prisma.clientWidget.findMany({
+    const widgets = await this.prisma.clientWidget.findMany({
       where: { projectId },
     });
+    return widgets as unknown as ClientWidget[];
   }
 
   async findOne(id: string): Promise<ClientWidget> {
@@ -31,16 +33,17 @@ export class WidgetsService {
       throw new NotFoundException(`Widget with ID ${id} not found`);
     }
 
-    return widget;
+    return widget as unknown as ClientWidget;
   }
 
   async toggleEnabled(id: string, enabled: boolean): Promise<ClientWidget> {
     await this.findOne(id);
 
-    return this.prisma.clientWidget.update({
+    const widget = await this.prisma.clientWidget.update({
       where: { id },
       data: { enabled },
     });
+    return widget as unknown as ClientWidget;
   }
 
   async remove(id: string): Promise<void> {
