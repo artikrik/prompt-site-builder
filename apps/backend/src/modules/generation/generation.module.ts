@@ -16,9 +16,10 @@ import { PublishingModule } from '../publishing/publishing.module';
 import { ProjectsModule } from '../projects/projects.module';
 import { PrismaModule } from '../../shared/prisma/prisma.module';
 import { QueueModule } from '../queue/queue.module';
+import { SettingsModule } from '../settings/settings.module';
 
 @Module({
-  imports: [PublishingModule, ProjectsModule, PrismaModule, QueueModule],
+  imports: [PublishingModule, ProjectsModule, PrismaModule, QueueModule, SettingsModule],
   controllers: [GenerationController],
   providers: [
     GenerationService,
