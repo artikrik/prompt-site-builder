@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { validateEnv } from './shared/config/env.validation';
 import { RolesGuard } from './shared/guards/roles.guard';
 import { AuthModule } from './modules/auth/auth.module';
@@ -22,6 +23,10 @@ import { RedisModule } from './shared/redis/redis.module';
   providers: [
     {
       provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
       useClass: RolesGuard,
     },
   ],
@@ -31,6 +36,10 @@ import { RedisModule } from './shared/redis/redis.module';
       envFilePath: '.env',
       validate: validateEnv,
     }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 20,
+    }]),
     ScheduleModule.forRoot(),
     PrismaModule,
     RedisModule,

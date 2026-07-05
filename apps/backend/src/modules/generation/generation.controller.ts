@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, HttpCode, HttpStatus, UseGuards, NotFoundException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CacheService } from '../../shared/redis/cache.service';
@@ -6,6 +6,21 @@ import { ProjectsService } from '../projects/projects.service';
 import { QueueService } from '../queue/queue.service';
 import { ThemeService } from './themes/theme.service';
 import { ThemeSelector } from './themes/theme-selector';
+
+interface ProjectRelations {
+  lead?: {
+    id: string;
+    businessName: string;
+    category: string | null;
+    description: string | null;
+    address: string | null;
+    phone: string | null;
+    email: string | null;
+    socialUrl: string | null;
+  } | null;
+  hugoConfig?: { theme?: string } | null;
+  generationJobs?: Array<{ id: string; status: string; result?: unknown; error?: string | null }> | null;
+}
 
 const THEMES_CACHE_KEY = 'themes:list';
 const THEMES_CACHE_TTL = 3600;
@@ -34,7 +49,11 @@ export class GenerationController {
     @Body('variantId') variantId?: string,
   ) {
     const project = await this.projectsService.findOne(projectId);
-    const lead = (project as any).lead;
+    const projectRel = project as unknown as ProjectRelations;
+    const lead = projectRel.lead;
+    if (!lead) {
+      throw new NotFoundException('Lead not found for project');
+    }
 
     let selectedTheme: string | undefined;
     if (theme === 'auto') {
@@ -47,7 +66,7 @@ export class GenerationController {
     } else if (theme) {
       selectedTheme = theme;
     } else {
-      selectedTheme = (project as any).hugoConfig?.theme || this.themeService.getDefaultTheme();
+      selectedTheme = projectRel.hugoConfig?.theme || this.themeService.getDefaultTheme();
     }
 
     const job = await this.queueService.addGenerationJob({
@@ -91,7 +110,8 @@ export class GenerationController {
   @ApiResponse({ status: 200, description: 'Job status' })
   async getStatus(@Param('projectId') projectId: string) {
     const project = await this.projectsService.findOne(projectId);
-    const latestJob = (project as any).generationJobs?.[0];
+    const projectRel = project as unknown as ProjectRelations;
+    const latestJob = projectRel.generationJobs?.[0];
 
     if (!latestJob) {
       return { projectId, status: 'NO_JOB', message: 'No generation job found' };

@@ -60,7 +60,7 @@ RUN mkdir -p /var/www/client-sites
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=5 \
   CMD curl -f http://localhost:3000/health || exit 1
 
 CMD ["node", "dist/src/main.js"]

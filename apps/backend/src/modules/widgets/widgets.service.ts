@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
-import { CreateWidgetDto, ClientWidget, WidgetType } from '@prompt-site-builder/shared';
+import { CreateWidgetDto, ClientWidget, WidgetType, BookingWidgetConfig, PaymentWidgetConfig } from '@prompt-site-builder/shared';
 
 @Injectable()
 export class WidgetsService {
@@ -59,10 +59,10 @@ export class WidgetsService {
 
     for (const widget of enabledWidgets) {
       if (widget.type === WidgetType.BOOKING) {
-        const config = widget.config as any;
+        const config = widget.config as BookingWidgetConfig;
         html += this.generateBookingWidgetHtml(config);
       } else if (widget.type === WidgetType.PAYMENT) {
-        const config = widget.config as any;
+        const config = widget.config as PaymentWidgetConfig;
         html += this.generatePaymentWidgetHtml(config);
       }
     }
@@ -70,7 +70,7 @@ export class WidgetsService {
     return html;
   }
 
-  private generateBookingWidgetHtml(config: any): string {
+  private generateBookingWidgetHtml(config: BookingWidgetConfig): string {
     return `
 <!-- EasyWeek Booking Widget -->
 <div id="easyweek-widget" 
@@ -81,7 +81,7 @@ export class WidgetsService {
 `;
   }
 
-  private generatePaymentWidgetHtml(config: any): string {
+  private generatePaymentWidgetHtml(config: PaymentWidgetConfig): string {
     if (config.provider === 'wayforpay') {
       return `
 <!-- WayForPay Widget -->
