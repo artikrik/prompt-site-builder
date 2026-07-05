@@ -60,12 +60,9 @@ model Setting {
 | `deepseek_api_key` | string | **Yes** (AES-256-GCM) | `"sk-..."` |
 | `mimo_api_key` | string | **Yes** (AES-256-GCM) | `"..."` |
 | `bfl_api_key` | string | **Yes** (AES-256-GCM) | `"..."` |
-| `easyweek_enabled` | string | No | `"true"` / `"false"` |
 | `easyweek_api_key` | string | **Yes** (AES-256-GCM) | `"..."` |
-| `wayforpay_enabled` | string | No | `"true"` / `"false"` |
 | `wayforpay_merchant` | string | No | `"..."` |
 | `wayforpay_secret` | string | **Yes** (AES-256-GCM) | `"..."` |
-| `monobank_enabled` | string | No | `"true"` / `"false"` |
 | `monobank_api_key` | string | **Yes** (AES-256-GCM) | `"..."` |
 
 ### Settings Read Logic
@@ -91,12 +88,9 @@ SettingsService.get(key):
 | `deepseek_api_key` | `null` | none |
 | `mimo_api_key` | `null` | none |
 | `bfl_api_key` | `null` | none |
-| `easyweek_enabled` | `"true"` | env EASYWEEK_API_KEY present? "true" : "false" |
 | `easyweek_api_key` | `null` | env EASYWEEK_API_KEY |
-| `wayforpay_enabled` | `"false"` | none |
 | `wayforpay_merchant` | `null` | env WAYFORPAY_MERCHANT |
 | `wayforpay_secret` | `null` | env WAYFORPAY_SECRET |
-| `monobank_enabled` | `"false"` | none |
 | `monobank_api_key` | `null` | env MONOBANK_API_KEY |
 
 **Per-provider default models (from MODEL_REGISTRY first entry per provider):**
@@ -248,32 +242,42 @@ Each field:
   - Model dropdown filters by selected provider
   - Each model shows: `label` + `role` tag + price badge (`$0.05/image`)
 
-**Section 3: Payment Providers** — додаткові послуги для клієнтських сайтів (запис, оплата)
+**Section 3: Payment & Booking Provider API Keys** — глобальні ключі (один раз)
 
-Кожен провайдер — окрема картка з toggle ON/OFF + полями:
+Кожен провайдер — окрема картка без toggle, тільки поля для ключів:
 
 **EasyWeek** (online booking):
-- Toggle `easyweek_enabled` — увімкнути запис на сайтах клієнтів
 - API Key input: `easyweek_api_key` — маскований `ew-...XyZ1`
 
 **WayForPay** (payment processing):
-- Toggle `wayforpay_enabled` — увімкнути оплати на сайтах клієнтів
 - Merchant ID input: `wayforpay_merchant`
 - Secret key input: `wayforpay_secret` — маскований `wp-...BcD2`
 
 **Monobank** (payment processing):
-- Toggle `monobank_enabled` — увімкнути оплати на сайтах клієнтів
 - API Key input: `monobank_api_key` — маскований `mb-...EfG3`
 
-Якщо toggle OFF → поля приховані, ключі зберігаються в DB але не використовуються при генерації.
-Webhook URLs — автогенеровані на бекенді (`/api/webhooks/wayforpay`, `/api/webhooks/monobank`), показуються read-only під toggle.
+Webhook URLs — автогенеровані бекендом (`/api/webhooks/wayforpay`, `/api/webhooks/monobank`), показуються read-only.
+Це глобальні ключі — спільні для всіх лідів. Увімкнення/вимкнення послуг — per-lead (див. Generation Override).
 
-### Generation Override
+### Generation Trigger (per-lead)
 
-When triggering generation (existing lead → generate flow):
-- Show current default model (from settings) as pre-selected
-- Dropdown to override: same provider → model cascade as Settings
-- If no override selected, use default
+При запуску генерації для ліда — модалка/форма з двома групами налаштувань:
+
+**Group 1: AI Models**
+- Content Provider + Model dropdowns — pre-selected з глобальних settings, можна перевизначити
+- Image Provider + Model dropdowns — pre-selected з глобальних settings, можна перевизначити
+
+**Group 2: Site Services** (per-lead toggles — які послуги включити на сайті цього клієнта)
+
+| Toggle | Умова активності | Ефект на згенерованому сайті |
+|--------|-------------------|------------------------------|
+| **EasyWeek** (online booking) | API key налаштовано в Settings | Додає форму запису, секцію послуг |
+| **WayForPay** (payment) | Merchant + Secret налаштовано в Settings | Додає форму оплати, кошик |
+| **Monobank** (payment) | API key налаштовано в Settings | Додає форму оплати через Monobank |
+
+Якщо API-ключ не налаштовано → toggle сірий з підказкою "Configure API key in Settings first".
+Toggles зберігаються в полях Lead (або в metadata JSON), не в глобальних settings.
+За замовчуванням — всі OFF, адмін вмикає потрібні перед генерацією.
 
 ### New Components
 
@@ -317,18 +321,28 @@ Response: { saved: ['openai_api_key', 'llm_model'] }
 ### Generation with Model Selection
 
 ```
-Lead → "Generate Site" → modal shows default model from settings
+Lead → "Generate Site" → modal shows defaults + per-lead toggles
   ↓
-User optionally overrides model
+User optionally overrides model + enables services for this lead
   ↓
-POST /generation/generate { leadId, model?: 'gpt-4o-mini', imageModel?: 'flux-1-pro' }
+POST /generation/generate {
+  leadId,
+  model?: 'gpt-4o-mini',
+  imageModel?: 'flux-1-pro',
+  services: { easyweek: true, wayforpay: false, monobank: true }
+}
   ↓
 GenerationService:
   llmModel = model || settingsService.get('llm_model')
   imageModel = imageModel || settingsService.get('image_model')
+  // Services — from request body, stored on lead after generation
+  if (services.easyweek) → easyweekApiKey = settingsService.get('easyweek_api_key')
+  if (services.wayforpay) → wayforpayConfig = settingsService.get('wayforpay_*')
+  if (services.monobank) → monobankApiKey = settingsService.get('monobank_api_key')
   ↓
 LLMStrategyFactory.create(provider, { model: llmModel })
 ImageStrategyFactory.create(provider, { model: imageModel })
+// Hugo generation includes payment/booking partials based on services
 ```
 
 ---
