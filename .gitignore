@@ -39,3 +39,9 @@ graphify-out/
 
 # Skills lock
 skills-lock.json
+
+# Playwright MCP artifacts
+.playwright-mcp/
+
+# Frontend build output (committed during deploy, not in git)
+apps/frontend/build/
