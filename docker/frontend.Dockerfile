@@ -25,6 +25,8 @@ COPY packages/shared/src ./packages/shared/src
 RUN cd packages/shared && npm run build
 
 # Build frontend (adapter-auto → adapter-node → output at build/)
+# PUBLIC_API_URL must be set at BUILD time (Vite replaces import.meta.env)
+ENV PUBLIC_API_URL=https://api.sitenow.pp.ua
 RUN cd apps/frontend && npm run build
 
 # Stage 2: Production
