@@ -121,6 +121,60 @@ concurrency:
 
 Branch: `main`
 
+#### How to configure
+
+```
+GitHub Repo → Settings → Branches → Add branch protection rule
+  Branch name pattern: main
+
+  ✅ Require a pull request before merging
+     └─ ✅ Require approvals: 1
+
+  ✅ Require status checks to pass before merging
+     └─ Search and add: lint, typecheck, test-backend, test-frontend
+     └─ ☐ Require branches to be up to date before merging  ← CRITICAL: strict mode
+
+  ✅ Require conversation resolution before merging
+```
+
+#### How it blocks merge
+
+```
+PR створено → push до гілки → CI запускається
+                                    ↓
+  GitHub чекає на всі required status checks:
+     ❌ будь-який failing → кнопка "Merge" сіра
+     ✅ всі green → далі:
+        └─ branch up to date?
+           ❌ НІ → вимагає "Update branch" (re-run CI після rebase)
+           ✅ ТАК → кнопка "Merge" зелена, можна мерджити
+```
+
+#### Strict mode (up to date) — чому це критично
+
+Без strict mode можлива ситуація:
+```
+1. Ти пушиш код → тести проходять ✅
+2. Хтось інший мерджить свій PR у main
+3. Твій PR все ще показує green ✅, хоча код вже розійшовся з main
+4. Merge → build/deploy падає в продакшені
+```
+
+З strict mode:
+```
+1. Ти пушиш код → тести проходять ✅
+2. Хтось інший мерджить свій PR у main
+3. Твій PR показує ⚠️ "Branch out of date"
+4. Ти натискаєш "Update branch" → rebase → тести знову ✅ (на актуальному main)
+5. Merge → гарантовано сумісний код
+```
+
+#### Admin bypass protection
+
+- Force push to main: заблоковано branch protection (немає `Allow force pushes`)
+- Bypass branch protection: тільки через GitHub Admin роль (аудит в логах)
+- Жоден звичайний користувач не може обійти
+
 ### Integration with Worktree Flow
 
 ```
