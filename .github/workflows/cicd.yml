@@ -5,7 +5,7 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
-    types: [opened, synchronize, reopened, closed]
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
       skip_tests:
@@ -27,7 +27,6 @@ jobs:
     runs-on: self-hosted
     # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
     # Skip only: PR closed without merge
-    if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
     timeout-minutes: 10
     steps:
       - name: Clean root-owned files (Docker residue)
@@ -48,7 +47,6 @@ jobs:
     name: Type Check
     runs-on: self-hosted
     # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
-    if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
     timeout-minutes: 10
     steps:
       - name: Clean root-owned files (Docker residue)
@@ -75,7 +73,6 @@ jobs:
     runs-on: self-hosted
     # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
     # skip_tests only skips test execution, NOT the job itself (needs chain requires job to run)
-    if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
     timeout-minutes: 15
     env:
       DATABASE_URL: postgresql://promptsite:testpassword@localhost:5434/promptsite_test
@@ -152,7 +149,6 @@ jobs:
     runs-on: self-hosted
     # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
     # skip_tests only skips test execution, NOT the job itself (needs chain requires job to run)
-    if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
     timeout-minutes: 10
     steps:
       - name: Clean root-owned files (Docker residue)
@@ -185,7 +181,7 @@ jobs:
     runs-on: self-hosted
     # Build only runs if ALL quality gates pass — failing test cancels workflow
     needs: [lint, typecheck, test-backend, test-frontend]
-    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch' }}
+    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch' }}
     timeout-minutes: 15
     steps:
       - name: Clean root-owned files (Docker residue)
@@ -210,7 +206,7 @@ jobs:
     name: Deploy to Production
     runs-on: self-hosted
     needs: [build]
-    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch' }}
+    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch' }}
     environment: production
     timeout-minutes: 30
     env:
