@@ -12,7 +12,7 @@ describe('SettingsService', () => {
       findByKey: vi.fn(),
       upsert: vi.fn(),
       findAll: vi.fn(),
-      deleteByKey: vi.fn(),
+      deleteByKey: vi.fn().mockResolvedValue(undefined),
     };
     mockEncryption = {
       encrypt: vi.fn((v: string) => `enc_${v}`),
@@ -74,7 +74,7 @@ describe('SettingsService', () => {
       });
       const result = await service.getSettings();
       expect(result.llmProvider).toBe('anthropic');
-      expect(result.openaiApiKey).toBe('sk-...bKey');
+      expect(result.openaiApiKey).toBe('sk-...-key');
     });
   });
 
