@@ -5,7 +5,9 @@
   import { resolve } from '$app/paths';
   import { onMount } from 'svelte';
   import { projects, type Project } from '$lib/stores/projects';
+  import { variants, type VariantListItem } from '$lib/stores/variants';
   import { api } from '$lib/api/client.js';
+  import VariantList from '$lib/components/variants/VariantList.svelte';
   import { Button } from '$lib/components/ui/button/index.js';
   import { Badge } from '$lib/components/ui/badge/index.js';
   import * as Card from '$lib/components/ui/card/index.js';
@@ -16,6 +18,10 @@
   let isLoading = $state(true);
   let selectedTheme = $state('auto');
   let themes = $state<Array<{ name: string; description: string; category: string }>>([]);
+  let projectVariants = $state<VariantListItem[]>([]);
+  let variantsLoading = $state(false);
+  let activeVariantId = $state<string | null>(null);
+
   let themeLabel = $derived(
     selectedTheme === 'auto'
       ? 'AI Auto-Select'
@@ -25,8 +31,10 @@
   onMount(async () => {
     try {
       project = await projects.fetchOne($page.params.id!);
+      activeVariantId = (project as any).activeVariantId || null;
       const themeList = await api.get<any[]>('/generation/themes');
       themes = themeList;
+      await loadVariants();
     } catch (_e) {
       // eslint-disable-next-line no-console
       console.error('Failed to load:', _e);
@@ -35,13 +43,45 @@
     }
   });
 
+  async function loadVariants() {
+    if (!project) return;
+    variantsLoading = true;
+    projectVariants = await variants.fetchForProject(project.id);
+    variantsLoading = false;
+  }
+
   async function handleGenerate() {
     if (!project) return;
     try {
       await projects.generate(project.id, selectedTheme);
       project = await projects.fetchOne(project.id);
+      activeVariantId = (project as any).activeVariantId || null;
+      await loadVariants();
     } catch {
       alert('Failed to start generation');
+    }
+  }
+
+  async function handleActivate(variantId: string) {
+    try {
+      await variants.activate(variantId);
+      activeVariantId = variantId;
+      projectVariants = projectVariants.map((v) => ({
+        ...v,
+        status: v.id === variantId ? 'PUBLISHED' : (v.status === 'PUBLISHED' ? 'GENERATED' : v.status),
+      }));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed to activate variant');
+    }
+  }
+
+  async function handleDelete(variantId: string) {
+    if (!project) return;
+    try {
+      await variants.remove(variantId, project.id);
+      projectVariants = projectVariants.filter((v) => v.id !== variantId);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed to delete variant');
     }
   }
 
@@ -77,7 +117,7 @@
       </div>
       <div class="flex items-center gap-3">
         <Badge variant={getStatusVariant(project.status)}>{project.status}</Badge>
-        {#if project.status === 'DRAFT'}
+        {#if project.status === 'DRAFT' || project.status === 'PUBLISHED' || project.status === 'GENERATED'}
           <div class="flex items-center gap-2">
             <Select.Root type="single" bind:value={selectedTheme}>
               <Select.Trigger class="w-48">{themeLabel}</Select.Trigger>
@@ -100,7 +140,18 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Variants Section -->
+    <section>
+      <VariantList
+        variants={projectVariants}
+        {activeVariantId}
+        onActivate={handleActivate}
+        onDelete={handleDelete}
+        isLoading={variantsLoading}
+      />
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
       <Card.Root>
         <Card.Header>
           <Card.Title>Site Information</Card.Title>
@@ -110,6 +161,7 @@
             <div class="flex justify-between"><dt class="text-muted-foreground">Domain</dt><dd>{project.slug}.sitenow.pp.ua</dd></div>
             <div class="flex justify-between"><dt class="text-muted-foreground">Status</dt><dd>{project.status}</dd></div>
             <div class="flex justify-between"><dt class="text-muted-foreground">Theme</dt><dd>{project.hugoConfig?.theme || 'hugo-theme-zen'}</dd></div>
+            <div class="flex justify-between"><dt class="text-muted-foreground">Active Variant</dt><dd>{activeVariantId ? activeVariantId.slice(0, 8) + '...' : 'None'}</dd></div>
             <div class="flex justify-between"><dt class="text-muted-foreground">Created</dt><dd>{new Date(project.createdAt).toLocaleString()}</dd></div>
             {#if project.publishedAt}
               <div class="flex justify-between"><dt class="text-muted-foreground">Published</dt><dd>{new Date(project.publishedAt).toLocaleString()}</dd></div>
