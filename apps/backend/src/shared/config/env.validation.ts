@@ -27,10 +27,13 @@ const envSchema = z.object({
   MIMO_API_KEY: z.string().optional(),
   MIMO_BASE_URL: z.string().optional(),
   MIMO_MODEL: z.string().optional(),
-  LLM_PROVIDER: z.enum(['anthropic', 'openai', 'deepseek', 'mimo']).default('openai'),
+  GOOGLE_API_KEY: z.string().optional(),
+  BFL_API_KEY: z.string().optional(),
+  ENCRYPTION_KEY: z.string().optional(),
+  LLM_PROVIDER: z.enum(['openai', 'anthropic', 'deepseek', 'mimo', 'google']).default('openai'),
 
   // Image Generation
-  IMAGE_PROVIDER: z.enum(['dall-e-3']).default('dall-e-3'),
+  IMAGE_PROVIDER: z.enum(['dall-e-3', 'openai', 'google', 'bfl']).default('dall-e-3'),
   DALL_E_MODEL: z.string().default('dall-e-3'),
 
   // Scraper
