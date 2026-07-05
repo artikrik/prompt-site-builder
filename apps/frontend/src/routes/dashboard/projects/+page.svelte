@@ -65,7 +65,7 @@
                     <Button variant="ghost" size="sm" onclick={() => handleGenerate(project.id)}>Generate</Button>
                   {/if}
                   {#if project.status === 'PUBLISHED' && project.publishedUrl}
-                    <Button variant="ghost" size="sm" onclick={() => window.open(project.publishedUrl, '_blank')}>
+                    <Button variant="ghost" size="sm" onclick={() => window.open(project.publishedUrl!, '_blank')}>
                       <ExternalLink class="size-4 mr-1" />
                       View Site
                     </Button>

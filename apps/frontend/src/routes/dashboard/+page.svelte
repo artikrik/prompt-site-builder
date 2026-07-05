@@ -1,6 +1,5 @@
 /* global console, window, alert, document */
 <script lang="ts">
-  import { resolve } from '$app/paths';
   import { onMount } from 'svelte';
   import { leads } from '$lib/stores/leads';
   import { projects } from '$lib/stores/projects';
@@ -95,7 +94,8 @@
                   {project.status}
                 </Badge>
                 {#if project.publishedUrl}
-                  <a href={resolve(project.publishedUrl)} target="_blank" rel="noopener noreferrer" class="text-sm text-primary underline">View Site</a>
+                  <!-- eslint-disable-next-line svelte/no-navigation-without-resolve -->
+                  <a href={project.publishedUrl ?? '#'} target="_blank" rel="noopener noreferrer" class="text-sm text-primary underline">View Site</a>
                 {/if}
               </div>
             </div>

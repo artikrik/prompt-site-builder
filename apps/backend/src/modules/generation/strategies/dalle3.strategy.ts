@@ -24,7 +24,11 @@ export class DallE3Strategy implements IImageGenerationStrategy {
       response_format: 'url',
     });
 
-    const image = response.data[0];
+    const data = response.data as { url: string; revised_prompt?: string }[] | undefined;
+    const image = data?.[0];
+    if (!image) {
+      throw new Error('DALL-E returned no image data');
+    }
 
     return {
       url: image.url || '',

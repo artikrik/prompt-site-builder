@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 # Install Hugo
 ARG HUGO_VERSION=0.139.0
@@ -13,7 +13,7 @@ RUN apk add --no-cache wget && \
 WORKDIR /app
 
 # Copy root package files
-COPY package.json turbo.json tsconfig.base.json ./
+COPY package.json package-lock.json turbo.json tsconfig.base.json ./
 COPY apps/backend/package.json ./apps/backend/
 COPY packages/shared/package.json ./packages/shared/
 
@@ -34,7 +34,7 @@ RUN cd packages/shared && npm run build
 RUN cd apps/backend && npm run build
 
 # Stage 2: Production
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 
 # Install Hugo and curl for healthcheck
 ARG HUGO_VERSION=0.139.0
@@ -49,7 +49,7 @@ WORKDIR /app
 
 # Copy built artifacts
 COPY --from=builder /app/apps/backend/dist ./dist
-COPY --from=builder /app/apps/backend/node_modules ./node_modules
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/backend/package.json ./
 COPY --from=builder /app/apps/backend/prisma ./prisma
 COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
@@ -63,4 +63,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:3000/health || exit 1
 
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/src/main.js"]

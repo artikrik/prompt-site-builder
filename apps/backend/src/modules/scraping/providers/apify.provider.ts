@@ -53,7 +53,7 @@ export class ApifyProvider {
         throw new Error(`Apify API error: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data = await response.json() as any[];
       return this.mapApifyResults(data);
     } catch (error) {
       this.logger.error(`Apify scraping failed: ${error}`);

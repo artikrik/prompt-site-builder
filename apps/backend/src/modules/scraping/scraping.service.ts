@@ -83,7 +83,7 @@ export class ScrapingService {
 
     await this.leadsService.update(leadId, {
       scrapedData: {
-        ...(lead as any).scrapedData,
+        ...((lead as any).scrapedData as Record<string, unknown>),
         instagram: {
           username: profile.username,
           fullName: profile.fullName,
