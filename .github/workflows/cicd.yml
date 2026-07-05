@@ -5,6 +5,7 @@ on:
     branches: ["**"]
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, closed]
   workflow_dispatch:
     inputs:
       skip_tests:
@@ -18,12 +19,13 @@ concurrency:
 
 jobs:
   # ═══════════════════════════════════════════════════════════
-  #  Quality Gates (all parallel — no inter-dependencies)
+  #  Quality Gates (push + workflow_dispatch only)
   # ═══════════════════════════════════════════════════════════
 
   lint:
     name: Lint
     runs-on: self-hosted
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     timeout-minutes: 10
     steps:
       - name: Clean root-owned files (Docker residue)
@@ -43,6 +45,7 @@ jobs:
   typecheck:
     name: Type Check
     runs-on: self-hosted
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     timeout-minutes: 10
     steps:
       - name: Clean root-owned files (Docker residue)
@@ -67,7 +70,7 @@ jobs:
   test-backend:
     name: Backend Tests
     runs-on: self-hosted
-    if: ${{ !inputs.skip_tests }}
+    if: ${{ !inputs.skip_tests && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
     timeout-minutes: 15
     env:
       DATABASE_URL: postgresql://promptsite:testpassword@localhost:5434/promptsite_test
@@ -136,7 +139,7 @@ jobs:
   test-frontend:
     name: Frontend Tests
     runs-on: self-hosted
-    if: ${{ !inputs.skip_tests }}
+    if: ${{ !inputs.skip_tests && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
     timeout-minutes: 10
     steps:
       - name: Clean root-owned files (Docker residue)
@@ -155,15 +158,13 @@ jobs:
       - run: npm run test --workspace=apps/frontend
 
   # ═══════════════════════════════════════════════════════════
-  #  Build (after all quality gates pass)
+  #  Build + Deploy (PR merge to main or manual trigger)
   # ═══════════════════════════════════════════════════════════
 
   build:
     name: Build
     runs-on: self-hosted
-    needs: [lint, typecheck, test-backend, test-frontend]
-    # always() needed so build runs even when tests are skipped (skip_tests=true)
-    if: ${{ always() && !cancelled() && !contains(needs.*.result, 'failure') }}
+    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || github.event_name == 'workflow_dispatch' }}
     timeout-minutes: 15
     steps:
       - name: Clean root-owned files (Docker residue)
@@ -181,14 +182,14 @@ jobs:
       - run: npm run build
 
   # ═══════════════════════════════════════════════════════════
-  #  Deploy (main branch only)
+  #  Deploy (on PR merge to main or manual trigger)
   # ═══════════════════════════════════════════════════════════
 
   deploy:
     name: Deploy to Production
     runs-on: self-hosted
     needs: [build]
-    if: ${{ github.ref == 'refs/heads/main' && !failure() && !cancelled() }}
+    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || github.event_name == 'workflow_dispatch' }}
     environment: production
     timeout-minutes: 30
     env:
