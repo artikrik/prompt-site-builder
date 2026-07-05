@@ -18,10 +18,10 @@
   });
 
   const navItems = [
-    { href: '/dashboard', label: 'Overview', icon: Home },
-    { href: '/dashboard/leads', label: 'Leads', icon: Users },
-    { href: '/dashboard/projects', label: 'Projects', icon: FolderOpen },
-    { href: '/dashboard/settings', label: 'Settings', icon: Settings },
+    { href: '/dashboard' as const, label: 'Overview', icon: Home },
+    { href: '/dashboard/leads' as const, label: 'Leads', icon: Users },
+    { href: '/dashboard/projects' as const, label: 'Projects', icon: FolderOpen },
+    { href: '/dashboard/settings' as const, label: 'Settings', icon: Settings },
   ];
 
   function isActive(href: string, pathname: string) {

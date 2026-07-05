@@ -1,5 +1,18 @@
 # prompt-site-builder
 
+## Caveman Mode — MANDATORY
+
+**Завжди використовуй Caveman плагін для всієї комунікації.**
+Усі відповіді, коментарі, пояснення — тільки через caveman-стиль:
+- Без артиклів (a/an/the)
+- Без філерів (just/really/basically/actually)
+- Без приємностей (sure/certainly/of course)
+- Фрагменти дозволені
+- Код, коміти, PR-описи — без змін, пишуться нормально
+- Технічні терміни точні
+
+Режим: **full** (lite|full|ultra). Вимкнути: "stop caveman" / "normal mode".
+
 ## RTK (Rust Token Killer) — MANDATORY
 
 **Кожна shell команда — ТІЛЬКИ через `rtk`.** Bash і PowerShell перехоплюються PreToolUse хуком автоматично. Жодних прямих викликів.
@@ -120,6 +133,21 @@ node scripts/test-pipeline.js  # Simulate lead → pull theme → generate → h
 Must produce successful build in `/client-sites/<slug>/public/`.
 
 ## Testing
+
+### CI Pipeline — Run Locally Before Push (MANDATORY)
+**Кожен пуш має пройти ті самі кроки, що й GitHub Actions CI/CD.** Перед `git push` завжди запускай:
+
+```bash
+npm run lint             # 1. ESLint — 0 errors required (CI: lint job)
+npm run typecheck        # 2. tsc + svelte-check — 0 errors required (CI: typecheck job)
+npm run test             # 3. vitest (backend 112 tests, frontend 17 tests) (CI: test-backend + test-frontend)
+npm run build            # 4. Production build — exit 0 required (CI: build job)
+```
+
+**Кроки ідентичні CI/CD пайплайну в `.github/workflows/cicd.yml`.**
+Якщо будь-який крок падає — спочатку виправ, потім пуш.
+Також можна запустити одним скриптом: `bash scripts/ci-local.sh`
+
 - Unit/Integration: `vitest` (backend + frontend)
 - E2E: `playwright test` (frontend)
 - E2E backend: `vitest run --config vitest.e2e.config.ts`

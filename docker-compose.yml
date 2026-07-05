@@ -87,7 +87,7 @@ services:
     container_name: prompt-site-frontend
     restart: unless-stopped
     environment:
-      PUBLIC_API_URL: http://backend:3000
+      PUBLIC_API_URL: https://api.sitenow.pp.ua
     ports:
       - "${FRONTEND_PORT:-5173}:5173"
     depends_on:

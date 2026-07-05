@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -24,21 +24,30 @@ COPY packages/shared/src ./packages/shared/src
 # Build shared package
 RUN cd packages/shared && npm run build
 
-# Build frontend
+# Build frontend (adapter-auto → adapter-node → output at build/)
+# PUBLIC_API_URL must be set at BUILD time (Vite replaces import.meta.env)
+ENV PUBLIC_API_URL=https://api.sitenow.pp.ua
 RUN cd apps/frontend && npm run build
 
 # Stage 2: Production
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
+
+# Install curl for healthcheck
+RUN apk add --no-cache curl
 
 WORKDIR /app
 
-COPY --from=builder /app/apps/frontend/.svelte-kit/output ./build
+# Copy adapter-node output (build/ directory with index.js)
+COPY --from=builder /app/apps/frontend/build ./build
 COPY --from=builder /app/apps/frontend/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 5173
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:5173/ || exit 1
+ENV HOST=0.0.0.0
+ENV PORT=5173
 
-CMD ["npm", "run", "preview", "--", "--port", "5173", "--host"]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl --max-time 5 http://localhost:5173/ || exit 1
+
+CMD ["node", "build/index.js"]
