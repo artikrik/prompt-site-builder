@@ -27,6 +27,7 @@ Move API key management and model selection from `.env`-only to DB-backed WebUI 
 - Runtime hot-reload of API keys for already-initialized strategy instances
 - Multi-tenant settings
 - Model fine-tuning or custom prompts per model
+- **Site versioning** — full history, browse, compare, rollback. Separate PR (see Follow-up)
 
 ---
 
@@ -441,3 +442,15 @@ No automatic migration. On first deployment:
 6. Frontend: generation override modal
 7. `.env.example` update
 8. CI check (`lint`, `typecheck`, `test`, `build`)
+
+---
+
+## Follow-up: Site Versioning (next PR)
+
+Після цього PR — система версіонування згенерованих сайтів:
+
+- `SiteVersion` модель: leadId, version, model, imageModel, services (JSON), content snapshot, hugo config snapshot, createdAt
+- Зберігання Hugo-контенту + `hugo.toml` для кожної версії на диску (`/client-sites/{slug}/versions/{v}/`)
+- UI: список версій на сторінці ліда, перегляд вмісту, порівняння diff, відкіт до попередньої
+- Regeneration кнопка — створює нову версію, не перезаписує
+- Поточна активна версія — та, що в `/public/`
