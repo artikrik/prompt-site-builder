@@ -2,9 +2,9 @@ name: CI/CD
 
 on:
   push:
-    branches: [master]
+    branches-ignore: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
     types: [opened, synchronize, reopened, closed]
   workflow_dispatch:
     inputs:
@@ -12,9 +12,13 @@ on:
         description: 'Skip tests (emergency deploy only)'
         type: boolean
         default: false
+      deploy:
+        description: 'Deploy to production after build'
+        type: boolean
+        default: false
 
 concurrency:
-  group: cicd-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -29,8 +33,6 @@ jobs:
     # Skip only: PR closed without merge
     if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
     timeout-minutes: 10
-    env:
-      TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
     steps:
       - name: Clean root-owned files (Docker residue)
         run: |
@@ -52,8 +54,6 @@ jobs:
     # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
     if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
     timeout-minutes: 10
-    env:
-      TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
     steps:
       - name: Clean root-owned files (Docker residue)
         run: |
@@ -82,7 +82,6 @@ jobs:
     if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
     timeout-minutes: 15
     env:
-      TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
       DATABASE_URL: postgresql://promptsite:testpassword@localhost:5434/promptsite_test
       REDIS_HOST: localhost
       REDIS_PORT: 6381
@@ -159,8 +158,6 @@ jobs:
     # skip_tests only skips test execution, NOT the job itself (needs chain requires job to run)
     if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
     timeout-minutes: 10
-    env:
-      TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
     steps:
       - name: Clean root-owned files (Docker residue)
         run: |
@@ -192,7 +189,7 @@ jobs:
     runs-on: self-hosted
     # Build only runs if ALL quality gates pass — failing test cancels workflow
     needs: [lint, typecheck, test-backend, test-frontend]
-    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch' }}
+    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || (github.event_name == 'workflow_dispatch' && inputs.deploy) }}
     timeout-minutes: 15
     steps:
       - name: Clean root-owned files (Docker residue)
@@ -217,7 +214,7 @@ jobs:
     name: Deploy to Production
     runs-on: self-hosted
     needs: [build]
-    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch' }}
+    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || github.event_name == 'workflow_dispatch' }}
     environment: production
     timeout-minutes: 30
     env:
