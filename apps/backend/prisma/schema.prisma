@@ -83,6 +83,16 @@ model Lead {
   status       LeadStatus @default(NEW)
   tags         String[]
   scrapedData  Json       @default("{}")
+
+  // Payment & Booking — per-lead config with individual API keys
+  easyweekEnabled   Boolean  @default(false)
+  easyweekApiKey    String?
+  wayforpayEnabled  Boolean  @default(false)
+  wayforpayMerchant String?
+  wayforpaySecret   String?
+  monobankEnabled   Boolean  @default(false)
+  monobankApiKey    String?
+
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
