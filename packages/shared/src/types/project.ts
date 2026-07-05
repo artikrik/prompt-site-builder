@@ -44,6 +44,8 @@ export interface SiteGenerationRequest {
   email: string | null;
   socialUrl: string | null;
   theme?: string;
+  model?: string;
+  imageModel?: string;
 }
 
 export interface GeneratedSiteStructure {

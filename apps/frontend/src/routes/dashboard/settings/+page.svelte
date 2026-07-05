@@ -1,131 +1,167 @@
 <script lang="ts">
-  /* global console */
   import { onMount } from 'svelte';
-  import { Button } from '$lib/components/ui/button/index.js';
-  import { Input } from '$lib/components/ui/input/index.js';
-  import { Label } from '$lib/components/ui/label/index.js';
-  import * as Card from '$lib/components/ui/card/index.js';
-  import * as Select from '$lib/components/ui/select/index.js';
   import { api } from '$lib/api/client.js';
+  import ApiKeyInput from '$lib/components/settings/ApiKeyInput.svelte';
+  import ModelSelector from '$lib/components/settings/ModelSelector.svelte';
+  import type { AppSettings, ContentModel, ImageModel } from '@prompt-site-builder/shared';
 
-  let settings = $state({
-    llmProvider: 'openai',
-    defaultTheme: 'hugo-theme-zen',
-    baseDomain: 'sitenow.pp.ua',
-    hugoSitesPath: '/var/www/client-sites',
-    widgets: {
-      easyweekEnabled: false,
-      wayforpayEnabled: false,
-      monobankEnabled: false,
-    },
-  });
-
+  let settings = $state<AppSettings | null>(null);
+  let contentModels = $state<ContentModel[]>([]);
+  let imageModels = $state<ImageModel[]>([]);
+  let saveStatus = $state<'idle' | 'saving' | 'saved'>('idle');
   let loading = $state(true);
-  let saving = $state(false);
-  let message = $state('');
-
-  const providerOptions = [
-    { value: 'anthropic', label: 'Anthropic Claude' },
-    { value: 'openai', label: 'OpenAI GPT-4o' },
-    { value: 'deepseek', label: 'DeepSeek' },
-    { value: 'mimo', label: 'Mimo AI' },
-  ];
-
-  let providerLabel = $derived(providerOptions.find((o) => o.value === settings.llmProvider)?.label ?? 'OpenAI GPT-4o');
 
   onMount(async () => {
-    try {
-      const data = await api.get<any>('/settings');
-      settings = { ...settings, ...data };
-    } catch (_e) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to load settings:', _e);
-    } finally {
-      loading = false;
-    }
+    settings = await api.get<AppSettings>('/settings');
+    // Fetch models from API instead of importing CJS module (Rollup compat)
+    const modelData = await api.get<{ content: ContentModel[]; image: ImageModel[] }>('/settings/models');
+    contentModels = modelData.content;
+    imageModels = modelData.image;
+    loading = false;
   });
 
-  async function handleSave() {
-    saving = true;
-    message = '';
-    try {
-      await api.put('/settings', settings);
-      message = 'Settings saved successfully';
-    } catch {
-      message = 'Failed to save settings';
-    } finally {
-      saving = false;
+  async function saveSettings() {
+    if (!settings) return;
+    saveStatus = 'saving';
+    await api.put('/settings', {
+      llmProvider: settings.llmProvider,
+      llmModel: settings.llmModel,
+      imageProvider: settings.imageProvider,
+      imageModel: settings.imageModel,
+    });
+    saveStatus = 'saved';
+    // Status stays 'saved' until next action
+  }
+
+  async function saveApiKey(key: string, value: string) {
+    if (!settings) return;
+    await api.put('/settings', { [key]: value });
+  }
+
+  function handleProviderChange(provider: string) {
+    if (!settings) return;
+    settings.llmProvider = provider as AppSettings['llmProvider'];
+    const providerModels = contentModels.filter((m) => m.provider === provider);
+    if (providerModels.length > 0) {
+      settings.llmModel = providerModels[0].id;
+    }
+  }
+
+  function handleImageProviderChange(provider: string) {
+    if (!settings) return;
+    settings.imageProvider = provider as AppSettings['imageProvider'];
+    const providerModels = imageModels.filter((m) => m.provider === provider);
+    if (providerModels.length > 0) {
+      settings.imageModel = providerModels[0].id;
     }
   }
 </script>
 
 <svelte:head><title>Settings - Prompt Site Builder</title></svelte:head>
 
-<div class="space-y-6">
-  <h1 class="text-2xl font-bold tracking-tight">Settings</h1>
+<div class="space-y-8 p-6">
+  <h1 class="text-2xl font-bold">Settings</h1>
 
   {#if loading}
     <p class="text-muted-foreground">Loading settings...</p>
-  {:else}
-    <Card.Root>
-      <Card.Header>
-        <Card.Title>AI Configuration</Card.Title>
-        <Card.Description>Configure LLM provider and theme defaults.</Card.Description>
-      </Card.Header>
-      <Card.Content class="space-y-4">
-        <div class="space-y-2">
-          <Label for="llm-provider">LLM Provider</Label>
-          <Select.Root type="single" bind:value={settings.llmProvider}>
-            <Select.Trigger class="w-full">{providerLabel}</Select.Trigger>
-            <Select.Content>
-              {#each providerOptions as option (option.value)}
-                <Select.Item value={option.value}>{option.label}</Select.Item>
-              {/each}
-            </Select.Content>
-          </Select.Root>
-        </div>
-        <div class="space-y-2">
-          <Label for="domain">Base Domain</Label>
-          <Input id="domain" bind:value={settings.baseDomain} placeholder="sitenow.pp.ua" />
-          <p class="text-sm text-muted-foreground">Client sites: [slug].{settings.baseDomain}</p>
-        </div>
-      </Card.Content>
-    </Card.Root>
+  {:else if settings}
+    <!-- Section 1: API Keys -->
+    <section class="space-y-4">
+      <h2 class="text-lg font-semibold">API Keys</h2>
+      <div class="grid gap-4 md:grid-cols-2">
+        <ApiKeyInput
+          label="OpenAI API Key"
+          placeholder="sk-..."
+          value=""
+          maskedPreview={settings.openaiApiKey ?? ''}
+          onChange={(v: string) => saveApiKey('openaiApiKey', v)}
+        />
+        <ApiKeyInput
+          label="Anthropic API Key"
+          placeholder="sk-ant-..."
+          value=""
+          maskedPreview={settings.anthropicApiKey ?? ''}
+          onChange={(v: string) => saveApiKey('anthropicApiKey', v)}
+        />
+        <ApiKeyInput
+          label="Google API Key"
+          placeholder="AIza..."
+          value=""
+          maskedPreview={settings.googleApiKey ?? ''}
+          onChange={(v: string) => saveApiKey('googleApiKey', v)}
+        />
+        <ApiKeyInput
+          label="DeepSeek API Key"
+          placeholder="sk-..."
+          value=""
+          maskedPreview={settings.deepseekApiKey ?? ''}
+          onChange={(v: string) => saveApiKey('deepseekApiKey', v)}
+        />
+        <ApiKeyInput
+          label="MiMo API Key"
+          placeholder="..."
+          value=""
+          maskedPreview={settings.mimoApiKey ?? ''}
+          onChange={(v: string) => saveApiKey('mimoApiKey', v)}
+        />
+        <ApiKeyInput
+          label="BFL API Key"
+          placeholder="..."
+          value=""
+          maskedPreview={settings.bflApiKey ?? ''}
+          onChange={(v: string) => saveApiKey('bflApiKey', v)}
+        />
+      </div>
+    </section>
 
-    <Card.Root>
-      <Card.Header>
-        <Card.Title>Widget Integrations</Card.Title>
-        <Card.Description>Status of external service integrations.</Card.Description>
-      </Card.Header>
-      <Card.Content class="space-y-3">
-        <div class="flex items-center justify-between">
-          <span>EasyWeek Booking</span>
-          <span class={settings.widgets.easyweekEnabled ? 'text-green-600' : 'text-red-500'}>
-            {settings.widgets.easyweekEnabled ? 'Connected' : 'Not configured'}
-          </span>
-        </div>
-        <div class="flex items-center justify-between">
-          <span>WayForPay Payments</span>
-          <span class={settings.widgets.wayforpayEnabled ? 'text-green-600' : 'text-red-500'}>
-            {settings.widgets.wayforpayEnabled ? 'Connected' : 'Not configured'}
-          </span>
-        </div>
-        <div class="flex items-center justify-between">
-          <span>Monobank Payments</span>
-          <span class={settings.widgets.monobankEnabled ? 'text-green-600' : 'text-red-500'}>
-            {settings.widgets.monobankEnabled ? 'Connected' : 'Not configured'}
-          </span>
-        </div>
-      </Card.Content>
-    </Card.Root>
+    <!-- Section 2: Model Defaults -->
+    <section class="space-y-4">
+      <h2 class="text-lg font-semibold">Model Defaults</h2>
+      <div class="grid gap-6 md:grid-cols-2">
+        <ModelSelector
+          type="content"
+          provider={settings.llmProvider}
+          model={settings.llmModel}
+          models={contentModels}
+          onProviderChange={handleProviderChange}
+          onModelChange={(m: string) => { if (settings) settings.llmModel = m; }}
+        />
+        <ModelSelector
+          type="image"
+          provider={settings.imageProvider}
+          model={settings.imageModel}
+          models={imageModels}
+          onProviderChange={handleImageProviderChange}
+          onModelChange={(m: string) => { if (settings) settings.imageModel = m; }}
+        />
+      </div>
+    </section>
 
-    <div class="flex items-center justify-between">
-      {#if message}
-        <p class="text-sm text-green-600">{message}</p>
-      {/if}
-      <Button onclick={handleSave} disabled={saving} class="ml-auto">
-        {saving ? 'Saving...' : 'Save Settings'}
-      </Button>
-    </div>
+    <!-- Section 3: Integrations Status -->
+    <section class="space-y-4">
+      <h2 class="text-lg font-semibold">Integrations Status</h2>
+      <div class="grid gap-4 md:grid-cols-3">
+        <div class="rounded-lg border p-4">
+          <h3 class="font-medium">EasyWeek</h3>
+          <p class="text-sm text-muted-foreground">Per-lead configuration</p>
+        </div>
+        <div class="rounded-lg border p-4">
+          <h3 class="font-medium">WayForPay</h3>
+          <p class="text-sm text-muted-foreground">Per-lead configuration</p>
+        </div>
+        <div class="rounded-lg border p-4">
+          <h3 class="font-medium">Monobank</h3>
+          <p class="text-sm text-muted-foreground">Per-lead configuration</p>
+        </div>
+      </div>
+    </section>
+
+    <button
+      onclick={saveSettings}
+      disabled={saveStatus === 'saving'}
+      class="rounded-md bg-primary px-6 py-2 text-white"
+    >
+      {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved!' : 'Save Settings'}
+    </button>
   {/if}
 </div>

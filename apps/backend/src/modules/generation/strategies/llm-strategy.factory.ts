@@ -5,6 +5,7 @@ import { AnthropicStrategy } from './anthropic.strategy';
 import { OpenAIStrategy } from './openai.strategy';
 import { DeepseekStrategy } from './deepseek.strategy';
 import { MimoStrategy } from './mimo.strategy';
+import { GeminiStrategy } from './gemini.strategy';
 
 @Injectable()
 export class LLMStrategyFactory {
@@ -16,6 +17,7 @@ export class LLMStrategyFactory {
     private readonly openaiStrategy: OpenAIStrategy,
     private readonly deepseekStrategy: DeepseekStrategy,
     private readonly mimoStrategy: MimoStrategy,
+    private readonly geminiStrategy: GeminiStrategy,
   ) {}
 
   create(): ILLMStrategy {
@@ -31,6 +33,8 @@ export class LLMStrategyFactory {
         return this.deepseekStrategy;
       case 'mimo':
         return this.mimoStrategy;
+      case 'google':
+        return this.geminiStrategy;
       default:
         this.logger.warn(`Unknown provider "${provider}", falling back to anthropic`);
         return this.anthropicStrategy;

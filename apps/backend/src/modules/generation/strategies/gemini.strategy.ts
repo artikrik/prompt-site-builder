@@ -1,27 +1,40 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { SettingsService } from '../../settings/settings.service';
 import OpenAI from 'openai';
-import { ILLMStrategy, LLMGenerateOptions, LLMResponse, BusinessData, HugoGeneratedContent } from './llm-strategy.interface';
+import { SettingsService } from '../../settings/settings.service';
+import {
+  ILLMStrategy,
+  LLMGenerateOptions,
+  LLMResponse,
+  BusinessData,
+  HugoGeneratedContent,
+} from './llm-strategy.interface';
 
 @Injectable()
-export class OpenAIStrategy implements ILLMStrategy {
-  private readonly logger = new Logger(OpenAIStrategy.name);
+export class GeminiStrategy implements ILLMStrategy {
+  private readonly logger = new Logger(GeminiStrategy.name);
 
   constructor(private readonly settingsService: SettingsService) {}
 
   private async getClient(): Promise<OpenAI> {
-    const apiKey = await this.settingsService.getApiKey('openai');
-    if (!apiKey) throw new Error('OpenAI API key not configured');
-    return new OpenAI({ apiKey });
+    const apiKey = await this.settingsService.getApiKey('google');
+    if (!apiKey) throw new Error('Google API key not configured');
+    return new OpenAI({
+      apiKey,
+      baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+    });
   }
 
   private async getModel(): Promise<string> {
-    return this.settingsService.getEffectiveModel('openai', 'content');
+    return this.settingsService.getEffectiveModel('google', 'content');
   }
 
-  async generateContent(prompt: string, options?: LLMGenerateOptions): Promise<LLMResponse> {
+  async generateContent(
+    prompt: string,
+    options?: LLMGenerateOptions,
+  ): Promise<LLMResponse> {
     const client = await this.getClient();
     const model = options?.model || (await this.getModel());
+
     const response = await client.chat.completions.create({
       model,
       max_tokens: options?.maxTokens || 4096,
@@ -34,11 +47,15 @@ export class OpenAIStrategy implements ILLMStrategy {
     return {
       content,
       model: response.model,
-      tokensUsed: (response.usage?.prompt_tokens || 0) + (response.usage?.completion_tokens || 0),
+      tokensUsed:
+        (response.usage?.prompt_tokens || 0) +
+        (response.usage?.completion_tokens || 0),
     };
   }
 
-  async generateHugoStructure(businessData: BusinessData): Promise<HugoGeneratedContent> {
+  async generateHugoStructure(
+    businessData: BusinessData,
+  ): Promise<HugoGeneratedContent> {
     const prompt = this.buildHugoPrompt(businessData);
     const response = await this.generateContent(prompt, { maxTokens: 8192 });
 
@@ -50,9 +67,12 @@ export class OpenAIStrategy implements ILLMStrategy {
         aboutMd: parsed.aboutMd || '',
         servicesMd: parsed.servicesMd || '',
         contactMd: parsed.contactMd || '',
-        heroImagePrompt: parsed.heroImagePrompt || `Professional ${businessData.category || 'business'} services`,
+        heroImagePrompt:
+          parsed.heroImagePrompt ||
+          `Professional ${businessData.category || 'business'} services`,
         seoTitle: parsed.seoTitle || businessData.businessName,
-        seoDescription: parsed.seoDescription || businessData.description || '',
+        seoDescription:
+          parsed.seoDescription || businessData.description || '',
       };
     } catch {
       return this.generateDefaultStructure(businessData);
@@ -107,7 +127,9 @@ theme = "${data.theme || 'hugo-theme-zen'}"
       unsafe = true`;
   }
 
-  private generateDefaultStructure(data: BusinessData): HugoGeneratedContent {
+  private generateDefaultStructure(
+    data: BusinessData,
+  ): HugoGeneratedContent {
     return {
       hugoToml: this.getDefaultHugoToml(data),
       indexMd: `---
@@ -145,7 +167,9 @@ title: "Contact"
 **Address:** ${data.address || 'Ukraine'}`,
       heroImagePrompt: `Professional ${data.category || 'business'} services`,
       seoTitle: `${data.businessName} | ${data.category || 'Services'}`,
-      seoDescription: data.description || `${data.businessName} - professional services`,
+      seoDescription:
+        data.description ||
+        `${data.businessName} - professional services`,
     };
   }
 }

@@ -6,6 +6,8 @@ import { DallE3Strategy } from './strategies/dalle3.strategy';
 import { HugoCompilerService } from './hugo/hugo-compiler.service';
 import { HugoValidatorService } from './hugo/hugo-validator.service';
 import { SitePublisherService } from '../publishing/site-publisher.service';
+import { SettingsService } from '../settings/settings.service';
+import { LeadsService } from '../leads/leads.service';
 import { SiteGenerationRequest, GeneratedSiteStructure, ProjectStatus, JobStatus } from '@prompt-site-builder/shared';
 
 @Injectable()
@@ -20,11 +22,31 @@ export class GenerationService {
     private readonly hugoCompiler: HugoCompilerService,
     private readonly hugoValidator: HugoValidatorService,
     private readonly publisher: SitePublisherService,
+    private readonly settingsService: SettingsService,
+    private readonly leadsService: LeadsService,
   ) {}
 
   async generateSite(request: SiteGenerationRequest): Promise<void> {
     const { projectId } = request;
     this.logger.log(`Starting site generation for project ${projectId}`);
+
+    // Resolve LLM provider and model from settings (with optional request override)
+    const llmProvider = (await this.settingsService.get('llm_provider')).value || 'openai';
+    const llmModel = request.model || (await this.settingsService.getEffectiveModel(llmProvider, 'content'));
+    this.logger.log(`LLM: provider=${llmProvider}, model=${llmModel}`);
+
+    // Resolve image provider and model from settings (with optional request override)
+    const imageProvider = (await this.settingsService.get('image_provider')).value || 'openai';
+    const imageModel = request.imageModel || (await this.settingsService.getEffectiveModel(imageProvider, 'image'));
+    this.logger.log(`Image: provider=${imageProvider}, model=${imageModel}`);
+
+    // Fetch lead for payment service config
+    const lead = await this.leadsService.findOne(request.leadId);
+    const paymentConfig = {
+      easyweekEnabled: lead.easyweekEnabled,
+      wayforpayEnabled: lead.wayforpayEnabled,
+      monobankEnabled: lead.monobankEnabled,
+    };
 
     const job = await this.prisma.generationJob.create({
       data: {
@@ -61,6 +83,9 @@ export class GenerationService {
         this.logger.warn(`LLM failed, using default template: ${llmError}`);
         hugoContent = this.getDefaultHugoContent(request);
       }
+
+      // Inject lead payment config into Hugo params
+      hugoContent.hugoToml = this.injectPaymentParams(hugoContent.hugoToml, paymentConfig);
 
       // 2. Build site structure
       const structure = this.buildSiteStructure(request, hugoContent);
@@ -259,6 +284,24 @@ title: "Контакти"
       seoTitle: `${name} | ${cat}`,
       seoDescription: desc,
     };
+  }
+
+  private injectPaymentParams(
+    hugoToml: string,
+    paymentConfig: { easyweekEnabled: boolean; wayforpayEnabled: boolean; monobankEnabled: boolean },
+  ): string {
+    const paramsBlock = [
+      '  easyweekEnabled = true',
+      '  wayforpayEnabled = true',
+      '  monobankEnabled = true',
+    ].filter((_, i) => [paymentConfig.easyweekEnabled, paymentConfig.wayforpayEnabled, paymentConfig.monobankEnabled][i]);
+    if (paramsBlock.length === 0) return hugoToml;
+    const insert = `\n[params.payment]\n${paramsBlock.join('\n')}`;
+    // Append before [markup] block or at end of [params] section
+    if (hugoToml.includes('[markup]')) {
+      return hugoToml.replace('[markup]', `${insert}\n\n[markup]`);
+    }
+    return hugoToml + insert;
   }
 
   private generatePlaceholderSvg(businessName: string, category: string | null): string {

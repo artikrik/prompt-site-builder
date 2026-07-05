@@ -3,4 +3,6 @@ export * from './types/project';
 export * from './types/user';
 export * from './types/generation';
 export * from './types/widget';
+export * from './types/models';
+export * from './types/settings';
 export * from './enums';

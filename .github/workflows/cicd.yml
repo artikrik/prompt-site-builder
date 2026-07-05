@@ -1,8 +1,6 @@
 name: CI/CD
 
 on:
-  push:
-    branches-ignore: [main]
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, closed]
@@ -33,6 +31,8 @@ jobs:
     # Skip only: PR closed without merge
     if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
     timeout-minutes: 10
+    env:
+      TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
     steps:
       - name: Clean root-owned files (Docker residue)
         run: |
@@ -54,6 +54,8 @@ jobs:
     # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
     if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
     timeout-minutes: 10
+    env:
+      TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
     steps:
       - name: Clean root-owned files (Docker residue)
         run: |
@@ -82,6 +84,7 @@ jobs:
     if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
     timeout-minutes: 15
     env:
+      TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
       DATABASE_URL: postgresql://promptsite:testpassword@localhost:5434/promptsite_test
       REDIS_HOST: localhost
       REDIS_PORT: 6381
@@ -158,6 +161,8 @@ jobs:
     # skip_tests only skips test execution, NOT the job itself (needs chain requires job to run)
     if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
     timeout-minutes: 10
+    env:
+      TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
     steps:
       - name: Clean root-owned files (Docker residue)
         run: |
