@@ -1,54 +1,95 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { SettingsService } from './settings.service';
-import { ConfigService } from '@nestjs/config';
 
 describe('SettingsService', () => {
   let service: SettingsService;
-  let configService: { get: ReturnType<typeof vi.fn> };
+  let mockRepo: any;
+  let mockEncryption: any;
+  let mockConfig: any;
 
   beforeEach(() => {
-    configService = {
-      get: vi.fn().mockImplementation((key: string, defaultVal?: unknown) => {
-        const env: Record<string, string | undefined> = {
-          LLM_PROVIDER: 'openai',
-          BASE_DOMAIN: 'sitenow.pp.ua',
-          HUGO_SITES_PATH: '/var/www/client-sites',
-          EASYWEEK_API_KEY: 'ew-key-123',
-          WAYFORPAY_MERCHANT: 'wf-merchant',
-          MONOBANK_API_KEY: undefined,
-        };
-        return env[key] ?? defaultVal ?? null;
-      }),
+    mockRepo = {
+      findByKey: vi.fn(),
+      upsert: vi.fn(),
+      findAll: vi.fn(),
+      deleteByKey: vi.fn().mockResolvedValue(undefined),
     };
+    mockEncryption = {
+      encrypt: vi.fn((v: string) => `enc_${v}`),
+      decrypt: vi.fn((v: string) => v.startsWith('enc_') ? v.slice(4) : v),
+    };
+    // Mock env vars for fallback testing
+    const env: Record<string, string> = {
+      LLM_PROVIDER: 'anthropic',
+      OPENAI_API_KEY: 'sk-env-key',
+    };
+    mockConfig = {
+      get: vi.fn((key: string) => env[key] ?? null),
+    };
+    service = new SettingsService(mockRepo, mockEncryption, mockConfig);
+  });
 
-    service = new SettingsService(configService as unknown as ConfigService);
+  describe('get', () => {
+    it('should return DB value when present', async () => {
+      mockRepo.findByKey.mockResolvedValue({ key: 'llm_provider', value: 'openai' });
+      const result = await service.get('llm_provider');
+      expect(result.value).toBe('openai');
+      expect(result.source).toBe('db');
+    });
+
+    it('should fallback to env when DB is null', async () => {
+      mockRepo.findByKey.mockResolvedValue(null);
+      const result = await service.get('llm_provider');
+      expect(result.value).toBe('anthropic');
+      expect(result.source).toBe('env');
+    });
+
+    it('should fallback to default when both DB and env are null', async () => {
+      mockRepo.findByKey.mockResolvedValue(null);
+      const result = await service.get('google_api_key');
+      expect(result.value).toBeNull();
+      expect(result.source).toBe('default');
+    });
+
+    it('should decrypt API key values from DB', async () => {
+      mockRepo.findByKey.mockResolvedValue({ key: 'openai_api_key', value: 'enc_sk-db-key' });
+      const result = await service.get('openai_api_key');
+      expect(result.value).toBe('sk-db-key');
+      expect(result.source).toBe('db');
+    });
+
+    it('should NOT decrypt plain config values from DB', async () => {
+      mockRepo.findByKey.mockResolvedValue({ key: 'llm_provider', value: 'openai' });
+      await service.get('llm_provider');
+      expect(mockEncryption.decrypt).not.toHaveBeenCalled();
+    });
   });
 
   describe('getSettings', () => {
-    it('should return all app settings', () => {
-      const settings = service.getSettings();
-
-      expect(settings.llmProvider).toBe('openai');
-      expect(settings.defaultTheme).toBe('hugo-theme-zen');
-      expect(settings.baseDomain).toBe('sitenow.pp.ua');
-      expect(settings.hugoSitesPath).toBe('/var/www/client-sites');
-      expect(settings.widgets.easyweekEnabled).toBe(true);
-      expect(settings.widgets.wayforpayEnabled).toBe(true);
-      expect(settings.widgets.monobankEnabled).toBe(false);
-    });
-
-    it('should use defaults when env vars are missing', () => {
-      configService.get.mockImplementation((_key: string, defaultVal?: unknown) => defaultVal ?? null);
-      const settings = service.getSettings();
-      expect(settings.llmProvider).toBe('openai');
-      expect(settings.baseDomain).toBe('sitenow.pp.ua');
+    it('should return full AppSettings with masked API keys', async () => {
+      mockRepo.findByKey.mockImplementation((key: string) => {
+        if (key === 'llm_provider') return Promise.resolve({ key: 'llm_provider', value: 'anthropic' });
+        if (key === 'openai_api_key') return Promise.resolve({ key: 'openai_api_key', value: 'enc_sk-db-key' });
+        return Promise.resolve(null);
+      });
+      const result = await service.getSettings();
+      expect(result.llmProvider).toBe('anthropic');
+      expect(result.openaiApiKey).toBe('sk-...-key');
     });
   });
 
   describe('updateSettings', () => {
-    it('should log and return current settings', () => {
-      const settings = service.updateSettings({ llmProvider: 'anthropic' });
-      expect(settings.llmProvider).toBe('openai'); // env-based, not mutable
+    it('should encrypt API keys before saving to DB', async () => {
+      await service.updateSettings({ openaiApiKey: 'sk-new-key', llmModel: 'gpt-4o-mini' });
+      expect(mockEncryption.encrypt).toHaveBeenCalledWith('sk-new-key');
+      expect(mockRepo.upsert).toHaveBeenCalledWith('openai_api_key', 'enc_sk-new-key');
+      expect(mockRepo.upsert).toHaveBeenCalledWith('llm_model', 'gpt-4o-mini');
+    });
+
+    it('should skip empty API key values', async () => {
+      await service.updateSettings({ openaiApiKey: '', llmModel: 'gpt-4o' });
+      expect(mockEncryption.encrypt).not.toHaveBeenCalled();
+      expect(mockRepo.upsert).toHaveBeenCalledWith('llm_model', 'gpt-4o');
     });
   });
 });

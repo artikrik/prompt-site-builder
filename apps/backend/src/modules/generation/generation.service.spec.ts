@@ -7,6 +7,8 @@ import { DallE3Strategy } from './strategies/dalle3.strategy';
 import { HugoCompilerService } from './hugo/hugo-compiler.service';
 import { HugoValidatorService } from './hugo/hugo-validator.service';
 import { SitePublisherService } from '../publishing/site-publisher.service';
+import { SettingsService } from '../settings/settings.service';
+import { LeadsService } from '../leads/leads.service';
 import { JobStatus, ProjectStatus } from '@prompt-site-builder/shared';
 
 describe('GenerationService', () => {
@@ -22,6 +24,8 @@ describe('GenerationService', () => {
   let hugoCompiler: { build: ReturnType<typeof vi.fn> };
   let hugoValidator: { validate: ReturnType<typeof vi.fn> };
   let publisher: { publish: ReturnType<typeof vi.fn>; writeFile: ReturnType<typeof vi.fn>; writeFileBinary: ReturnType<typeof vi.fn> };
+  let settingsService: { get: ReturnType<typeof vi.fn>; getEffectiveModel: ReturnType<typeof vi.fn> };
+  let leadsService: { findOne: ReturnType<typeof vi.fn> };
 
   const siteRequest = {
     projectId: 'proj-1',
@@ -90,6 +94,28 @@ describe('GenerationService', () => {
       writeFileBinary: vi.fn().mockResolvedValue(undefined),
     };
 
+    settingsService = {
+      get: vi.fn().mockImplementation((key: string) => {
+        const defaults: Record<string, string> = {
+          llm_provider: 'openai',
+          image_provider: 'openai',
+        };
+        return Promise.resolve({ value: defaults[key] || null, source: 'default' as const });
+      }),
+      getEffectiveModel: vi.fn().mockImplementation((_provider: string, type: string) => {
+        return Promise.resolve(type === 'content' ? 'gpt-4o' : 'dall-e-3');
+      }),
+    };
+
+    leadsService = {
+      findOne: vi.fn().mockResolvedValue({
+        id: 'lead-1',
+        easyweekEnabled: false,
+        wayforpayEnabled: false,
+        monobankEnabled: false,
+      }),
+    };
+
     service = new GenerationService(
       prisma as unknown as PrismaService,
       configService as unknown as ConfigService,
@@ -98,6 +124,8 @@ describe('GenerationService', () => {
       hugoCompiler as unknown as HugoCompilerService,
       hugoValidator as unknown as HugoValidatorService,
       publisher as unknown as SitePublisherService,
+      settingsService as unknown as SettingsService,
+      leadsService as unknown as LeadsService,
     );
   });
 

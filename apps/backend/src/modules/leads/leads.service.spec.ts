@@ -44,9 +44,15 @@ describe('LeadsService', () => {
       getOrSet: vi.fn((_key, factory) => factory()),
     };
 
+    const mockEncryption = {
+      encrypt: vi.fn((v: string) => `enc_${v}`),
+      decrypt: vi.fn((v: string) => v.startsWith('enc_') ? v.slice(4) : v),
+    };
+
     service = new LeadsService(
       prisma as unknown as PrismaService,
       cache as unknown as CacheService,
+      mockEncryption as any,
     );
   });
 

@@ -1,22 +1,32 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Logger } from '@nestjs/common';
+import { SettingsService } from '../../settings/settings.service';
 import OpenAI from 'openai';
 import { ILLMStrategy, LLMGenerateOptions, LLMResponse, BusinessData, HugoGeneratedContent } from './llm-strategy.interface';
 
 @Injectable()
 export class MimoStrategy implements ILLMStrategy {
-  private client: OpenAI;
+  private readonly logger = new Logger(MimoStrategy.name);
 
-  constructor(private readonly configService: ConfigService) {
-    this.client = new OpenAI({
-      apiKey: this.configService.get<string>('MIMO_API_KEY'),
-      baseURL: this.configService.get<string>('MIMO_BASE_URL', 'https://api.mimo.ai/v1'),
+  constructor(private readonly settingsService: SettingsService) {}
+
+  private async getClient(): Promise<OpenAI> {
+    const apiKey = await this.settingsService.getApiKey('mimo');
+    if (!apiKey) throw new Error('Mimo API key not configured');
+    return new OpenAI({
+      apiKey,
+      baseURL: 'https://api.mimo.ai/v1',
     });
   }
 
+  private async getModel(): Promise<string> {
+    return this.settingsService.getEffectiveModel('mimo', 'content');
+  }
+
   async generateContent(prompt: string, options?: LLMGenerateOptions): Promise<LLMResponse> {
-    const response = await this.client.chat.completions.create({
-      model: options?.model || this.configService.get<string>('MIMO_MODEL', 'mimo-auto'),
+    const client = await this.getClient();
+    const model = options?.model || (await this.getModel());
+    const response = await client.chat.completions.create({
+      model,
       max_tokens: options?.maxTokens || 4096,
       temperature: options?.temperature || 0.7,
       messages: [{ role: 'user', content: prompt }],

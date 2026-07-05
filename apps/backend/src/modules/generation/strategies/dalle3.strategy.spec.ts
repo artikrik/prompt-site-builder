@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DallE3Strategy } from './dalle3.strategy';
-import { ConfigService } from '@nestjs/config';
 
 // Capture the mocked generate function from global setup
 const mockedImagesGenerate = vi.fn().mockResolvedValue({
@@ -19,11 +18,12 @@ describe('DallE3Strategy', () => {
   beforeEach(() => {
     mockedImagesGenerate.mockClear();
 
-    const configService = {
-      get: vi.fn().mockReturnValue('test-api-key'),
+    const mockSettingsService = {
+      getApiKey: vi.fn().mockResolvedValue('sk-test-key'),
+      getEffectiveModel: vi.fn().mockResolvedValue('dall-e-3'),
     };
 
-    strategy = new DallE3Strategy(configService as unknown as ConfigService);
+    strategy = new DallE3Strategy(mockSettingsService as any);
   });
 
   it('should generate an image with default options', async () => {
