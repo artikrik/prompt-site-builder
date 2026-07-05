@@ -1,0 +1,1 @@
+import{a as n,f as i}from"../chunks/JyzBMdJ3.js";import{f as t,r as e}from"../chunks/Dr5nq49l.js";import{s as m}from"../chunks/BJD03waS.js";var d=i('<div class="min-h-screen bg-background font-sans antialiased"><!></div>');function l(o,r){var a=d(),s=t(a);m(s,()=>r.children),e(a),n(o,a)}export{l as component};

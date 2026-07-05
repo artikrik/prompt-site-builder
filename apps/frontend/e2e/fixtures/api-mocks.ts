@@ -61,7 +61,7 @@ export async function mockAuthLogin(page: Page, user: MockUser = DEFAULT_USER) {
   });
 }
 
-export async function mockAuthRegister(page: Page, user: MockUser = DEFAULT_USER) {
+export async function mockAuthRegister(page: Page, _user: MockUser = DEFAULT_USER) {
   await page.route(`${API}/auth/register`, async (route: Route) => {
     await route.fulfill({
       status: 201,
@@ -113,7 +113,7 @@ export const DEFAULT_STATS: DashboardStats = {
   publishedSites: 34,
 };
 
-export async function mockDashboardStats(page: Page, stats: DashboardStats = DEFAULT_STATS) {
+export async function mockDashboardStats(page: Page, _stats: DashboardStats = DEFAULT_STATS) {
   await page.route(`${API}/leads`, async (route: Route) => {
     await route.fulfill({
       status: 200,

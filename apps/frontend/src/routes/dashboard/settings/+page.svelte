@@ -28,7 +28,7 @@
       imageModel: settings.imageModel,
     });
     saveStatus = 'saved';
-    setTimeout(() => (saveStatus = 'idle'), 2000);
+    // Status stays 'saved' until next action
   }
 
   async function saveApiKey(key: string, value: string) {

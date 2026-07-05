@@ -62,7 +62,7 @@
       </div>
 
       <!-- Extra fields (e.g., WayForPay Merchant) -->
-      {#each extraFields as field}
+      {#each extraFields as field (field.label)}
         <div>
           <label class="text-sm">{field.label}</label>
           <input

@@ -1,6 +1,7 @@
 <script lang="ts">
+  import { api } from '$lib/api/client';
   import ModelSelector from '$lib/components/settings/ModelSelector.svelte';
-  import type { Lead } from '@prompt-site-builder/shared';
+  import type { Lead, ContentModel, ImageModel } from '@prompt-site-builder/shared';
 
   interface Props {
     open: boolean;
@@ -10,7 +11,7 @@
     defaultContentModel: string;
     defaultImageProvider: string;
     defaultImageModel: string;
-    models: { content: any[]; image: any[] };
+    models: { content: ContentModel[]; image: ImageModel[] };
     onClose: () => void;
   }
 
@@ -29,15 +30,11 @@
 
   async function generate() {
     isGenerating = true;
-    await fetch('/api/generation/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        projectId,
-        leadId: lead.id,
-        model: contentModel,
-        imageModel: imageModel,
-      }),
+    await api.post('/generation/generate', {
+      projectId,
+      leadId: lead.id,
+      model: contentModel,
+      imageModel,
     });
     onClose();
   }
@@ -54,7 +51,7 @@
         provider={contentProvider}
         model={contentModel}
         models={models.content}
-        onProviderChange={(p: string) => { contentProvider = p; contentModel = models.content.find((m: any) => m.provider === p)?.id ?? ''; }}
+        onProviderChange={(p: string) => { contentProvider = p; contentModel = models.content.find((m: ContentModel | ImageModel) => m.provider === p)?.id ?? ''; }}
         onModelChange={(m: string) => (contentModel = m)}
       />
       <ModelSelector
@@ -62,7 +59,7 @@
         provider={imageProvider}
         model={imageModel}
         models={models.image}
-        onProviderChange={(p: string) => { imageProvider = p; imageModel = models.image.find((m: any) => m.provider === p)?.id ?? ''; }}
+        onProviderChange={(p: string) => { imageProvider = p; imageModel = models.image.find((m: ContentModel | ImageModel) => m.provider === p)?.id ?? ''; }}
         onModelChange={(m: string) => (imageModel = m)}
       />
 

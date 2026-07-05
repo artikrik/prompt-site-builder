@@ -1,0 +1,17 @@
+- generic [ref=f2e5]:
+  - generic [ref=f2e6]:
+    - generic [ref=f2e7]: Sign in to your account
+    - paragraph [ref=f2e8]:
+      - text: Or
+      - link "create a new account" [ref=f2e9] [cursor=pointer]:
+        - /url: ../auth/register
+  - generic [ref=f2e11]:
+    - generic [ref=f2e12]:
+      - generic [ref=f2e13]: Email address
+      - textbox "Email address" [ref=f2e14]:
+        - /placeholder: admin@promptsite.com
+    - generic [ref=f2e15]:
+      - generic [ref=f2e16]: Password
+      - textbox "Password" [ref=f2e17]:
+        - /placeholder: ••••••••
+    - button "Sign in" [ref=f2e18]

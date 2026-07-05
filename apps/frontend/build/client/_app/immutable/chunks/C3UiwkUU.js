@@ -1,0 +1,1 @@
+import"./JyzBMdJ3.js";import{s as t,r as c}from"./DRdcSOzW.js";import{I as p}from"./DZ4FIO2L.js";var a=new Set(["$$slots","$$events","$$legacy"]);function $(e,r){let o=c(r,a);const s=[["path",{d:"m21 21-4.34-4.34"}],["circle",{cx:"11",cy:"11",r:"8"}]];p(e,t({name:"search"},()=>o,{get iconNode(){return s}}))}export{$ as S};

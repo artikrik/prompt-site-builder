@@ -46,7 +46,7 @@
       monobankApiKey: lead.monobankApiKey,
     });
     saveStatus = 'saved';
-    setTimeout(() => (saveStatus = 'idle'), 2000);
+    // Status stays 'saved' until next action
   }
 
   function getWebhookUrl(provider: string): string {

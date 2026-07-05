@@ -3,12 +3,11 @@
   interface Props {
     label: string;
     placeholder: string;
-    value: string;
     maskedPreview: string;
-    onChange: (value: string) => void;
+    onChange: (_value: string) => void;
   }
 
-  let { label, placeholder, value, maskedPreview, onChange }: Props = $props();
+  let { label, placeholder, maskedPreview, onChange }: Props = $props();
 
   let isEditing = $state(false);
   let inputValue = $state('');

@@ -43,7 +43,7 @@
       onchange={(e) => onProviderChange(e.currentTarget.value)}
       class="w-full rounded-md border px-3 py-2 text-sm"
     >
-      {#each providers as p}
+      {#each providers as p (p)}
         <option value={p}>{providerLabels[p] ?? p}</option>
       {/each}
     </select>
@@ -56,7 +56,7 @@
       onchange={(e) => onModelChange(e.currentTarget.value)}
       class="w-full rounded-md border px-3 py-2 text-sm"
     >
-      {#each filteredModels as m}
+      {#each filteredModels as m (m.id)}
         <option value={m.id}>
           {m.label} — {m.role} ({formatPrice(m)})
         </option>
