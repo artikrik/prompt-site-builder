@@ -37,8 +37,9 @@
 
 <div class="space-y-4">
   <div>
-    <label class="text-sm font-medium">{type === 'content' ? 'Provider' : 'Image Provider'}</label>
+    <label for={`${type}-provider-select`} class="text-sm font-medium">{type === 'content' ? 'Provider' : 'Image Provider'}</label>
     <select
+      id={`${type}-provider-select`}
       value={provider}
       onchange={(e) => onProviderChange(e.currentTarget.value)}
       class="w-full rounded-md border px-3 py-2 text-sm"
@@ -50,8 +51,9 @@
   </div>
 
   <div>
-    <label class="text-sm font-medium">{type === 'content' ? 'Model' : 'Image Model'}</label>
+    <label for={`${type}-model-select`} class="text-sm font-medium">{type === 'content' ? 'Model' : 'Image Model'}</label>
     <select
+      id={`${type}-model-select`}
       value={model}
       onchange={(e) => onModelChange(e.currentTarget.value)}
       class="w-full rounded-md border px-3 py-2 text-sm"

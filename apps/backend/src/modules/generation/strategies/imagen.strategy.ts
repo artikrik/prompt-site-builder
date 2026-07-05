@@ -37,8 +37,7 @@ export class ImagenStrategy implements IImageGenerationStrategy {
       model,
       prompt,
       n: 1,
-      size: (options?.size as string) || '1024x1024',
-      response_format: 'url',
+      size: ((options?.size as '1024x1024') || '1024x1024'),
     });
 
     const data = response.data as
