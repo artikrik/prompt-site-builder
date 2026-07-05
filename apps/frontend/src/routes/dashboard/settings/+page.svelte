@@ -3,7 +3,7 @@
   import { api } from '$lib/api/client.js';
   import ApiKeyInput from '$lib/components/settings/ApiKeyInput.svelte';
   import ModelSelector from '$lib/components/settings/ModelSelector.svelte';
-  import { MODEL_REGISTRY, type AppSettings, type ContentModel, type ImageModel } from '@prompt-site-builder/shared';
+  import type { AppSettings, ContentModel, ImageModel } from '@prompt-site-builder/shared';
 
   let settings = $state<AppSettings | null>(null);
   let contentModels = $state<ContentModel[]>([]);
@@ -13,8 +13,10 @@
 
   onMount(async () => {
     settings = await api.get<AppSettings>('/settings');
-    contentModels = [...MODEL_REGISTRY.content] as ContentModel[];
-    imageModels = [...MODEL_REGISTRY.image] as ImageModel[];
+    // Fetch models from API instead of importing CJS module (Rollup compat)
+    const modelData = await api.get<{ content: ContentModel[]; image: ImageModel[] }>('/settings/models');
+    contentModels = modelData.content;
+    imageModels = modelData.image;
     loading = false;
   });
 

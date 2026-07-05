@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { Roles } from '../../shared/decorators/roles.decorator';
 import { UserRole, type AppSettings, type UpdateSettingsDto } from '@prompt-site-builder/shared';
 import { SettingsService } from './settings.service';
+import { MODEL_REGISTRY } from '@prompt-site-builder/shared';
 
 @ApiTags('Settings')
 @ApiBearerAuth()
@@ -25,5 +26,12 @@ export class SettingsController {
   @ApiResponse({ status: 200, description: 'Updated settings' })
   async updateSettings(@Body() dto: UpdateSettingsDto) {
     return this.settingsService.updateSettings(dto);
+  }
+
+  @Get('models')
+  @ApiOperation({ summary: 'Get available models with pricing' })
+  @ApiResponse({ status: 200, description: 'Model registry' })
+  getModels() {
+    return { content: MODEL_REGISTRY.content, image: MODEL_REGISTRY.image };
   }
 }
