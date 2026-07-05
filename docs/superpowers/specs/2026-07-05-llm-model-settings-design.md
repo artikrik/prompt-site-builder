@@ -60,6 +60,13 @@ model Setting {
 | `deepseek_api_key` | string | **Yes** (AES-256-GCM) | `"sk-..."` |
 | `mimo_api_key` | string | **Yes** (AES-256-GCM) | `"..."` |
 | `bfl_api_key` | string | **Yes** (AES-256-GCM) | `"..."` |
+| `easyweek_enabled` | string | No | `"true"` / `"false"` |
+| `easyweek_api_key` | string | **Yes** (AES-256-GCM) | `"..."` |
+| `wayforpay_enabled` | string | No | `"true"` / `"false"` |
+| `wayforpay_merchant` | string | No | `"..."` |
+| `wayforpay_secret` | string | **Yes** (AES-256-GCM) | `"..."` |
+| `monobank_enabled` | string | No | `"true"` / `"false"` |
+| `monobank_api_key` | string | **Yes** (AES-256-GCM) | `"..."` |
 
 ### Settings Read Logic
 
@@ -84,6 +91,13 @@ SettingsService.get(key):
 | `deepseek_api_key` | `null` | none |
 | `mimo_api_key` | `null` | none |
 | `bfl_api_key` | `null` | none |
+| `easyweek_enabled` | `"true"` | env EASYWEEK_API_KEY present? "true" : "false" |
+| `easyweek_api_key` | `null` | env EASYWEEK_API_KEY |
+| `wayforpay_enabled` | `"false"` | none |
+| `wayforpay_merchant` | `null` | env WAYFORPAY_MERCHANT |
+| `wayforpay_secret` | `null` | env WAYFORPAY_SECRET |
+| `monobank_enabled` | `"false"` | none |
+| `monobank_api_key` | `null` | env MONOBANK_API_KEY |
 
 **Per-provider default models (from MODEL_REGISTRY first entry per provider):**
 
@@ -177,8 +191,8 @@ export const MODEL_REGISTRY: {
 | `llm-strategy.factory.ts` | Support Google provider, read model from Settings, pass model override |
 | `image-strategy.factory.ts` | **New** — factory for image generation (currently hardcoded DallE3Strategy) |
 | `prisma/schema.prisma` | Add `Setting` model |
-| `env.validation.ts` | Add `GOOGLE_API_KEY`, `BFL_API_KEY`, `ENCRYPTION_KEY`, `MIMO_MODEL` |
-| `.env.example` | Add all missing vars: `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, `MIMO_API_KEY`, `MIMO_BASE_URL`, `MIMO_MODEL`, `GOOGLE_API_KEY`, `BFL_API_KEY`, `ENCRYPTION_KEY`, `LLM_PROVIDER`, `IMAGE_PROVIDER` |
+| `env.validation.ts` | Add `GOOGLE_API_KEY`, `BFL_API_KEY`, `ENCRYPTION_KEY`, `MIMO_MODEL` + payment toggle/env vars |
+| `.env.example` | Add all missing vars: `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, `MIMO_API_KEY`, `MIMO_BASE_URL`, `MIMO_MODEL`, `GOOGLE_API_KEY`, `BFL_API_KEY`, `ENCRYPTION_KEY`, `LLM_PROVIDER`, `IMAGE_PROVIDER`, `EASYWEEK_ENABLED`, `WAYFORPAY_ENABLED`, `MONOBANK_ENABLED` |
 
 ### Strategy Updates
 
@@ -234,8 +248,25 @@ Each field:
   - Model dropdown filters by selected provider
   - Each model shows: `label` + `role` tag + price badge (`$0.05/image`)
 
-**Section 3: Integrations** (existing, unchanged)
-- EasyWeek status, WayForPay status, Monobank status
+**Section 3: Payment Providers** — додаткові послуги для клієнтських сайтів (запис, оплата)
+
+Кожен провайдер — окрема картка з toggle ON/OFF + полями:
+
+**EasyWeek** (online booking):
+- Toggle `easyweek_enabled` — увімкнути запис на сайтах клієнтів
+- API Key input: `easyweek_api_key` — маскований `ew-...XyZ1`
+
+**WayForPay** (payment processing):
+- Toggle `wayforpay_enabled` — увімкнути оплати на сайтах клієнтів
+- Merchant ID input: `wayforpay_merchant`
+- Secret key input: `wayforpay_secret` — маскований `wp-...BcD2`
+
+**Monobank** (payment processing):
+- Toggle `monobank_enabled` — увімкнути оплати на сайтах клієнтів
+- API Key input: `monobank_api_key` — маскований `mb-...EfG3`
+
+Якщо toggle OFF → поля приховані, ключі зберігаються в DB але не використовуються при генерації.
+Webhook URLs — автогенеровані на бекенді (`/api/webhooks/wayforpay`, `/api/webhooks/monobank`), показуються read-only під toggle.
 
 ### Generation Override
 
@@ -250,6 +281,7 @@ When triggering generation (existing lead → generate flow):
 |------|---------|
 | `apps/frontend/src/lib/components/settings/ModelSelector.svelte` | Provider → Model cascading dropdowns with pricing badges |
 | `apps/frontend/src/lib/components/settings/ApiKeyInput.svelte` | Password field with masked display + clear button |
+| `apps/frontend/src/lib/components/settings/PaymentProviderCard.svelte` | Toggle + conditional fields per payment provider |
 
 ---
 
