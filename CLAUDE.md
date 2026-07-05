@@ -40,102 +40,44 @@ Examples: `rtk git status`, `rtk npm install`, `rtk turbo build`
 | Bash `rg`   | `rtk grep <pattern>` | ~75% |
 | Bash `ls`   | `rtk ls <path>` | ~65% |
 
-## Plugin Stack
+## Development Workflow (Superpowers)
 
-| Plugin | Version | Purpose |
-|--------|---------|---------|
-| **ECC** | 2.0.0 | 67 agents, 271 skills, 92 commands, 6 MCP |
-| **Superpowers** | 6.1.1 | 14 skills, auto-triggered workflow |
-| **claude-mem** | 13.10.1 | Persistent memory between sessions |
-| **Claude HUD** | 0.1.0 | Status line |
-| **Caveman** | active | Response style |
+**Philosophy: TDD + plan + review = MANDATORY.**
 
-## Development Workflow (Superpowers + ECC)
-
-**Philosophy: TDD + plan + review = MANDATORY. Not optional.**
-
-Superpowers = methodology (development process). ECC = tools (agents for specific tasks).
-
-### 7-Phase Auto-Triggered Workflow
-
-Each phase triggers automatically via SessionStart hook. No manual invocation needed.
-
-```
-1. /brainstorm              ← Superpowers (Socratic dialogue, design doc)
-2. worktree isolate         ← Superpowers (clean environment + baseline)
-3. /write-plan              ← Superpowers (2-5 min tasks, exact files, verification)
-4. /execute-plan            ← Superpowers (batches with human checkpoints)
-   ├─ ecc:architect         ← ECC (architectural decisions)
-   ├─ ecc:code-reviewer     ← ECC (after every file)
-   ├─ ecc:security-reviewer ← ECC (sensitive code)
-   ├─ ecc:tdd-guide         ← ECC (write tests first)
-   └─ ecc:e2e-runner        ← ECC (E2E tests)
-5. code review              ← Superpowers (pre-merge, against plan)
-6. merge / PR               ← Superpowers (merge/keep/discard decision)
-```
-
-### Superpowers Skills (auto-trigger)
+### Superpowers Skills
 
 | Skill | When It Fires |
 |-------|---------------|
-| **brainstorming** | Before any code — Socratic dialogue, design doc |
+| **brainstorming** | Before any code — design discussion, design doc |
 | **using-git-worktrees** | Creates isolated worktree + clean baseline |
 | **writing-plans** | Breaks into 2-5 min tasks, exact files, verification |
 | **executing-plans** | Executes in batches with human checkpoints |
-| **subagent-driven-development** | Parallel sub-agents + two-level review |
 | **test-driven-development** | RED-GREEN-REFACTOR. Test first, code second |
 | **requesting-code-review** | Pre-merge review against plan |
 | **receiving-code-review** | Processing review feedback |
 | **finishing-a-development-branch** | Merge/PR/keep/discard decision |
-| **systematic-debugging** | 4-phase root cause analysis |
 | **verification-before-completion** | Proof that fix works |
-| **dispatching-parallel-agents** | Parallel sub-agents |
-| **writing-skills** | Creating new skills |
-| **using-superpowers** | Intro to the system |
+| **systematic-debugging** | 4-phase root cause analysis |
+| **dispatching-parallel-agents** | Parallel sub-agents for independent tasks |
+| **subagent-driven-development** | Multi-agent orchestration |
 
-### Key ECC Agents for This Project
+### Standard Flow
 
-| Agent | Purpose |
-|-------|---------|
-| **ecc:code-reviewer** | After every file — quality, patterns, bugs |
-| **ecc:security-reviewer** | Auth, payments, API endpoints, user input |
-| **ecc:typescript-reviewer** | TS/JS type safety, async correctness |
-| **ecc:architect** | Architectural decisions, system design |
-| **ecc:build-error-resolver** | When build fails — minimal diffs, fast fix |
-| **ecc:database-reviewer** | Prisma schemas, SQL queries, migrations |
-| **ecc:performance-optimizer** | Bottlenecks, bundle size, N+1 queries |
-| **ecc:silent-failure-hunter** | Swallowed errors, bad fallbacks, missing propagation |
-| **ecc:refactor-cleaner** | Dead code, duplicates, unused deps |
-| **ecc:doc-updater** | Documentation, codemaps, README updates |
-
-### Agent Usage Rules
-- **ecc:code-reviewer** — MANDATORY after every file write/edit
-- **ecc:security-reviewer** — MANDATORY for auth, payment, API, file system code
-- **ecc:tdd-guide** — MANDATORY for new features and bug fixes (write tests first)
-- **ecc:architect** — Before major refactoring or new modules
-- **ecc:build-error-resolver** — Immediately when build/typecheck fails
-- All other agents — use PROACTIVELY when relevant domain code changes
-
-### How to Start
-
-**New feature:**
 ```
-/brainstorm   → discuss design, get design doc
-/write-plan   → get plan with small tasks
-/execute-plan → execute plan (ECC agents auto-attach)
-```
+Нова фіча:
+  /brainstorm   → design doc
+  worktree      → isolate
+  /write-plan   → small tasks
+  /execute-plan → implement (TDD per task)
+  review        → pre-merge check
+  finish        → merge/PR
 
-**Bug fix (from AUDIT_REPORT.md):**
-Say: "fix B1 — path.dirname in site-publisher.service.ts"
-Superpowers auto: worktree → plan → TDD fix → test → review
-
-**Code review:**
+Баг-фікс:
+  worktree      → isolate
+  TDD           → write failing test → fix → verify
+  review        → pre-merge check
+  finish        → merge/PR
 ```
-/request-code-review          → Superpowers review
-ecc:code-reviewer (direct)    → single file review
-```
-
-Superpowers via SessionStart hook automatically checks relevant skills before any task. No need to think "should I enable brainstorming now" — it asks if needed.
 
 ## Commands
 - `turbo dev` — run all dev servers
@@ -172,7 +114,7 @@ Superpowers via SessionStart hook automatically checks relevant skills before an
 - `git submodule add <theme_url> themes/<theme_name>` on project creation.
 - NEVER generate raw HTML. ALWAYS generate `hugo.toml` + Markdown Front Matter matching the selected theme's schema.
 
-### ECC Protocol (Build Validation)
+### Build Validation Protocol
 Every Hugo generation MUST pass:
 1. **WRITE** — Generate `hugo.toml` + content `.md` files per theme schema.
 2. **EXECUTE** — Run `hugo --source ./client-sites/<slug>`.
@@ -194,7 +136,7 @@ Must produce successful build in `/client-sites/<slug>/public/`.
 - Unit/Integration: `vitest` (backend + frontend)
 - E2E: `playwright test` (frontend)
 - E2E backend: `vitest run --config vitest.e2e.config.ts`
-- Hugo build: `hugo --source ./client-sites/<slug>` (ECC protocol)
+- Hugo build: `hugo --source ./client-sites/<slug>` (build validation protocol)
 
 ## Key Constraints
 - All external API calls MUST be mocked in tests (REQUIREMENTS.md)
