@@ -11,7 +11,7 @@ function makeMockFactory(providers: Record<string, IEnrichmentProvider>): Enrich
   } as unknown as EnrichmentFactory;
 }
 
-function makeMockPrisma(leadData: Record<string, unknown> = {}): PrismaService {
+function makeMockPrisma(_leadData: Record<string, unknown> = {}): PrismaService {
   return {
     lead: {
       findUnique: vi.fn(),

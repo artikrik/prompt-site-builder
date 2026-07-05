@@ -24,7 +24,7 @@ export class EnrichmentController {
   }
 
   @Get(':id/enrichment')
-  async getEnrichment(@Param('id') id: string) {
+  async getEnrichment(@Param('id') _id: string) {
     return { data: null, enrichedAt: null, sources: [] };
   }
 }

@@ -11,7 +11,7 @@ export class VariantsService {
   async create(projectId: string, dto: CreateVariantDto): Promise<SiteVariant> {
     const variantName = this.generateVariantName(dto.model, dto.imageModel, dto.theme);
 
-    return this.prisma.siteVariant.create({
+    const variant = await this.prisma.siteVariant.create({
       data: {
         projectId,
         variantName,
@@ -21,10 +21,11 @@ export class VariantsService {
         themeName: dto.theme,
       },
     });
+    return this.toSiteVariant(variant);
   }
 
   async findByProject(projectId: string): Promise<VariantListItem[]> {
-    return this.prisma.siteVariant.findMany({
+    const variants = await this.prisma.siteVariant.findMany({
       where: { projectId },
       select: {
         id: true,
@@ -37,6 +38,7 @@ export class VariantsService {
       },
       orderBy: { createdAt: 'desc' },
     });
+    return variants.map(v => this.toVariantListItem(v));
   }
 
   async findById(variantId: string): Promise<any> {
@@ -97,5 +99,39 @@ export class VariantsService {
   private generateVariantName(model?: string, imageModel?: string, theme?: string): string {
     const parts = [model || 'default', imageModel || 'default', theme || 'auto'].filter(Boolean);
     return parts.join(' + ');
+  }
+
+  private nullToUndefined<T>(value: T | null): T | undefined {
+    return value === null ? undefined : value;
+  }
+
+  private toVariantListItem(v: any): VariantListItem {
+    return {
+      id: v.id,
+      variantName: v.variantName,
+      status: v.status,
+      modelUsed: this.nullToUndefined(v.modelUsed),
+      imageModel: this.nullToUndefined(v.imageModel),
+      themeName: this.nullToUndefined(v.themeName),
+      createdAt: v.createdAt,
+    };
+  }
+
+  private toSiteVariant(v: any): SiteVariant {
+    return {
+      id: v.id,
+      projectId: v.projectId,
+      variantName: v.variantName,
+      status: v.status,
+      hugoConfig: v.hugoConfig ?? {},
+      content: v.content ?? {},
+      modelUsed: this.nullToUndefined(v.modelUsed),
+      imageModel: this.nullToUndefined(v.imageModel),
+      themeName: this.nullToUndefined(v.themeName),
+      previewUrl: this.nullToUndefined(v.previewUrl),
+      publishedAt: v.publishedAt,
+      createdAt: v.createdAt,
+      updatedAt: v.updatedAt,
+    };
   }
 }

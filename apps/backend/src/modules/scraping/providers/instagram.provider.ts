@@ -198,9 +198,6 @@ export class InstagramProvider {
     if (!text.trim()) return null;
 
     const emojiRegex = /[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu;
-    const variationSelector = /\u{FE0F}|\u{FE00}/gu;
-    const zwj = /\u{200D}/gu;
-    const emojiMatches = [...text.matchAll(emojiRegex), ...text.matchAll(variationSelector), ...text.matchAll(zwj)];
     const emojiMatches = text.match(emojiRegex) || [];
 
     let emojiUsage: string;

@@ -28,7 +28,7 @@ export class EnrichmentFactory {
   private wrapInstagramProvider(): IEnrichmentProvider {
     return {
       source: 'instagram',
-      enrich: async (businessName: string, city?: string) => {
+      enrich: async (businessName: string, _city?: string) => {
         const result = await this.instagramProvider.enrichFromProfile(businessName);
         if (!result) return {};
 

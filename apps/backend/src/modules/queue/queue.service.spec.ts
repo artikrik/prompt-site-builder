@@ -5,11 +5,13 @@ describe('QueueService', () => {
   let service: QueueService;
   let generationQueue: { add: ReturnType<typeof vi.fn>; getJob: ReturnType<typeof vi.fn> };
   let scrapingQueue: { add: ReturnType<typeof vi.fn>; getJob: ReturnType<typeof vi.fn> };
+  let enrichmentQueue: { add: ReturnType<typeof vi.fn>; getJob: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     generationQueue = { add: vi.fn(), getJob: vi.fn() };
     scrapingQueue = { add: vi.fn(), getJob: vi.fn() };
-    service = new QueueService(generationQueue as any, scrapingQueue as any);
+    enrichmentQueue = { add: vi.fn(), getJob: vi.fn() };
+    service = new QueueService(generationQueue as any, scrapingQueue as any, enrichmentQueue as any);
   });
 
   describe('addGenerationJob', () => {
