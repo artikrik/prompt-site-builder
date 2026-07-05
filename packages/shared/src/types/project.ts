@@ -6,6 +6,7 @@ export interface Project {
   slug: string;
   status: ProjectStatus;
   hugoConfig: any;
+  activeVariantId?: string | null;
   generatedAt: Date | null;
   publishedAt: Date | null;
   publishedUrl: string | null;

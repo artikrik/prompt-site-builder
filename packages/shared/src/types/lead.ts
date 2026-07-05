@@ -1,4 +1,5 @@
 import { LeadStatus } from '../enums';
+import { EnrichmentData } from './enrichment';
 
 export interface Lead {
   id: string;
@@ -16,6 +17,9 @@ export interface Lead {
   status: LeadStatus;
   tags: string[];
   scrapedData: any;
+  enrichmentData: EnrichmentData | null;
+  enrichedAt: Date | null;
+  enrichmentSources: string[];
   createdAt: Date;
   updatedAt: Date;
   easyweekEnabled: boolean;
@@ -40,6 +44,7 @@ export interface CreateLeadDto {
   source: string;
   tags?: string[];
   scrapedData?: any;
+  enrichmentSources?: Array<'instagram' | 'facebook' | 'googleMaps'>;
 }
 
 export interface UpdateLeadDto {
@@ -55,6 +60,7 @@ export interface UpdateLeadDto {
   status?: LeadStatus;
   scrapedData?: any;
   tags?: string[];
+  enrichmentSources?: Array<'instagram' | 'facebook' | 'googleMaps'>;
   easyweekEnabled?: boolean;
   easyweekApiKey?: string | null;
   wayforpayEnabled?: boolean;
