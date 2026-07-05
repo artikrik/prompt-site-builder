@@ -38,7 +38,7 @@ export class VariantsService {
       },
       orderBy: { createdAt: 'desc' },
     });
-    return variants.map(v => this.toVariantListItem(v));
+    return variants.map((v: any) => this.toVariantListItem(v));
   }
 
   async findById(variantId: string): Promise<any> {
