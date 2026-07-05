@@ -1,8 +1,6 @@
 name: CI/CD
 
 on:
-  push:
-    branches-ignore: [main]
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, closed]
@@ -12,9 +10,13 @@ on:
         description: 'Skip tests (emergency deploy only)'
         type: boolean
         default: false
+      deploy:
+        description: 'Deploy to production after build'
+        type: boolean
+        default: false
 
 concurrency:
-  group: cicd-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -25,8 +27,12 @@ jobs:
   lint:
     name: Lint
     runs-on: self-hosted
-    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed') }}
+    # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
+    # Skip only: PR closed without merge
+    if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
     timeout-minutes: 10
+    env:
+      TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
     steps:
       - name: Clean root-owned files (Docker residue)
         run: |
@@ -45,8 +51,11 @@ jobs:
   typecheck:
     name: Type Check
     runs-on: self-hosted
-    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed') }}
+    # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
+    if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
     timeout-minutes: 10
+    env:
+      TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
     steps:
       - name: Clean root-owned files (Docker residue)
         run: |
@@ -70,9 +79,12 @@ jobs:
   test-backend:
     name: Backend Tests
     runs-on: self-hosted
-    if: ${{ !inputs.skip_tests && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed')) }}
+    # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
+    # skip_tests only skips test execution, NOT the job itself (needs chain requires job to run)
+    if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
     timeout-minutes: 15
     env:
+      TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
       DATABASE_URL: postgresql://promptsite:testpassword@localhost:5434/promptsite_test
       REDIS_HOST: localhost
       REDIS_PORT: 6381
@@ -130,7 +142,13 @@ jobs:
       - run: npm run build --workspace=packages/shared
       - run: npx prisma generate --schema=apps/backend/prisma/schema.prisma
       - run: npx prisma migrate deploy --schema=apps/backend/prisma/schema.prisma
-      - run: npm run test --workspace=apps/backend
+      - name: Skip tests (manual override)
+        if: ${{ inputs.skip_tests }}
+        run: echo "⏭️ Backend tests skipped via workflow_dispatch skip_tests"
+
+      - name: Run backend tests
+        if: ${{ !inputs.skip_tests }}
+        run: npm run test --workspace=apps/backend
 
       - name: Cleanup services
         if: always()
@@ -139,8 +157,12 @@ jobs:
   test-frontend:
     name: Frontend Tests
     runs-on: self-hosted
-    if: ${{ !inputs.skip_tests && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed')) }}
+    # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
+    # skip_tests only skips test execution, NOT the job itself (needs chain requires job to run)
+    if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
     timeout-minutes: 10
+    env:
+      TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
     steps:
       - name: Clean root-owned files (Docker residue)
         run: |
@@ -155,7 +177,13 @@ jobs:
 
       - run: npm ci
       - run: npm run build --workspace=packages/shared
-      - run: npm run test --workspace=apps/frontend
+      - name: Skip tests (manual override)
+        if: ${{ inputs.skip_tests }}
+        run: echo "⏭️ Frontend tests skipped via workflow_dispatch skip_tests"
+
+      - name: Run frontend tests
+        if: ${{ !inputs.skip_tests }}
+        run: npm run test --workspace=apps/frontend
 
   # ═══════════════════════════════════════════════════════════
   #  Build + Deploy (PR merge to main or manual trigger)
@@ -164,7 +192,9 @@ jobs:
   build:
     name: Build
     runs-on: self-hosted
-    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || github.event_name == 'workflow_dispatch' }}
+    # Build only runs if ALL quality gates pass — failing test cancels workflow
+    needs: [lint, typecheck, test-backend, test-frontend]
+    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || (github.event_name == 'workflow_dispatch' && inputs.deploy) }}
     timeout-minutes: 15
     steps:
       - name: Clean root-owned files (Docker residue)
