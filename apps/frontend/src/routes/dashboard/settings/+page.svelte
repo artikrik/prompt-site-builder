@@ -122,7 +122,7 @@
           model={settings.llmModel}
           models={contentModels}
           onProviderChange={handleProviderChange}
-          onModelChange={(m: string) => (settings.llmModel = m)}
+          onModelChange={(m: string) => { if (settings) settings.llmModel = m; }}
         />
         <ModelSelector
           type="image"
@@ -130,7 +130,7 @@
           model={settings.imageModel}
           models={imageModels}
           onProviderChange={handleImageProviderChange}
-          onModelChange={(m: string) => (settings.imageModel = m)}
+          onModelChange={(m: string) => { if (settings) settings.imageModel = m; }}
         />
       </div>
     </section>

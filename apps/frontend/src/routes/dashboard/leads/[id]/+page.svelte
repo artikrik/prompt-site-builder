@@ -89,40 +89,40 @@
         name="EasyWeek (Online Booking)"
         enabled={lead.easyweekEnabled}
         apiKey={lead.easyweekApiKey ?? ''}
-        apiKeyMasked={maskApiKey(lead.easyweekApiKey)}
+        apiKeyMasked={maskApiKey(lead!.easyweekApiKey)}
         apiKeyLabel="API Key"
         extraFields={[]}
         webhookUrl={getWebhookUrl('easyweek')}
-        onToggle={(v: boolean) => (lead.easyweekEnabled = v)}
-        onApiKeyChange={(k: string) => (lead.easyweekApiKey = k)}
+        onToggle={(v: boolean) => (lead!.easyweekEnabled = v)}
+        onApiKeyChange={(k: string) => (lead!.easyweekApiKey = k)}
       />
 
       <PaymentProviderCard
         name="WayForPay (Payment)"
         enabled={lead.wayforpayEnabled}
         apiKey={lead.wayforpaySecret ?? ''}
-        apiKeyMasked={maskApiKey(lead.wayforpaySecret)}
+        apiKeyMasked={maskApiKey(lead!.wayforpaySecret)}
         apiKeyLabel="Secret Key"
         extraFields={[{
           label: 'Merchant ID',
           value: lead.wayforpayMerchant ?? '',
-          onChange: (v: string) => (lead.wayforpayMerchant = v),
+          onChange: (v: string) => (lead!.wayforpayMerchant = v),
         }]}
         webhookUrl={getWebhookUrl('wayforpay')}
-        onToggle={(v: boolean) => (lead.wayforpayEnabled = v)}
-        onApiKeyChange={(k: string) => (lead.wayforpaySecret = k)}
+        onToggle={(v: boolean) => (lead!.wayforpayEnabled = v)}
+        onApiKeyChange={(k: string) => (lead!.wayforpaySecret = k)}
       />
 
       <PaymentProviderCard
         name="Monobank (Payment)"
         enabled={lead.monobankEnabled}
         apiKey={lead.monobankApiKey ?? ''}
-        apiKeyMasked={maskApiKey(lead.monobankApiKey)}
+        apiKeyMasked={maskApiKey(lead!.monobankApiKey)}
         apiKeyLabel="API Key"
         extraFields={[]}
         webhookUrl={getWebhookUrl('monobank')}
-        onToggle={(v: boolean) => (lead.monobankEnabled = v)}
-        onApiKeyChange={(k: string) => (lead.monobankApiKey = k)}
+        onToggle={(v: boolean) => (lead!.monobankEnabled = v)}
+        onApiKeyChange={(k: string) => (lead!.monobankApiKey = k)}
       />
     </section>
 

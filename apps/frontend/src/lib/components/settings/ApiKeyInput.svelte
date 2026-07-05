@@ -3,6 +3,7 @@
   interface Props {
     label: string;
     placeholder: string;
+    value?: string;
     maskedPreview: string;
     onChange: (_value: string) => void;
   }
