@@ -1,22 +1,29 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Logger } from '@nestjs/common';
+import { SettingsService } from '../../settings/settings.service';
 import Anthropic from '@anthropic-ai/sdk';
 import { ILLMStrategy, LLMGenerateOptions, LLMResponse, BusinessData, HugoGeneratedContent } from './llm-strategy.interface';
 
 @Injectable()
 export class AnthropicStrategy implements ILLMStrategy {
-  private client: Anthropic;
-  private defaultModel = 'claude-3-5-sonnet-20241022';
+  private readonly logger = new Logger(AnthropicStrategy.name);
 
-  constructor(private readonly configService: ConfigService) {
-    this.client = new Anthropic({
-      apiKey: this.configService.get<string>('ANTHROPIC_API_KEY'),
-    });
+  constructor(private readonly settingsService: SettingsService) {}
+
+  private async getClient(): Promise<Anthropic> {
+    const apiKey = await this.settingsService.getApiKey('anthropic');
+    if (!apiKey) throw new Error('Anthropic API key not configured');
+    return new Anthropic({ apiKey });
+  }
+
+  private async getModel(): Promise<string> {
+    return this.settingsService.getEffectiveModel('anthropic', 'content');
   }
 
   async generateContent(prompt: string, options?: LLMGenerateOptions): Promise<LLMResponse> {
-    const response = await this.client.messages.create({
-      model: options?.model || this.defaultModel,
+    const client = await this.getClient();
+    const model = options?.model || (await this.getModel());
+    const response = await client.messages.create({
+      model,
       max_tokens: options?.maxTokens || 4096,
       temperature: options?.temperature || 0.7,
       messages: [{ role: 'user', content: prompt }],

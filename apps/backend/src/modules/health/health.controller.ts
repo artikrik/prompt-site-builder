@@ -23,8 +23,8 @@ export class HealthController {
       const start = Date.now();
       await this.prisma.$queryRaw`SELECT 1`;
       checks.database = { status: 'ok', latency: Date.now() - start };
-    } catch {
-      checks.database = { status: 'error', error: String(error) };
+    } catch (e: unknown) {
+      checks.database = { status: 'error', error: String(e) };
       overallStatus = 'error';
     }
 
@@ -34,8 +34,8 @@ export class HealthController {
       const client = this.redis.getClient();
       await client.ping();
       checks.redis = { status: 'ok', latency: Date.now() - start };
-    } catch {
-      checks.redis = { status: 'error', error: String(error) };
+    } catch (e: unknown) {
+      checks.redis = { status: 'error', error: String(e) };
       overallStatus = 'error';
     }
 

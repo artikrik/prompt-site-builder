@@ -24,7 +24,7 @@
 
   onMount(async () => {
     try {
-      project = await projects.fetchOne($page.params.id);
+      project = await projects.fetchOne($page.params.id!);
       const themeList = await api.get<any[]>('/generation/themes');
       themes = themeList;
     } catch (_e) {
@@ -92,7 +92,7 @@
           </div>
         {/if}
         {#if project.status === 'PUBLISHED' && project.publishedUrl}
-          <Button onclick={() => window.open(project.publishedUrl, '_blank')}>
+          <Button onclick={() => window.open(project!.publishedUrl!, '_blank')}>
             <ExternalLink class="w-4 h-4 mr-2" />
             View Live Site
           </Button>

@@ -76,9 +76,9 @@ export class GenerationController {
   @ApiOperation({ summary: 'List available Hugo themes' })
   @ApiResponse({ status: 200, description: 'List of themes' })
   async listThemes() {
-    return this.cache.getOrSet(
+    return await this.cache.getOrSet(
       THEMES_CACHE_KEY,
-      () => this.themeService.listAvailableThemes(),
+      async () => this.themeService.listAvailableThemes(),
       THEMES_CACHE_TTL,
     );
   }

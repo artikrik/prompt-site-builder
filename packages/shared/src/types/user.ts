@@ -7,10 +7,11 @@ export interface User {
   updatedAt: Date;
 }
 
-export enum UserRole {
-  ADMIN = 'ADMIN',
-  OPERATOR = 'OPERATOR',
-}
+export const UserRole = {
+  ADMIN: 'ADMIN',
+  OPERATOR: 'OPERATOR',
+} as const;
+export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
 export interface CreateUserDto {
   email: string;

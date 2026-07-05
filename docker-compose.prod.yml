@@ -1,6 +1,5 @@
-# Production overrides — used by deploy.yml on self-hosted runner
-# docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-version: '3.8'
+# Production overrides — uses absolute paths to avoid root-owned files in runner workspace
+# Ports set via deploy.yml env: POSTGRES_PORT, REDIS_PORT, BACKEND_PORT, FRONTEND_PORT, CADDY_HTTP_PORT, CADDY_HTTPS_PORT
 
 services:
   backend:
@@ -10,6 +9,4 @@ services:
   caddy:
     volumes:
       - /opt/prompt-site-builder/docker/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
       - /opt/prompt-site-builder/var/www/client-sites:/var/www/client-sites:ro

@@ -1,0 +1,336 @@
+name: CI/CD
+
+on:
+  push:
+    branches-ignore: [main]
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, closed]
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip tests (emergency deploy only)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: cicd-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ═══════════════════════════════════════════════════════════
+  #  Quality Gates (push, PR checks, workflow_dispatch)
+  # ═══════════════════════════════════════════════════════════
+
+  lint:
+    name: Lint
+    runs-on: self-hosted
+    # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
+    # Skip only: PR closed without merge
+    if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
+    timeout-minutes: 10
+    steps:
+      - name: Clean root-owned files (Docker residue)
+        run: |
+          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var /ws/node_modules 2>/dev/null; true'
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.3
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+
+  typecheck:
+    name: Type Check
+    runs-on: self-hosted
+    # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
+    if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
+    timeout-minutes: 10
+    steps:
+      - name: Clean root-owned files (Docker residue)
+        run: |
+          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var /ws/node_modules 2>/dev/null; true'
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.3
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build --workspace=packages/shared
+      - run: npm run typecheck
+
+  # ═══════════════════════════════════════════════════════════
+  #  Tests (parallel — all quality gates run independently)
+  # ═══════════════════════════════════════════════════════════
+
+  test-backend:
+    name: Backend Tests
+    runs-on: self-hosted
+    # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
+    # skip_tests only skips test execution, NOT the job itself (needs chain requires job to run)
+    if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: postgresql://promptsite:testpassword@localhost:5434/promptsite_test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6381
+      JWT_SECRET: test-secret-key-for-ci-environment-32chars
+      JWT_REFRESH_SECRET: test-refresh-secret-key-for-ci-environment-32chars
+      ANTHROPIC_API_KEY: test-key
+      OPENAI_API_KEY: test-key
+      APIFY_TOKEN: test-token
+    steps:
+      - name: Clean root-owned files (Docker residue)
+        run: |
+          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var /ws/node_modules 2>/dev/null; true'
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.3
+          cache: npm
+
+      - name: Start PostgreSQL
+        run: |
+          docker rm -f pg-test 2>/dev/null || true
+          docker run -d --name pg-test \
+            -e POSTGRES_DB=promptsite_test \
+            -e POSTGRES_USER=promptsite \
+            -e POSTGRES_PASSWORD=testpassword \
+            -p 5434:5432 \
+            postgres:16-alpine
+          for i in $(seq 1 20); do
+            if docker exec pg-test pg_isready -U promptsite > /dev/null 2>&1; then
+              echo "✅ PostgreSQL ready"
+              break
+            fi
+            echo "⏳ Waiting for PostgreSQL ($i/20)..."
+            sleep 1
+          done
+
+      - name: Start Redis
+        run: |
+          docker rm -f redis-test 2>/dev/null || true
+          docker run -d --name redis-test \
+            -p 6381:6379 \
+            redis:7-alpine
+          for i in $(seq 1 10); do
+            if docker exec redis-test redis-cli ping | grep -q PONG; then
+              echo "✅ Redis ready"
+              break
+            fi
+            echo "⏳ Waiting for Redis ($i/10)..."
+            sleep 1
+          done
+
+      - run: npm ci
+      - run: npm run build --workspace=packages/shared
+      - run: npx prisma generate --schema=apps/backend/prisma/schema.prisma
+      - run: npx prisma migrate deploy --schema=apps/backend/prisma/schema.prisma
+      - name: Skip tests (manual override)
+        if: ${{ inputs.skip_tests }}
+        run: echo "⏭️ Backend tests skipped via workflow_dispatch skip_tests"
+
+      - name: Run backend tests
+        if: ${{ !inputs.skip_tests }}
+        run: npm run test --workspace=apps/backend
+
+      - name: Cleanup services
+        if: always()
+        run: docker rm -f pg-test redis-test 2>/dev/null || true
+
+  test-frontend:
+    name: Frontend Tests
+    runs-on: self-hosted
+    # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
+    # skip_tests only skips test execution, NOT the job itself (needs chain requires job to run)
+    if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
+    timeout-minutes: 10
+    steps:
+      - name: Clean root-owned files (Docker residue)
+        run: |
+          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var /ws/node_modules 2>/dev/null; true'
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.3
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build --workspace=packages/shared
+      - name: Skip tests (manual override)
+        if: ${{ inputs.skip_tests }}
+        run: echo "⏭️ Frontend tests skipped via workflow_dispatch skip_tests"
+
+      - name: Run frontend tests
+        if: ${{ !inputs.skip_tests }}
+        run: npm run test --workspace=apps/frontend
+
+  # ═══════════════════════════════════════════════════════════
+  #  Build + Deploy (PR merge to main or manual trigger)
+  # ═══════════════════════════════════════════════════════════
+
+  build:
+    name: Build
+    runs-on: self-hosted
+    # Build only runs if ALL quality gates pass — failing test cancels workflow
+    needs: [lint, typecheck, test-backend, test-frontend]
+    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || github.event_name == 'workflow_dispatch' }}
+    timeout-minutes: 15
+    steps:
+      - name: Clean root-owned files (Docker residue)
+        run: |
+          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var /ws/node_modules 2>/dev/null; true'
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.3
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+  # ═══════════════════════════════════════════════════════════
+  #  Deploy (on PR merge to main or manual trigger)
+  # ═══════════════════════════════════════════════════════════
+
+  deploy:
+    name: Deploy to Production
+    runs-on: self-hosted
+    needs: [build]
+    if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || github.event_name == 'workflow_dispatch' }}
+    environment: production
+    timeout-minutes: 30
+    env:
+      POSTGRES_PORT: "5433"
+      REDIS_PORT: "6380"
+      BACKEND_PORT: "3001"
+      FRONTEND_PORT: "5174"
+      CADDY_HTTP_PORT: "8080"
+      CADDY_HTTPS_PORT: "8443"
+
+    steps:
+      - name: Clean root-owned files (Docker residue)
+        run: |
+          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var /ws/node_modules 2>/dev/null; true'
+
+      - uses: actions/checkout@v4
+
+      - name: Verify .env exists
+        run: |
+          ENV_FILE="/opt/prompt-site-builder/.env"
+          if [ ! -f "$ENV_FILE" ]; then
+            echo "❌ ERROR: .env file not found at $ENV_FILE"
+            echo "Create it: cp /opt/prompt-site-builder/.env.example $ENV_FILE && vim $ENV_FILE"
+            exit 1
+          fi
+          cp "$ENV_FILE" .env
+          echo "✅ .env copied from $ENV_FILE"
+
+      - name: Setup persistent directories
+        run: |
+          mkdir -p /opt/prompt-site-builder/var/www/client-sites
+          mkdir -p /opt/prompt-site-builder/docker
+          # Remove before copy — Docker may have created Caddyfile as a directory on failed mount
+          rm -rf /opt/prompt-site-builder/docker/Caddyfile
+          cp -f docker/Caddyfile /opt/prompt-site-builder/docker/Caddyfile
+          echo "✅ Persistent dirs ready"
+
+      - name: Verify Docker
+        run: |
+          docker --version
+          docker compose version
+          echo "✅ Docker ready"
+
+      - name: Stop old containers
+        run: |
+          echo "🛑 Stopping old containers..."
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml down --remove-orphans || true
+
+      - name: Build and start services
+        run: |
+          echo "🐳 Building images..."
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache 2>&1
+          echo "🚀 Starting services..."
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --wait --wait-timeout 120
+
+      - name: Run database migrations
+        run: docker compose exec -T backend npx prisma migrate deploy
+
+      - name: Health check — Backend
+        run: |
+          echo "🏥 Checking backend..."
+          for i in $(seq 1 12); do
+            if curl -sf http://localhost:3001/health > /dev/null 2>&1; then
+              echo "✅ Backend healthy"
+              break
+            fi
+            if [ "$i" -eq 12 ]; then
+              echo "❌ Backend failed to start"
+              docker compose logs backend --tail=50
+              exit 1
+            fi
+            echo "⏳ Waiting ($i/12)..."
+            sleep 5
+          done
+
+      - name: Health check — Frontend
+        run: |
+          echo "🏥 Checking frontend..."
+          for i in $(seq 1 6); do
+            if curl -sf http://localhost:5174/ > /dev/null 2>&1; then
+              echo "✅ Frontend healthy"
+              break
+            fi
+            if [ "$i" -eq 6 ]; then
+              echo "❌ Frontend failed to start"
+              docker compose logs frontend --tail=50
+              exit 1
+            fi
+            echo "⏳ Waiting ($i/6)..."
+            sleep 5
+          done
+
+      - name: Check Caddy
+        run: |
+          if curl -sf http://localhost:8080/ > /dev/null 2>&1; then
+            echo "✅ Caddy responding"
+          else
+            echo "⚠️ Caddy not responding (may need valid DNS)"
+            docker compose logs caddy --tail=20
+          fi
+
+      - name: Cleanup old images
+        if: always()
+        run: docker image prune -f
+
+      - name: Deploy Summary
+        if: always()
+        run: |
+          echo ""
+          echo "============================================"
+          echo "  Deploy finished"
+          echo "============================================"
+          echo "  Dashboard:  https://sitenow.pp.ua"
+          echo "  API:        https://api.sitenow.pp.ua"
+          echo "  Server:     $(hostname) ($(hostname -I | awk '{print $1}'))"
+          echo "  Time:       $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+          echo "============================================"
+
+      - name: Clean root-owned files (post-job)
+        if: always()
+        run: |
+          docker run --rm -v "$(pwd):/ws" alpine sh -c 'rm -rf /ws/docker /ws/var /ws/node_modules 2>/dev/null; true'
+          echo "✅ Root-owned files cleaned"

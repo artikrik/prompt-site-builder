@@ -5,7 +5,7 @@ export interface Project {
   leadId: string;
   slug: string;
   status: ProjectStatus;
-  hugoConfig: HugoConfig;
+  hugoConfig: any;
   generatedAt: Date | null;
   publishedAt: Date | null;
   publishedUrl: string | null;
@@ -24,12 +24,12 @@ export interface HugoConfig {
 
 export interface CreateProjectDto {
   leadId: string;
-  hugoConfig?: Partial<HugoConfig>;
+  hugoConfig?: any;
 }
 
 export interface UpdateProjectDto {
   status?: ProjectStatus;
-  hugoConfig?: Partial<HugoConfig>;
+  hugoConfig?: any;
 }
 
 export interface SiteGenerationRequest {
@@ -44,6 +44,8 @@ export interface SiteGenerationRequest {
   email: string | null;
   socialUrl: string | null;
   theme?: string;
+  model?: string;
+  imageModel?: string;
 }
 
 export interface GeneratedSiteStructure {

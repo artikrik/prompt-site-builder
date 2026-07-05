@@ -15,9 +15,16 @@ export interface Lead {
   source: string;
   status: LeadStatus;
   tags: string[];
-  scrapedData: Record<string, unknown>;
+  scrapedData: any;
   createdAt: Date;
   updatedAt: Date;
+  easyweekEnabled: boolean;
+  easyweekApiKey: string | null;
+  wayforpayEnabled: boolean;
+  wayforpayMerchant: string | null;
+  wayforpaySecret: string | null;
+  monobankEnabled: boolean;
+  monobankApiKey: string | null;
 }
 
 export interface CreateLeadDto {
@@ -32,7 +39,7 @@ export interface CreateLeadDto {
   socialUrl?: string;
   source: string;
   tags?: string[];
-  scrapedData?: Record<string, unknown>;
+  scrapedData?: any;
 }
 
 export interface UpdateLeadDto {
@@ -46,7 +53,15 @@ export interface UpdateLeadDto {
   website?: string;
   socialUrl?: string;
   status?: LeadStatus;
+  scrapedData?: any;
   tags?: string[];
+  easyweekEnabled?: boolean;
+  easyweekApiKey?: string | null;
+  wayforpayEnabled?: boolean;
+  wayforpayMerchant?: string | null;
+  wayforpaySecret?: string | null;
+  monobankEnabled?: boolean;
+  monobankApiKey?: string | null;
 }
 
 export interface LeadFilter {

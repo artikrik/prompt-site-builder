@@ -1,22 +1,29 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Logger } from '@nestjs/common';
+import { SettingsService } from '../../settings/settings.service';
 import OpenAI from 'openai';
 import { ILLMStrategy, LLMGenerateOptions, LLMResponse, BusinessData, HugoGeneratedContent } from './llm-strategy.interface';
 
 @Injectable()
 export class OpenAIStrategy implements ILLMStrategy {
-  private client: OpenAI;
-  private defaultModel = 'gpt-4o';
+  private readonly logger = new Logger(OpenAIStrategy.name);
 
-  constructor(private readonly configService: ConfigService) {
-    this.client = new OpenAI({
-      apiKey: this.configService.get<string>('OPENAI_API_KEY'),
-    });
+  constructor(private readonly settingsService: SettingsService) {}
+
+  private async getClient(): Promise<OpenAI> {
+    const apiKey = await this.settingsService.getApiKey('openai');
+    if (!apiKey) throw new Error('OpenAI API key not configured');
+    return new OpenAI({ apiKey });
+  }
+
+  private async getModel(): Promise<string> {
+    return this.settingsService.getEffectiveModel('openai', 'content');
   }
 
   async generateContent(prompt: string, options?: LLMGenerateOptions): Promise<LLMResponse> {
-    const response = await this.client.chat.completions.create({
-      model: options?.model || this.defaultModel,
+    const client = await this.getClient();
+    const model = options?.model || (await this.getModel());
+    const response = await client.chat.completions.create({
+      model,
       max_tokens: options?.maxTokens || 4096,
       temperature: options?.temperature || 0.7,
       messages: [{ role: 'user', content: prompt }],

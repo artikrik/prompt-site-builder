@@ -1,21 +1,29 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Logger } from '@nestjs/common';
+import { SettingsService } from '../../settings/settings.service';
 import OpenAI from 'openai';
 import { IImageGenerationStrategy, ImageGenerationOptions, ImageGenerationResponse } from './image-strategy.interface';
 
 @Injectable()
 export class DallE3Strategy implements IImageGenerationStrategy {
-  private client: OpenAI;
+  private readonly logger = new Logger(DallE3Strategy.name);
 
-  constructor(private readonly configService: ConfigService) {
-    this.client = new OpenAI({
-      apiKey: this.configService.get<string>('OPENAI_API_KEY'),
-    });
+  constructor(private readonly settingsService: SettingsService) {}
+
+  private async getClient(): Promise<OpenAI> {
+    const apiKey = await this.settingsService.getApiKey('openai');
+    if (!apiKey) throw new Error('OpenAI API key not configured');
+    return new OpenAI({ apiKey });
+  }
+
+  private async getModel(): Promise<string> {
+    return this.settingsService.getEffectiveModel('openai', 'image');
   }
 
   async generateImage(prompt: string, options?: ImageGenerationOptions): Promise<ImageGenerationResponse> {
-    const response = await this.client.images.generate({
-      model: 'dall-e-3',
+    const client = await this.getClient();
+    const model = options?.model || (await this.getModel());
+    const response = await client.images.generate({
+      model,
       prompt,
       n: 1,
       size: options?.size || '1792x1024',
@@ -24,7 +32,11 @@ export class DallE3Strategy implements IImageGenerationStrategy {
       response_format: 'url',
     });
 
-    const image = response.data[0];
+    const data = response.data as { url: string; revised_prompt?: string }[] | undefined;
+    const image = data?.[0];
+    if (!image) {
+      throw new Error('DALL-E returned no image data');
+    }
 
     return {
       url: image.url || '',

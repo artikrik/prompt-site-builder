@@ -4,7 +4,7 @@ export interface ClientWidget {
   id: string;
   projectId: string;
   type: WidgetType;
-  config: WidgetConfig;
+  config: any;
   enabled: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -28,5 +28,5 @@ export interface PaymentWidgetConfig {
 export interface CreateWidgetDto {
   projectId: string;
   type: WidgetType;
-  config: WidgetConfig;
+  config: any;
 }
