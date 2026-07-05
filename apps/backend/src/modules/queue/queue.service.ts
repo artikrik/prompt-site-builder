@@ -24,6 +24,7 @@ export class QueueService {
     email: string | null;
     socialUrl: string | null;
     theme?: string;
+    variantId?: string;
   }) {
     const job = await this.generationQueue.add('generate-site', data, {
       attempts: 3,

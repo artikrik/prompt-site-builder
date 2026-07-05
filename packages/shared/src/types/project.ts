@@ -47,6 +47,7 @@ export interface SiteGenerationRequest {
   theme?: string;
   model?: string;
   imageModel?: string;
+  variantId?: string;
 }
 
 export interface GeneratedSiteStructure {

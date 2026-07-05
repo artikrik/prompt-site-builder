@@ -26,11 +26,12 @@ export class GenerationController {
   @Post(':projectId/generate')
   @HttpCode(HttpStatus.ACCEPTED)
   @ApiOperation({ summary: 'Start site generation for a project' })
-  @ApiBody({ schema: { properties: { theme: { type: 'string', description: 'Hugo theme name or "auto" for AI selection' } } } })
+  @ApiBody({ schema: { properties: { theme: { type: 'string', description: 'Hugo theme name or "auto" for AI selection' }, variantId: { type: 'string', description: 'Optional — existing variant ID to regenerate' } } } })
   @ApiResponse({ status: 202, description: 'Generation queued' })
   async generate(
     @Param('projectId') projectId: string,
     @Body('theme') theme?: string,
+    @Body('variantId') variantId?: string,
   ) {
     const project = await this.projectsService.findOne(projectId);
     const lead = (project as any).lead;
@@ -61,6 +62,7 @@ export class GenerationController {
       email: lead.email,
       socialUrl: lead.socialUrl,
       theme: selectedTheme,
+      variantId,
     });
 
     return {
@@ -68,6 +70,7 @@ export class GenerationController {
       projectId,
       jobId: job.id,
       theme: selectedTheme,
+      variantId: variantId || null,
       status: 'QUEUED',
     };
   }
