@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { CreateWidgetDto, ClientWidget, WidgetType, BookingWidgetConfig, PaymentWidgetConfig } from '@prompt-site-builder/shared';
 
@@ -12,7 +11,7 @@ export class WidgetsService {
       data: {
         projectId: dto.projectId,
         type: dto.type,
-        config: dto.config as Prisma.InputJsonValue,
+        config: dto.config as object,
       },
     });
     return widget as unknown as ClientWidget;
