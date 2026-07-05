@@ -1,24 +1,52 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { CacheService } from '../../shared/redis/cache.service';
+import { EncryptionService } from '../settings/encryption.service';
 import { CreateLeadDto, UpdateLeadDto, LeadFilter, Lead } from '@prompt-site-builder/shared';
 
 const CACHE_TTL = 60;
 const CACHE_PREFIX = 'leads';
+const ENCRYPTED_LEAD_FIELDS = ['easyweekApiKey', 'wayforpaySecret', 'monobankApiKey'];
 
 @Injectable()
 export class LeadsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cache: CacheService,
+    private readonly encryption: EncryptionService,
   ) {}
+
+  private encryptPaymentFields(dto: any): any {
+    const result = { ...dto };
+    for (const field of ENCRYPTED_LEAD_FIELDS) {
+      if (result[field]) {
+        result[field] = this.encryption.encrypt(result[field]);
+      }
+    }
+    return result;
+  }
+
+  private decryptPaymentFields<T>(data: T): T {
+    const result = { ...data } as any;
+    for (const field of ENCRYPTED_LEAD_FIELDS) {
+      if (result[field]) {
+        try {
+          result[field] = this.encryption.decrypt(result[field]);
+        } catch {
+          // Leave as-is if decryption fails (might be plaintext)
+        }
+      }
+    }
+    return result;
+  }
 
   async create(dto: CreateLeadDto): Promise<Lead> {
     const slug = this.generateSlug(dto.businessName);
+    const encryptedData = this.encryptPaymentFields(dto);
 
     const lead = await this.prisma.lead.create({
       data: {
-        ...dto,
+        ...encryptedData,
         slug,
         tags: dto.tags || [],
         scrapedData: dto.scrapedData || {},
@@ -26,7 +54,7 @@ export class LeadsService {
     });
 
     await this.cache.delByPrefix(CACHE_PREFIX);
-    return lead;
+    return this.decryptPaymentFields(lead);
   }
 
   async findAll(filter: LeadFilter = {}): Promise<Lead[]> {
@@ -39,19 +67,21 @@ export class LeadsService {
       (filter.tags && filter.tags.length > 0);
 
     if (!hasFilters) {
-      return this.cache.getOrSet(
+      const leads = await this.cache.getOrSet(
         `${CACHE_PREFIX}:all`,
         () => this.prisma.lead.findMany({ orderBy: { createdAt: 'desc' } }),
         CACHE_TTL,
       );
+      return leads.map(lead => this.decryptPaymentFields(lead));
     }
 
     const cacheKey = `${CACHE_PREFIX}:filtered:${JSON.stringify(filter, Object.keys(filter).sort())}`;
-    return this.cache.getOrSet(
+    const leads = await this.cache.getOrSet(
       cacheKey,
       () => this.findAllFromDb(filter),
       CACHE_TTL,
     );
+    return leads.map(lead => this.decryptPaymentFields(lead));
   }
 
   private async findAllFromDb(filter: LeadFilter): Promise<Lead[]> {
@@ -101,7 +131,7 @@ export class LeadsService {
       throw new NotFoundException(`Lead with ID ${id} not found`);
     }
 
-    return lead;
+    return this.decryptPaymentFields(lead);
   }
 
   async findBySlug(slug: string): Promise<Lead> {
@@ -113,19 +143,20 @@ export class LeadsService {
       throw new NotFoundException(`Lead with slug ${slug} not found`);
     }
 
-    return lead;
+    return this.decryptPaymentFields(lead);
   }
 
   async update(id: string, dto: UpdateLeadDto): Promise<Lead> {
     await this.findOne(id);
+    const encryptedData = this.encryptPaymentFields(dto);
 
     const lead = await this.prisma.lead.update({
       where: { id },
-      data: dto,
+      data: encryptedData,
     });
 
     await this.cache.delByPrefix(CACHE_PREFIX);
-    return lead;
+    return this.decryptPaymentFields(lead);
   }
 
   async remove(id: string): Promise<void> {

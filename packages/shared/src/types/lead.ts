@@ -18,6 +18,13 @@ export interface Lead {
   scrapedData: any;
   createdAt: Date;
   updatedAt: Date;
+  easyweekEnabled: boolean;
+  easyweekApiKey: string | null;
+  wayforpayEnabled: boolean;
+  wayforpayMerchant: string | null;
+  wayforpaySecret: string | null;
+  monobankEnabled: boolean;
+  monobankApiKey: string | null;
 }
 
 export interface CreateLeadDto {
@@ -48,6 +55,13 @@ export interface UpdateLeadDto {
   status?: LeadStatus;
   scrapedData?: any;
   tags?: string[];
+  easyweekEnabled?: boolean;
+  easyweekApiKey?: string | null;
+  wayforpayEnabled?: boolean;
+  wayforpayMerchant?: string | null;
+  wayforpaySecret?: string | null;
+  monobankEnabled?: boolean;
+  monobankApiKey?: string | null;
 }
 
 export interface LeadFilter {

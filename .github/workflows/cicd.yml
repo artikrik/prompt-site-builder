@@ -25,7 +25,9 @@ jobs:
   lint:
     name: Lint
     runs-on: self-hosted
-    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed') }}
+    # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
+    # Skip only: PR closed without merge
+    if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
     timeout-minutes: 10
     steps:
       - name: Clean root-owned files (Docker residue)
@@ -45,7 +47,8 @@ jobs:
   typecheck:
     name: Type Check
     runs-on: self-hosted
-    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed') }}
+    # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
+    if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
     timeout-minutes: 10
     steps:
       - name: Clean root-owned files (Docker residue)
@@ -70,7 +73,9 @@ jobs:
   test-backend:
     name: Backend Tests
     runs-on: self-hosted
-    if: ${{ !inputs.skip_tests && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed')) }}
+    # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
+    # skip_tests only skips test execution, NOT the job itself (needs chain requires job to run)
+    if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
     timeout-minutes: 15
     env:
       DATABASE_URL: postgresql://promptsite:testpassword@localhost:5434/promptsite_test
@@ -130,7 +135,13 @@ jobs:
       - run: npm run build --workspace=packages/shared
       - run: npx prisma generate --schema=apps/backend/prisma/schema.prisma
       - run: npx prisma migrate deploy --schema=apps/backend/prisma/schema.prisma
-      - run: npm run test --workspace=apps/backend
+      - name: Skip tests (manual override)
+        if: ${{ inputs.skip_tests }}
+        run: echo "⏭️ Backend tests skipped via workflow_dispatch skip_tests"
+
+      - name: Run backend tests
+        if: ${{ !inputs.skip_tests }}
+        run: npm run test --workspace=apps/backend
 
       - name: Cleanup services
         if: always()
@@ -139,7 +150,9 @@ jobs:
   test-frontend:
     name: Frontend Tests
     runs-on: self-hosted
-    if: ${{ !inputs.skip_tests && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed')) }}
+    # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
+    # skip_tests only skips test execution, NOT the job itself (needs chain requires job to run)
+    if: ${{ !(github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false) }}
     timeout-minutes: 10
     steps:
       - name: Clean root-owned files (Docker residue)
@@ -155,7 +168,13 @@ jobs:
 
       - run: npm ci
       - run: npm run build --workspace=packages/shared
-      - run: npm run test --workspace=apps/frontend
+      - name: Skip tests (manual override)
+        if: ${{ inputs.skip_tests }}
+        run: echo "⏭️ Frontend tests skipped via workflow_dispatch skip_tests"
+
+      - name: Run frontend tests
+        if: ${{ !inputs.skip_tests }}
+        run: npm run test --workspace=apps/frontend
 
   # ═══════════════════════════════════════════════════════════
   #  Build + Deploy (PR merge to main or manual trigger)
@@ -164,6 +183,8 @@ jobs:
   build:
     name: Build
     runs-on: self-hosted
+    # Build only runs if ALL quality gates pass — failing test cancels workflow
+    needs: [lint, typecheck, test-backend, test-frontend]
     if: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || github.event_name == 'workflow_dispatch' }}
     timeout-minutes: 15
     steps:
