@@ -1,5 +1,18 @@
 # prompt-site-builder
 
+## Caveman Mode — MANDATORY
+
+**Завжди використовуй Caveman плагін для всієї комунікації.**
+Усі відповіді, коментарі, пояснення — тільки через caveman-стиль:
+- Без артиклів (a/an/the)
+- Без філерів (just/really/basically/actually)
+- Без приємностей (sure/certainly/of course)
+- Фрагменти дозволені
+- Код, коміти, PR-описи — без змін, пишуться нормально
+- Технічні терміни точні
+
+Режим: **full** (lite|full|ultra). Вимкнути: "stop caveman" / "normal mode".
+
 ## RTK (Rust Token Killer) — MANDATORY
 
 **Кожна shell команда — ТІЛЬКИ через `rtk`.** Bash і PowerShell перехоплюються PreToolUse хуком автоматично. Жодних прямих викликів.
@@ -66,6 +79,9 @@
 - `turbo typecheck` — tsc --noEmit + svelte-check
 - `turbo format` — prettier
 - `hugo --source ./client-sites/<slug>` — build single client site
+- `docker compose up -d` — start all services (postgres, redis, caddy, backend, frontend)
+- `docker compose -f docker-compose.prod.yml up -d` — production deployment
+- `docker compose logs -f backend` — tail backend logs
 
 ## Hugo Theme Engine (CRITICAL)
 
@@ -80,17 +96,22 @@
 ```
 
 ### Theme Registry — Category Mapping
-| Theme | Git URL | Categories |
-|-------|---------|------------|
-| **ananke** | `github.com/theNewDynamic/gohugo-theme-ananke` | Law, Consulting |
-| **hugo-fresh** | `github.com/StefMa/hugo-fresh` | Medical, Cleaning, Vet |
-| **hugo-hero-theme** | `github.com/zerostaticthemes/hugo-hero-theme` | Salon, Gym |
-| **hugo-universal-theme** | `github.com/devcows/hugo-universal-theme` | Construction, Real Estate, Auto |
-| **hugo-scroll** | `github.com/janraasch/hugo-scroll` | Plumbers, Logistics |
+| Theme | Git URL | Category |
+|-------|---------|----------|
+| **hugo-theme-zen** | `github.com/frjo/hugo-theme-zen` | Minimal (default) |
+| **ananke** | `github.com/theNewDynamic/gohugo-theme-ananke` | Business |
+| **hugo-up-business** | `github.com/akshaybabloo/hugo-up-business` | Business, Legal, Finance |
+| **hugo-universal-theme** | `github.com/devcows/hugo-universal-theme` | Business, Restaurant |
+| **corporio** | `github.com/mismirnyy/corporio` | Corporate, Salon, Beauty |
+| **hugoplate** | `github.com/zeon-studio/hugoplate` | Landing, SaaS, Tech |
+| **blowfish** | `github.com/nunocoracao/blowfish` | Minimal, Tailwind |
+| **congo** | `github.com/jpanther/congo` | Minimal, Tailwind |
+| **hugo-theme-stack** | `github.com/CaiJimmy/hugo-theme-stack` | Blog, Content |
+| **PaperMod** | `github.com/adityatelange/hugo-PaperMod` | Blog, SEO |
 
 ### ThemeOrchestrator Module
-- Maps 15 business categories → 5 themes based on registry above.
-- `git submodule add <theme_url> themes/<theme_name>` on project creation.
+- Maps business categories → themes based on registry above.
+- Themes installed at runtime via `git clone --depth 1` into project `themes/` directory.
 - NEVER generate raw HTML. ALWAYS generate `hugo.toml` + Markdown Front Matter matching the selected theme's schema.
 
 ### ECC Protocol (Build Validation)
@@ -112,14 +133,30 @@ node scripts/test-pipeline.js  # Simulate lead → pull theme → generate → h
 Must produce successful build in `/client-sites/<slug>/public/`.
 
 ## Testing
+
+### CI Pipeline — Run Locally Before Push (MANDATORY)
+**Кожен пуш має пройти ті самі кроки, що й GitHub Actions CI/CD.** Перед `git push` завжди запускай:
+
+```bash
+npm run lint             # 1. ESLint — 0 errors required (CI: lint job)
+npm run typecheck        # 2. tsc + svelte-check — 0 errors required (CI: typecheck job)
+npm run test             # 3. vitest (backend 112 tests, frontend 17 tests) (CI: test-backend + test-frontend)
+npm run build            # 4. Production build — exit 0 required (CI: build job)
+```
+
+**Кроки ідентичні CI/CD пайплайну в `.github/workflows/cicd.yml`.**
+Якщо будь-який крок падає — спочатку виправ, потім пуш.
+Також можна запустити одним скриптом: `bash scripts/ci-local.sh`
+
 - Unit/Integration: `vitest` (backend + frontend)
 - E2E: `playwright test` (frontend)
 - E2E backend: `vitest run --config vitest.e2e.config.ts`
 - Hugo build: `hugo --source ./client-sites/<slug>` (ECC protocol)
 
 ## Key Constraints
+- Copy `.env.example` → `.env` before first run (backend + frontend vars)
 - All external API calls MUST be mocked in tests (REQUIREMENTS.md)
-- `validateEnv()` must be called at startup (currently NOT wired)
-- `RolesGuard` exists but NOT connected in app.module.ts
+- `validateEnv()` wired via `ConfigModule.forRoot({ validate: validateEnv })` in app.module.ts
+- `RolesGuard` connected globally via `APP_GUARD` in app.module.ts
 - Hugo themes loaded via git submodule — never commit theme code to repo
 - Generated sites MUST pass `hugo build` with exit code 0 before publishing

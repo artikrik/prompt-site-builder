@@ -28,7 +28,10 @@ Thumbs.db
 *.tsbuildinfo
 
 # Generated
-/client-sites/
+# Hugo themes cloned at runtime — never committed
+client-sites/*/themes/
+# Hugo build output
+client-sites/*/public/
 /var/
 
 # Graphify output

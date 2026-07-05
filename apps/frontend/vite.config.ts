@@ -1,10 +1,11 @@
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
-import { defineConfig } from 'vitest/config';
+import { defineConfig, type Plugin } from 'vitest/config';
 import path from 'path';
 
 export default defineConfig({
-  plugins: [tailwindcss(), sveltekit()],
+  // vitest bundles its own Vite types — cast plugins to reconcile type mismatch
+  plugins: [tailwindcss() as unknown as Plugin, sveltekit() as unknown as Plugin],
   server: {
     host: true,
   },
