@@ -72,7 +72,7 @@ jobs:
     env:
       DATABASE_URL: postgresql://promptsite:testpassword@localhost:5434/promptsite_test
       REDIS_HOST: localhost
-      REDIS_PORT: 6379
+      REDIS_PORT: 6381
       JWT_SECRET: test-secret-key-for-ci-environment-32chars
       JWT_REFRESH_SECRET: test-refresh-secret-key-for-ci-environment-32chars
       ANTHROPIC_API_KEY: test-key
@@ -112,7 +112,7 @@ jobs:
         run: |
           docker rm -f redis-test 2>/dev/null || true
           docker run -d --name redis-test \
-            -p 6379:6379 \
+            -p 6381:6379 \
             redis:7-alpine
           for i in $(seq 1 10); do
             if docker exec redis-test redis-cli ping | grep -q PONG; then
