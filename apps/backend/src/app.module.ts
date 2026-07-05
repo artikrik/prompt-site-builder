@@ -11,6 +11,7 @@ import { GenerationModule } from './modules/generation/generation.module';
 import { PublishingModule } from './modules/publishing/publishing.module';
 import { WidgetsModule } from './modules/widgets/widgets.module';
 import { ScrapingModule } from './modules/scraping/scraping.module';
+import { EnrichmentModule } from './modules/enrichment/enrichment.module';
 import { QueueModule } from './modules/queue/queue.module';
 import { HealthModule } from './modules/health/health.module';
 import { SettingsModule } from './modules/settings/settings.module';
@@ -41,6 +42,7 @@ import { RedisModule } from './shared/redis/redis.module';
     PublishingModule,
     WidgetsModule,
     ScrapingModule,
+    EnrichmentModule,
     HealthModule,
     SettingsModule,
   ],

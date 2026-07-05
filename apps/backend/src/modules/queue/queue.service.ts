@@ -9,6 +9,7 @@ export class QueueService {
   constructor(
     @InjectQueue('generation') private readonly generationQueue: Queue,
     @InjectQueue('scraping') private readonly scrapingQueue: Queue,
+    @InjectQueue('scraping') private readonly enrichmentQueue: Queue,
   ) {}
 
   async addGenerationJob(data: {
@@ -42,6 +43,20 @@ export class QueueService {
       removeOnFail: { age: 604800 },
     });
     this.logger.log(`Scraping job ${job.id} added for ${data.city}/${data.category}`);
+    return job;
+  }
+
+  async addEnrichmentJob(leadId: string) {
+    const job = await this.enrichmentQueue.add('enrich-lead',
+      { leadId, type: 'ENRICH_LEAD' },
+      {
+        attempts: 2,
+        backoff: { type: 'exponential', delay: 10000 },
+        removeOnComplete: { age: 86400 },
+        removeOnFail: { age: 604800 },
+      },
+    );
+    this.logger.log(`Enrichment job ${job.id} added for lead ${leadId}`);
     return job;
   }
 

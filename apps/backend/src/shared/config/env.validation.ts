@@ -51,6 +51,13 @@ const envSchema = z.object({
   WAYFORPAY_MERCHANT: z.string().optional(),
   WAYFORPAY_SECRET: z.string().optional(),
   MONOBANK_API_KEY: z.string().optional(),
+
+  // Enrichment
+  FACEBOOK_ACCESS_TOKEN: z.string().optional(),
+  GOOGLE_MAPS_API_KEY: z.string().optional(),
+  INSTAGRAM_ACCESS_TOKEN: z.string().optional(),
+  ENRICHMENT_AUTO_RUN: z.string().optional().default('true'),
+  ENRICHMENT_DEFAULT_SOURCES: z.string().optional().default('instagram,facebook,googleMaps'),
 });
 
 export type Env = z.infer<typeof envSchema>;
