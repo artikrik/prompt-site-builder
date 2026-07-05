@@ -2,7 +2,7 @@
 FROM node:22-alpine AS builder
 
 # Install Hugo
-ARG HUGO_VERSION=0.139.0
+ARG HUGO_VERSION=0.145.0
 RUN apk add --no-cache wget && \
     wget -q https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz && \
     tar xzf hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz && \
@@ -37,7 +37,7 @@ RUN cd apps/backend && npm run build
 FROM node:22-alpine AS production
 
 # Install Hugo and curl for healthcheck
-ARG HUGO_VERSION=0.139.0
+ARG HUGO_VERSION=0.145.0
 RUN apk add --no-cache wget curl && \
     wget -q https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz && \
     tar xzf hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz && \
@@ -60,7 +60,7 @@ RUN mkdir -p /var/www/client-sites
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=5 \
   CMD curl -f http://localhost:3000/health || exit 1
 
 CMD ["node", "dist/src/main.js"]

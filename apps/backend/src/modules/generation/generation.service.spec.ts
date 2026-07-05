@@ -9,6 +9,7 @@ import { HugoValidatorService } from './hugo/hugo-validator.service';
 import { SitePublisherService } from '../publishing/site-publisher.service';
 import { SettingsService } from '../settings/settings.service';
 import { LeadsService } from '../leads/leads.service';
+import { VariantsService } from '../projects/variants/variants.service';
 import { JobStatus, ProjectStatus } from '@prompt-site-builder/shared';
 
 describe('GenerationService', () => {
@@ -17,6 +18,7 @@ describe('GenerationService', () => {
     project: { update: ReturnType<typeof vi.fn> };
     generationJob: { create: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
     siteAsset: { create: ReturnType<typeof vi.fn> };
+    siteVariant: { update: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn> };
   };
   let configService: { get: ReturnType<typeof vi.fn> };
   let llmFactory: { create: ReturnType<typeof vi.fn> };
@@ -26,6 +28,7 @@ describe('GenerationService', () => {
   let publisher: { publish: ReturnType<typeof vi.fn>; writeFile: ReturnType<typeof vi.fn>; writeFileBinary: ReturnType<typeof vi.fn> };
   let settingsService: { get: ReturnType<typeof vi.fn>; getEffectiveModel: ReturnType<typeof vi.fn> };
   let leadsService: { findOne: ReturnType<typeof vi.fn> };
+  let variantsService: { create: ReturnType<typeof vi.fn> };
 
   const siteRequest = {
     projectId: 'proj-1',
@@ -49,6 +52,10 @@ describe('GenerationService', () => {
         update: vi.fn().mockResolvedValue({ id: 'job-1' }),
       },
       siteAsset: { create: vi.fn().mockResolvedValue({ id: 'asset-1' }) },
+      siteVariant: {
+        update: vi.fn().mockResolvedValue({ id: 'variant-1' }),
+        create: vi.fn().mockResolvedValue({ id: 'variant-1' }),
+      },
     };
 
     configService = { get: vi.fn().mockReturnValue('openai') };
@@ -116,6 +123,15 @@ describe('GenerationService', () => {
       }),
     };
 
+    variantsService = {
+      create: vi.fn().mockResolvedValue({
+        id: 'variant-1',
+        projectId: 'proj-1',
+        variantName: 'gpt-4o + dall-e-3 + ananke',
+        status: 'DRAFT',
+      }),
+    };
+
     service = new GenerationService(
       prisma as unknown as PrismaService,
       configService as unknown as ConfigService,
@@ -126,6 +142,7 @@ describe('GenerationService', () => {
       publisher as unknown as SitePublisherService,
       settingsService as unknown as SettingsService,
       leadsService as unknown as LeadsService,
+      variantsService as unknown as VariantsService,
     );
   });
 
