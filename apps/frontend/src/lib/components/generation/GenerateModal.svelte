@@ -22,10 +22,10 @@
     models, onClose,
   }: Props = $props();
 
-  let contentProvider = $state(defaultContentProvider);
-  let contentModel = $state(defaultContentModel);
-  let imageProvider = $state(defaultImageProvider);
-  let imageModel = $state(defaultImageModel);
+  let contentProvider = $state(String(defaultContentProvider));
+  let contentModel = $state(String(defaultContentModel));
+  let imageProvider = $state(String(defaultImageProvider));
+  let imageModel = $state(String(defaultImageModel));
   let isGenerating = $state(false);
 
   async function generate() {

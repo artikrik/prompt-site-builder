@@ -26,6 +26,7 @@
     <h3 class="font-semibold">{name}</h3>
     <button
       onclick={() => onToggle(!enabled)}
+      aria-label={`Toggle ${name}`}
       class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
       class:bg-primary={enabled}
       class:bg-muted={!enabled}
