@@ -40,6 +40,32 @@ Examples: `rtk git status`, `rtk npm install`, `rtk turbo build`
 | Bash `rg`   | `rtk grep <pattern>` | ~75% |
 | Bash `ls`   | `rtk ls <path>` | ~65% |
 
+## Branching Strategy (GitHub Flow)
+
+**One default branch: `main`.** All work branches from `main`, all PRs to `main`, deploy from `main`.
+
+| Rule | Detail |
+|------|--------|
+| Default branch | `main` (protected) |
+| Feature branches | `feat/<name>`, `fix/<name>`, `refactor/<name>` |
+| PR target | `main` |
+| Merge strategy | **Squash merge** — 1 commit per PR |
+| Deploy | Auto-deploy on merge to `main` |
+| Worktree | `EnterWorktree` for every task |
+
+### Squash Merge Rule (MANDATORY)
+**Кожен PR мерджиться через squash — всі коміти стискаються в один.** Це тримає історію `main` чистою.
+- `git merge --squash` локально
+- `gh pr merge --squash` через CLI
+- GitHub UI: "Squash and merge" кнопка
+
+### Branch Protection
+- ✅ Require status checks: lint, typecheck, test-backend, test-frontend
+- ✅ Require branches up to date (strict mode)
+- ✅ Require conversation resolution
+- ❌ NO approval required (solo project)
+- ❌ NO force pushes, NO deletions
+
 ## Development Workflow (Superpowers)
 
 **Philosophy: TDD + plan + review = MANDATORY. Not optional.**
@@ -89,10 +115,28 @@ Activates **between tasks** (after each file/task completion):
 
 ### 7. finishing-a-development-branch
 Activates **when all tasks complete**:
-1. Verifies all tests pass
-2. Presents 4 options: merge locally / push + create PR / keep as-is / discard
-3. Cleans up worktree (for merge/discard options)
-4. Deletes branch after merge
+1. Verifies all tests pass (local CI: `bash scripts/ci-local.sh`)
+2. Pushes branch, creates PR via `gh pr create`
+3. Dispatches **code-reviewer agent** — reviews PR diff against plan
+   - CRITICAL issues → fix first, re-review
+   - Questions → asks user before proceeding
+   - All clear → approves PR
+4. GitHub Actions CI runs on PR (lint, typecheck, test)
+5. CI green → PR auto-mergeable (branch protection: status checks only, no approval required)
+6. Merge to main → CI build + deploy
+7. Cleans up worktree, deletes branch
+
+### Auto-Review + Auto-Merge Flow
+
+```
+PR створено → reviewer agent → CRITICAL? → fix → re-review
+                              → OK → CI запускається
+                                    → CI green → auto-merge
+                                    → CI ❌ → fix → push → CI again
+```
+
+Branch protection: **status checks required, approvals NOT required.**
+Це дозволяє Claude автоматично мерджити PR після проходження CI.
 
 ### Quick Reference
 
