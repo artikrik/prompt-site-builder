@@ -30,6 +30,9 @@ RUN cd apps/frontend && npm run build
 # Stage 2: Production
 FROM node:22-alpine AS production
 
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
 WORKDIR /app
 
 COPY --from=builder /app/apps/frontend/.svelte-kit/output ./build
