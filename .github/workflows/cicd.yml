@@ -95,6 +95,10 @@ jobs:
       ANTHROPIC_API_KEY: test-key
       OPENAI_API_KEY: test-key
       APIFY_TOKEN: test-token
+      FACEBOOK_ACCESS_TOKEN: test-facebook-token
+      GOOGLE_MAPS_API_KEY: test-google-maps-key
+      ENRICHMENT_AUTO_RUN: 'false'
+      ENRICHMENT_DEFAULT_SOURCES: instagram,facebook,googleMaps
     steps:
       - name: Clean root-owned files (Docker residue)
         run: |
@@ -276,6 +280,14 @@ jobs:
           docker compose -f docker-compose.yml -f docker-compose.prod.yml build --no-cache 2>&1
           echo "🚀 Starting services..."
           docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --wait --wait-timeout 120
+
+      - name: Dump backend logs on start failure
+        if: failure()
+        run: |
+          echo "=== Backend Logs (last 100 lines) ==="
+          docker compose logs backend --tail=100 2>&1 || echo "(no backend logs available)"
+          echo "=== Container Status ==="
+          docker compose ps 2>&1 || true
 
       - name: Run database migrations
         run: docker compose exec -T backend npx prisma migrate deploy

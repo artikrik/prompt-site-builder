@@ -8,6 +8,7 @@ import { HugoValidatorService } from './hugo/hugo-validator.service';
 import { SitePublisherService } from '../publishing/site-publisher.service';
 import { SettingsService } from '../settings/settings.service';
 import { LeadsService } from '../leads/leads.service';
+import { VariantsService } from '../projects/variants/variants.service';
 import { SiteGenerationRequest, GeneratedSiteStructure, ProjectStatus, JobStatus } from '@prompt-site-builder/shared';
 
 @Injectable()
@@ -24,6 +25,7 @@ export class GenerationService {
     private readonly publisher: SitePublisherService,
     private readonly settingsService: SettingsService,
     private readonly leadsService: LeadsService,
+    private readonly variantsService: VariantsService,
   ) {}
 
   async generateSite(request: SiteGenerationRequest): Promise<void> {
@@ -48,9 +50,28 @@ export class GenerationService {
       monobankEnabled: lead.monobankEnabled,
     };
 
+    // Create or use variant for this generation
+    let variantId: string | undefined = (request as any).variantId;
+    if (!variantId) {
+      const variant = await this.variantsService.create(projectId, {
+        model: llmModel,
+        imageModel,
+        theme: request.theme,
+      });
+      variantId = variant.id;
+      this.logger.log(`Created variant ${variantId} for project ${projectId}`);
+    }
+
+    // Update variant status to generating
+    await this.prisma.siteVariant.update({
+      where: { id: variantId },
+      data: { status: 'GENERATING' },
+    });
+
     const job = await this.prisma.generationJob.create({
       data: {
         projectId,
+        variantId,
         type: 'GENERATE_SITE',
         status: JobStatus.PROCESSING,
         attempts: 1,
@@ -145,24 +166,46 @@ export class GenerationService {
       await this.publisher.publish(request.slug);
 
       // 8. Update project
+      const publishedUrl = `https://${request.slug}.${this.configService.get('BASE_DOMAIN')}`;
       await this.prisma.project.update({
         where: { id: projectId },
         data: {
           status: ProjectStatus.PUBLISHED,
           publishedAt: new Date(),
-          publishedUrl: `https://${request.slug}.${this.configService.get('BASE_DOMAIN')}`,
+          publishedUrl,
+          activeVariantId: variantId,
         },
       });
 
-      // 9. Mark job done
+      // 9. Store generated content on variant
+      await this.prisma.siteVariant.update({
+        where: { id: variantId! },
+        data: {
+          status: 'GENERATED',
+          hugoConfig: { theme: request.theme, config: hugoContent.hugoToml },
+          content: {
+            indexMd: hugoContent.indexMd,
+            aboutMd: hugoContent.aboutMd,
+            servicesMd: hugoContent.servicesMd,
+            contactMd: hugoContent.contactMd,
+          },
+          modelUsed: llmModel,
+          imageModel,
+          themeName: request.theme,
+          previewUrl: publishedUrl,
+        },
+      });
+
+      // 10. Mark job done
       await this.prisma.generationJob.update({
         where: { id: job.id },
         data: {
           status: JobStatus.COMPLETED,
           result: {
             seoTitle: hugoContent.seoTitle,
-            publishedUrl: `https://${request.slug}.${this.configService.get('BASE_DOMAIN')}`,
+            publishedUrl,
             method: buildSuccess ? 'hugo' : 'static',
+            variantId: variantId!,
           },
         },
       });
@@ -174,6 +217,12 @@ export class GenerationService {
         where: { id: projectId },
         data: { status: ProjectStatus.FAILED },
       });
+      if (variantId) {
+        await this.prisma.siteVariant.update({
+          where: { id: variantId },
+          data: { status: 'DRAFT' },
+        });
+      }
       await this.prisma.generationJob.update({
         where: { id: job.id },
         data: {

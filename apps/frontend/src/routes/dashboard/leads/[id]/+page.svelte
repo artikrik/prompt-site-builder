@@ -6,6 +6,9 @@
   import { resolve } from '$app/paths';
   import { api } from '$lib/api/client.js';
   import PaymentProviderCard from '$lib/components/lead/PaymentProviderCard.svelte';
+  import EnrichButton from '$lib/components/enrichment/EnrichButton.svelte';
+  import EnrichmentPanel from '$lib/components/enrichment/EnrichmentPanel.svelte';
+  import type { EnrichmentData } from '$lib/stores/enrichment';
   import { Button } from '$lib/components/ui/button/index.js';
   import { ArrowLeft } from '@lucide/svelte';
   import type { Lead } from '@prompt-site-builder/shared';
@@ -13,12 +16,18 @@
   let lead = $state<Lead | null>(null);
   let isLoading = $state(true);
   let saveStatus = $state<'idle' | 'saving' | 'saved'>('idle');
+  let enrichmentData = $state<EnrichmentData | null>(null);
+  let enrichmentSources = $state<string[]>([]);
+  let enrichedAt = $state<string | null>(null);
 
-  let leadId = $derived($page.params.id);
+  let leadId = $derived($page.params.id!);
 
   onMount(async () => {
     try {
       lead = await api.get<Lead>(`/leads/${leadId}`);
+      enrichmentSources = (lead as any).enrichmentSources || [];
+      enrichedAt = (lead as any).enrichedAt || null;
+      enrichmentData = (lead as any).enrichmentData || null;
     } catch {
       // eslint-disable-next-line no-console
       console.error('Failed to load lead');
@@ -79,6 +88,15 @@
       <div><label class="text-sm text-muted-foreground">Category</label><p>{lead.category || '—'}</p></div>
       <div><label class="text-sm text-muted-foreground">Source</label><p>{lead.source}</p></div>
       <div><label class="text-sm text-muted-foreground">Status</label><p>{lead.status}</p></div>
+    </section>
+
+    <!-- Enrichment -->
+    <section class="space-y-4">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-semibold">Enrichment</h2>
+        <EnrichButton leadId={leadId} sources={enrichmentSources} />
+      </div>
+      <EnrichmentPanel data={enrichmentData} sources={enrichmentSources} {enrichedAt} />
     </section>
 
     <!-- Payment & Booking Configuration -->
