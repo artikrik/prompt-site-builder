@@ -67,16 +67,16 @@ export class LeadsService {
       (filter.tags && filter.tags.length > 0);
 
     if (!hasFilters) {
-      const leads = await this.cache.getOrSet(
+      const leads: Lead[] = await this.cache.getOrSet<Lead[]>(
         `${CACHE_PREFIX}:all`,
-        () => this.prisma.lead.findMany({ orderBy: { createdAt: 'desc' } }),
+        () => this.prisma.lead.findMany({ orderBy: { createdAt: 'desc' } }) as Promise<Lead[]>,
         CACHE_TTL,
       );
       return leads.map(lead => this.decryptPaymentFields(lead));
     }
 
     const cacheKey = `${CACHE_PREFIX}:filtered:${JSON.stringify(filter, Object.keys(filter).sort())}`;
-    const leads = await this.cache.getOrSet(
+    const leads: Lead[] = await this.cache.getOrSet<Lead[]>(
       cacheKey,
       () => this.findAllFromDb(filter),
       CACHE_TTL,
