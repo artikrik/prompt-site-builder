@@ -18,6 +18,6 @@ import { EncryptionService } from './encryption.service';
     },
     SettingsService,
   ],
-  exports: [SettingsService],
+  exports: [SettingsService, EncryptionService],
 })
 export class SettingsModule {}
