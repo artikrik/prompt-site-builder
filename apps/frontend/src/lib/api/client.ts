@@ -1,4 +1,22 @@
-const API_BASE = import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+function resolveApiBase(): string {
+  // Client-side: derive API host from the browser's location.
+  //   sitenow.pp.ua        → https://api.sitenow.pp.ua
+  //   www.sitenow.pp.ua    → https://api.sitenow.pp.ua
+  //   localhost / 127.0.0.1 → http://localhost:3000 (dev)
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.')) {
+      return 'http://localhost:3000';
+    }
+    const baseDomain = hostname.replace(/^www\./, '');
+    return `https://api.${baseDomain}`;
+  }
+
+  // SSR fallback: use build-time env var or dev default
+  return import.meta.env.PUBLIC_API_URL || 'http://localhost:3000';
+}
+
+const API_BASE = resolveApiBase();
 
 interface RequestConfig {
   method?: string;
