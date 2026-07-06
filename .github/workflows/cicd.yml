@@ -2,9 +2,9 @@ name: CI/CD
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
     types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
@@ -192,7 +192,7 @@ jobs:
     runs-on: self-hosted
     # Build only runs if ALL quality gates pass — failing test cancels workflow
     needs: [lint, typecheck, test-backend, test-frontend]
-    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch' }}
+    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' }}
     timeout-minutes: 15
     steps:
       - name: Clean root-owned files (Docker residue)
@@ -217,7 +217,7 @@ jobs:
     name: Deploy to Production
     runs-on: self-hosted
     needs: [build]
-    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch' }}
+    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' }}
     environment: production
     timeout-minutes: 30
     env:
