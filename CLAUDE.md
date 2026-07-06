@@ -14,12 +14,11 @@
 - **Monorepo:** Turborepo (apps/backend, apps/frontend, packages/shared)
 
 ## Model Selection (Token Optimization)
-**deepseek-v4-flash is DEFAULT.** Start every task with flash. Only escalate to pro when flash fails or task is genuinely complex.
-- **deepseek-v4-flash (DEFAULT)** — 90% of tasks: single/multi-file edits, bug fixes, refactors, docs, tests, grep/find, format, commits, PRs, config changes, CI fixes, dependency updates, code review (mechanical), transcription
-- **deepseek-v4-pro[1m] (RARE)** — only when flash fails 2+ attempts OR task is: security audit, architecture redesign, multi-system debugging, complex concurrency
-- **Subagents**: flash for implementers + reviewers (90% of tasks); pro only for architecture/security reviewers
-- **Escalation rule**: start flash. If flash fails 2× on same task → switch to pro. Never start pro "just to be safe."
-- **Session default**: this session uses deepseek-v4-pro[1m] (inherited). But subagents/tool tasks should use flash per above.
+**Rule: flash for mechanical, pro for code.**
+- **deepseek-v4-flash** — mechanical tasks: docs, grep/find, format, commits, PRs, config changes, CI fixes, dependency updates, transcription, dead-code removal
+- **deepseek-v4-pro[1m]** — code tasks: single/multi-file edits, bug fixes, refactors, features, tests, code review, security audit, architecture, debugging, concurrency
+- **Subagents**: flash for mechanical implementers/reviewers (docs, config, CI); pro for code implementers + all code reviewers
+- **Session default**: this session uses deepseek-v4-pro[1m] (inherited). Subagents use pro for code work.
 
 ## RTK (Rust Token Killer)
 **ALL shell commands MUST use `rtk` prefix.** Saves 60-90% tokens. See `~/.claude/RTK.md` for full command reference.
