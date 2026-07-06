@@ -13,6 +13,13 @@
 - **Infra:** Docker Compose, Caddy (On-Demand TLS), GitHub Actions
 - **Monorepo:** Turborepo (apps/backend, apps/frontend, packages/shared)
 
+## Model Selection (Token Optimization)
+**Rule: flash for mechanical, pro for code.**
+- **deepseek-v4-flash** — mechanical tasks: docs, grep/find, format, commits, PRs, config changes, CI fixes, dependency updates, transcription, dead-code removal
+- **deepseek-v4-pro[1m]** — code tasks: single/multi-file edits, bug fixes, refactors, features, tests, code review, security audit, architecture, debugging, concurrency
+- **Subagents**: flash for mechanical implementers/reviewers (docs, config, CI); pro for code implementers + all code reviewers
+- **Session default**: this session uses deepseek-v4-pro[1m] (inherited). Subagents use pro for code work.
+
 ## RTK (Rust Token Killer)
 **ALL shell commands MUST use `rtk` prefix.** Saves 60-90% tokens. See `~/.claude/RTK.md` for full command reference.
 For file ops, prefer `rtk read`/`rtk grep`/`rtk find` over native Claude tools.
