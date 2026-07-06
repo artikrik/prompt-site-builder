@@ -377,6 +377,137 @@ export async function mockHealthCheck(page: Page) {
   });
 }
 
+// ── Variants mocks ───────────────────────────────────────────
+
+export interface MockVariant {
+  id: string;
+  projectId: string;
+  variantName: string;
+  status: string;
+  hugoConfig: unknown;
+  content: unknown;
+  modelUsed?: string;
+  imageModel?: string;
+  themeName?: string;
+  previewUrl?: string;
+  publishedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function createMockVariant(overrides: Partial<MockVariant> = {}): MockVariant {
+  const id = overrides.id ?? `var-${Math.random().toString(36).slice(2, 8)}`;
+  return {
+    id,
+    projectId: 'proj-1',
+    variantName: 'Default Variant',
+    status: 'GENERATED',
+    hugoConfig: { theme: 'ananke', title: 'Test Site' },
+    content: { 'index.md': '# Welcome\n\nTest content' },
+    modelUsed: 'claude-sonnet-5',
+    imageModel: 'dall-e-3',
+    themeName: 'ananke',
+    previewUrl: null,
+    publishedAt: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+export async function mockVariants(page: Page, variants: MockVariant[] = []) {
+  // GET/POST /projects/:id/variants
+  await page.route(`${API}/projects/**/variants`, async (route: Route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(variants),
+      });
+    } else if (route.request().method() === 'POST') {
+      const body = JSON.parse(route.request().postData() ?? '{}');
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify(createMockVariant({ ...body, id: `var-${Math.random().toString(36).slice(2, 8)}` })),
+      });
+    } else {
+      await route.continue();
+    }
+  });
+
+  // GET/PUT/DELETE /variants/:id (including /activate)
+  await page.route(`${API}/variants/**`, async (route: Route) => {
+    const url = route.request().url();
+    const method = route.request().method();
+
+    if (url.includes('/activate') && method === 'PUT') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(createMockVariant({ status: 'PUBLISHED' })),
+      });
+    } else if (method === 'PUT') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(variants[0] ?? createMockVariant()),
+      });
+    } else if (method === 'DELETE') {
+      await route.fulfill({ status: 204 });
+    } else {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          variants[0] ?? createMockVariant({ id: url.split('/').pop()! })
+        ),
+      });
+    }
+  });
+}
+
+// ── Generation mocks ─────────────────────────────────────────
+
+export async function mockGeneration(page: Page) {
+  // POST /generation/:projectId/generate
+  await page.route(`${API}/generation/**/generate`, async (route: Route) => {
+    await route.fulfill({
+      status: 202,
+      contentType: 'application/json',
+      body: JSON.stringify({ jobId: 'gen-job-1', status: 'PENDING' }),
+    });
+  });
+}
+
+// ── Enrichment mocks ─────────────────────────────────────────
+
+export async function mockEnrichment(page: Page) {
+  // POST /enrichment/run/:leadId
+  await page.route(`${API}/enrichment/run/**`, async (route: Route) => {
+    await route.fulfill({
+      status: 202,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        data: {
+          socialMedia: { instagram: 'https://instagram.com/testco', facebook: 'https://facebook.com/testco' },
+          photos: [],
+          enrichedAt: new Date().toISOString(),
+        },
+      }),
+    });
+  });
+
+  // GET /enrichment/status/:leadId
+  await page.route(`${API}/enrichment/status/**`, async (route: Route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ hasData: true, enrichedAt: new Date().toISOString() }),
+    });
+  });
+}
+
 // ── Convenience: mock everything needed for full app ─────────
 
 export async function mockAllApi(page: Page) {
@@ -388,6 +519,9 @@ export async function mockAllApi(page: Page) {
   await mockProjects(page);
   await mockSettings(page);
   await mockThemes(page);
+  await mockVariants(page);
+  await mockGeneration(page);
+  await mockEnrichment(page);
 }
 
 // ── Session helpers ─────────────────────────────────────────
@@ -404,7 +538,7 @@ export async function setAuthCookie(page: Page) {
       path: '/',
       httpOnly: false,
       secure: false,
-      sameSite: 'Lax' as const,
+      sameSite: 'None' as const,
     },
   ]);
 }

@@ -56,6 +56,27 @@ export class EnrichmentService {
     this.logger.log(`Enrichment complete for lead ${leadId} from ${sources.length} sources`);
   }
 
+  async getEnrichmentData(leadId: string) {
+    const lead = await this.prisma.lead.findUnique({
+      where: { id: leadId },
+      select: { enrichmentData: true, enrichedAt: true, enrichmentSources: true },
+    });
+    if (!lead) return { data: null, enrichedAt: null, sources: [] };
+    return {
+      data: lead.enrichmentData,
+      enrichedAt: lead.enrichedAt,
+      sources: lead.enrichmentSources,
+    };
+  }
+
+  async updateEnrichmentSources(leadId: string, sources: string[]) {
+    await this.prisma.lead.update({
+      where: { id: leadId },
+      data: { enrichmentSources: sources },
+    });
+    return { sources };
+  }
+
   private mergeResults(results: Partial<EnrichmentData>[]): Partial<EnrichmentData> {
     if (results.length === 0) return {};
     return results.reduce((acc, curr) => ({

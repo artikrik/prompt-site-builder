@@ -53,6 +53,8 @@ const envSchema = z.object({
   MONOBANK_API_KEY: z.string().optional(),
 
   // Enrichment
+  FACEBOOK_APP_ID: z.string().optional(),
+  FACEBOOK_APP_SECRET: z.string().optional(),
   FACEBOOK_ACCESS_TOKEN: z.string().optional(),
   GOOGLE_MAPS_API_KEY: z.string().optional(),
   INSTAGRAM_ACCESS_TOKEN: z.string().optional(),
