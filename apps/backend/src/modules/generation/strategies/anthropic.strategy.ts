@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { SettingsService } from '../../settings/settings.service';
 import Anthropic from '@anthropic-ai/sdk';
 import { ILLMStrategy, LLMGenerateOptions, LLMResponse, BusinessData, HugoGeneratedContent } from './llm-strategy.interface';
@@ -7,7 +8,10 @@ import { ILLMStrategy, LLMGenerateOptions, LLMResponse, BusinessData, HugoGenera
 export class AnthropicStrategy implements ILLMStrategy {
   private readonly logger = new Logger(AnthropicStrategy.name);
 
-  constructor(private readonly settingsService: SettingsService) {}
+  constructor(
+    private readonly settingsService: SettingsService,
+    private readonly configService: ConfigService,
+  ) {}
 
   private async getClient(): Promise<Anthropic> {
     const apiKey = await this.settingsService.getApiKey('anthropic');
@@ -88,11 +92,11 @@ Requirements:
 3. Make the hero image prompt specific and professional
 4. Include meta tags for social sharing (Open Graph)
 5. The Hugo config should use the '${data.theme || 'hugo-theme-zen'}' theme
-6. Base URL should be https://{slug}.sitenow.pp.ua`;
+6. Base URL should be https://{slug}.${this.configService.get<string>('BASE_DOMAIN', 'sitenow.pp.ua')}`;
   }
 
   private getDefaultHugoToml(data: BusinessData): string {
-    return `baseURL = "https://${data.businessName.toLowerCase().replace(/\s+/g, '-')}.sitenow.pp.ua"
+    return `baseURL = "https://${data.businessName.toLowerCase().replace(/\s+/g, '-')}.${this.configService.get<string>('BASE_DOMAIN', 'sitenow.pp.ua')}"
 languageCode = "uk"
 title = "${data.businessName}"
 theme = "${data.theme || 'hugo-theme-zen'}"
