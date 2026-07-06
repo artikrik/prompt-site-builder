@@ -1,6 +1,7 @@
 import { Controller, Post, Body, Get, Req, Res, HttpCode, HttpStatus, UseGuards, UnauthorizedException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { ConfigService } from '@nestjs/config';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { CreateUserDto, LoginDto, AuthTokens } from '@prompt-site-builder/shared';
@@ -8,15 +9,18 @@ import { CreateUserDto, LoginDto, AuthTokens } from '@prompt-site-builder/shared
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
   private setRefreshCookie(res: Response, token: string): void {
-    const isProd = process.env.NODE_ENV === 'production';
+    const isProd = this.configService.get<string>('NODE_ENV') === 'production';
     res.cookie('refresh_token', token, {
       httpOnly: true,
       secure: isProd,
       sameSite: 'lax',
-      domain: isProd ? process.env.BASE_DOMAIN : undefined,
+      domain: isProd ? this.configService.get<string>('BASE_DOMAIN') : undefined,
       path: '/',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
@@ -66,7 +70,11 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Logout and clear refresh token cookie' })
   async logout(@Res({ passthrough: true }) res: Response): Promise<void> {
-    res.clearCookie('refresh_token', { path: '/' });
+    const isProd = this.configService.get<string>('NODE_ENV') === 'production';
+    res.clearCookie('refresh_token', {
+      path: '/',
+      domain: isProd ? this.configService.get<string>('BASE_DOMAIN') : undefined,
+    });
   }
 
   @Get('me')

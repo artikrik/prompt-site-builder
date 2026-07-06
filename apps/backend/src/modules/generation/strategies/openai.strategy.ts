@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { SettingsService } from '../../settings/settings.service';
 import OpenAI from 'openai';
 import { ILLMStrategy, LLMGenerateOptions, LLMResponse, BusinessData, HugoGeneratedContent } from './llm-strategy.interface';
@@ -7,7 +8,10 @@ import { ILLMStrategy, LLMGenerateOptions, LLMResponse, BusinessData, HugoGenera
 export class OpenAIStrategy implements ILLMStrategy {
   private readonly logger = new Logger(OpenAIStrategy.name);
 
-  constructor(private readonly settingsService: SettingsService) {}
+  constructor(
+    private readonly settingsService: SettingsService,
+    private readonly configService: ConfigService,
+  ) {}
 
   private async getClient(): Promise<OpenAI> {
     const apiKey = await this.settingsService.getApiKey('openai');
@@ -85,11 +89,11 @@ Requirements:
 2. JSON-LD structured data on homepage
 3. Open Graph meta tags
 4. Theme: ${data.theme || 'hugo-theme-zen'}
-5. Base URL: https://{slug}.sitenow.pp.ua`;
+5. Base URL: https://{slug}.${this.configService.get<string>('BASE_DOMAIN', 'sitenow.pp.ua')}`;
   }
 
   private getDefaultHugoToml(data: BusinessData): string {
-    return `baseURL = "https://${data.businessName.toLowerCase().replace(/\s+/g, '-')}.sitenow.pp.ua"
+    return `baseURL = "https://${data.businessName.toLowerCase().replace(/\s+/g, '-')}.${this.configService.get<string>('BASE_DOMAIN', 'sitenow.pp.ua')}"
 languageCode = "uk"
 title = "${data.businessName}"
 theme = "${data.theme || 'hugo-theme-zen'}"

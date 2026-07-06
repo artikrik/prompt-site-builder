@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { CacheService } from '../../shared/redis/cache.service';
 import { CreateProjectDto, UpdateProjectDto, Project, ProjectStatus } from '@prompt-site-builder/shared';
@@ -11,6 +12,7 @@ export class ProjectsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly cache: CacheService,
+    private readonly configService: ConfigService,
   ) {}
 
   async create(dto: CreateProjectDto, userId?: string): Promise<Project> {
@@ -30,13 +32,14 @@ export class ProjectsService {
       throw new BadRequestException(`Project already exists for lead ${dto.leadId}`);
     }
 
+    const domain = this.configService.get<string>('BASE_DOMAIN', 'sitenow.pp.ua');
     const slug = lead.slug;
     const defaultHugoConfig = {
       title: lead.businessName,
       description: lead.description || `${lead.businessName} - Professional services`,
       theme: 'hugo-theme-zen',
       languageCode: 'uk',
-      baseUrl: `https://${slug}.sitenow.pp.ua`,
+      baseUrl: `https://${slug}.${domain}`,
       params: {
         businessName: lead.businessName,
         phone: lead.phone,
@@ -110,7 +113,7 @@ export class ProjectsService {
       updateData.generatedAt = new Date();
     } else if (status === ProjectStatus.PUBLISHED) {
       updateData.publishedAt = new Date();
-      updateData.publishedUrl = `https://${project.slug}.sitenow.pp.ua`;
+      updateData.publishedUrl = `https://${project.slug}.${this.configService.get<string>('BASE_DOMAIN', 'sitenow.pp.ua')}`;
     }
 
     const updated = await this.prisma.project.update({

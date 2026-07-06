@@ -24,7 +24,14 @@ describe('GeminiStrategy', () => {
       getEffectiveModel: vi.fn().mockResolvedValue('gemini-2.5-pro'),
     };
 
-    strategy = new GeminiStrategy(mockSettingsService as any);
+    const mockConfigService = {
+      get: vi.fn((key: string, fallback?: string) => {
+        if (key === 'BASE_DOMAIN') return 'sitenow.pp.ua';
+        return fallback;
+      }),
+    };
+
+    strategy = new GeminiStrategy(mockSettingsService as any, mockConfigService as any);
   });
 
   it('should construct with settings service', () => {
@@ -49,7 +56,13 @@ describe('GeminiStrategy', () => {
       getApiKey: vi.fn().mockResolvedValue(null),
       getEffectiveModel: vi.fn().mockResolvedValue('gemini-2.5-pro'),
     };
-    const noKeyStrategy = new GeminiStrategy(noKeySettings as any);
+    const noKeyConfig = {
+      get: vi.fn((key: string, fallback?: string) => {
+        if (key === 'BASE_DOMAIN') return 'sitenow.pp.ua';
+        return fallback;
+      }),
+    };
+    const noKeyStrategy = new GeminiStrategy(noKeySettings as any, noKeyConfig as any);
     await expect(noKeyStrategy.generateContent('test')).rejects.toThrow(
       'Google API key not configured',
     );
