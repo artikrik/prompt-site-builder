@@ -2,6 +2,7 @@ import { Controller, Post, Body, Get, Req, Res, HttpCode, HttpStatus, UseGuards,
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
+import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { CreateUserDto, LoginDto, AuthTokens } from '@prompt-site-builder/shared';
@@ -26,6 +27,7 @@ export class AuthController {
     });
   }
 
+  @Throttle({ default: { limit: 3, ttl: 3600000 } })
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User registered successfully' })
@@ -36,6 +38,7 @@ export class AuthController {
     return { accessToken: tokens.accessToken };
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login with email and password' })
