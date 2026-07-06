@@ -1,57 +1,34 @@
-# Testing Requirements
+# Testing
 
-## Minimum Test Coverage: 80%
+## Coverage: 80%+ required
+- Unit/Integration: vitest (backend + frontend)
+- E2E frontend: playwright test
+- E2E backend: vitest run --config vitest.e2e.config.ts
+- Hugo build: hugo --source ./client-sites/<slug> (build validation)
 
-Test Types (ALL required):
-1. **Unit Tests** - Individual functions, utilities, components
-2. **Integration Tests** - API endpoints, database operations
-3. **E2E Tests** - Critical user flows (framework chosen per language)
+## TDD
+RED → GREEN → IMPROVE. Use superpowers tdd-guide agent.
+1. Write test (should FAIL)
+2. Minimal implementation (should PASS)
+3. Refactor
+4. Verify 80%+ coverage
 
-## Test-Driven Development
-
-MANDATORY workflow:
-1. Write test first (RED)
-2. Run test - it should FAIL
-3. Write minimal implementation (GREEN)
-4. Run test - it should PASS
-5. Refactor (IMPROVE)
-6. Verify coverage (80%+)
-
-## Troubleshooting Test Failures
-
-1. Use **tdd-guide** agent
-2. Check test isolation
-3. Verify mocks are correct
-4. Fix implementation, not tests (unless tests are wrong)
-
-## Agent Support
-
-- **tdd-guide** - Use PROACTIVELY for new features, enforces write-tests-first
-
-## Test Structure (AAA Pattern)
-
-Prefer Arrange-Act-Assert structure for tests:
-
+## AAA Pattern
 ```typescript
-test('calculates similarity correctly', () => {
+test('descriptive name of behavior', () => {
   // Arrange
-  const vector1 = [1, 0, 0]
-  const vector2 = [0, 1, 0]
-
+  const input = ...
   // Act
-  const similarity = calculateCosineSimilarity(vector1, vector2)
-
+  const result = functionUnderTest(input)
   // Assert
-  expect(similarity).toBe(0)
+  expect(result).toBe(expected)
 })
 ```
 
-### Test Naming
+## Test Names
+Descriptive: "returns empty array when no markets match query", "throws error when API key is missing"
 
-Use descriptive names that explain the behavior under test:
-
-```typescript
-test('returns empty array when no markets match query', () => {})
-test('throws error when API key is missing', () => {})
-test('falls back to substring search when Redis is unavailable', () => {})
-```
+## Rules
+- External API calls MUST be mocked.
+- If test fails: check isolation → verify mocks → fix implementation (not tests, unless tests wrong).
+- CI: bash scripts/ci-local.sh (lint → typecheck → test → build).
