@@ -28,19 +28,30 @@ export class EnrichmentFactory {
   private wrapInstagramProvider(): IEnrichmentProvider {
     return {
       source: 'instagram',
-      enrich: async (businessName: string, _city?: string) => {
-        const result = await this.instagramProvider.enrichFromProfile(businessName);
+      enrich: async (businessName: string, _city?: string, url?: string) => {
+        const username = url
+          ? this.instagramProvider.extractUsernameFromUrl(url)
+          : businessName;
+        if (!username) {
+          return {};
+        }
+
+        const result = await this.instagramProvider.enrichFull(username);
         if (!result) return {};
 
         return {
-          photos: result.profilePicUrl ? [result.profilePicUrl] : [],
-          logoUrl: result.profilePicUrl ?? undefined,
+          services: result.services,
+          photos: result.photos,
+          videos: result.videos,
+          logoUrl: result.logoUrl ?? undefined,
+          toneOfVoice: result.toneOfVoice ?? undefined,
+          customerJourney: result.customerJourney,
           stats: {
             instagramPosts: result.postsCount ?? undefined,
             instagramFollowers: result.followers ?? undefined,
           },
           sourceUrls: {
-            instagram: `https://instagram.com/${businessName}`,
+            instagram: result.sourceUrl,
           },
         };
       },
