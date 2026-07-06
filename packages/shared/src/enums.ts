@@ -49,3 +49,11 @@ export const ImageAssetType = {
   GALLERY: 'GALLERY',
 } as const;
 export type ImageAssetType = (typeof ImageAssetType)[keyof typeof ImageAssetType];
+
+export const VariantStatus = {
+  DRAFT: 'DRAFT',
+  GENERATING: 'GENERATING',
+  GENERATED: 'GENERATED',
+  PUBLISHED: 'PUBLISHED',
+} as const;
+export type VariantStatus = (typeof VariantStatus)[keyof typeof VariantStatus];

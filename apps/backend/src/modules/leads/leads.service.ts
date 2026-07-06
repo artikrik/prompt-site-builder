@@ -37,7 +37,16 @@ export class LeadsService {
         }
       }
     }
-    return result;
+    return result as T;
+  }
+
+  private toLead(data: any): Lead {
+    const decrypted = this.decryptPaymentFields(data);
+    return {
+      ...decrypted,
+      enrichmentData: (decrypted.enrichmentData as any) ?? null,
+      scrapedData: decrypted.scrapedData ?? {},
+    } as Lead;
   }
 
   async create(dto: CreateLeadDto): Promise<Lead> {
@@ -54,7 +63,7 @@ export class LeadsService {
     });
 
     await this.cache.delByPrefix(CACHE_PREFIX);
-    return this.decryptPaymentFields(lead);
+    return this.toLead(lead);
   }
 
   async findAll(filter: LeadFilter = {}): Promise<Lead[]> {
@@ -72,7 +81,7 @@ export class LeadsService {
         () => this.prisma.lead.findMany({ orderBy: { createdAt: 'desc' } }) as Promise<Lead[]>,
         CACHE_TTL,
       );
-      return leads.map(lead => this.decryptPaymentFields(lead));
+      return leads.map(lead => this.toLead(lead));
     }
 
     const cacheKey = `${CACHE_PREFIX}:filtered:${JSON.stringify(filter, Object.keys(filter).sort())}`;
@@ -81,7 +90,7 @@ export class LeadsService {
       () => this.findAllFromDb(filter),
       CACHE_TTL,
     );
-    return leads.map(lead => this.decryptPaymentFields(lead));
+    return leads.map(lead => this.toLead(lead));
   }
 
   private async findAllFromDb(filter: LeadFilter): Promise<Lead[]> {
@@ -118,7 +127,7 @@ export class LeadsService {
     return this.prisma.lead.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-    });
+    }) as unknown as Lead[];
   }
 
   async findOne(id: string): Promise<Lead> {
@@ -131,7 +140,7 @@ export class LeadsService {
       throw new NotFoundException(`Lead with ID ${id} not found`);
     }
 
-    return this.decryptPaymentFields(lead);
+    return this.toLead(lead);
   }
 
   async findBySlug(slug: string): Promise<Lead> {
@@ -143,7 +152,7 @@ export class LeadsService {
       throw new NotFoundException(`Lead with slug ${slug} not found`);
     }
 
-    return this.decryptPaymentFields(lead);
+    return this.toLead(lead);
   }
 
   async update(id: string, dto: UpdateLeadDto): Promise<Lead> {
@@ -156,7 +165,7 @@ export class LeadsService {
     });
 
     await this.cache.delByPrefix(CACHE_PREFIX);
-    return this.decryptPaymentFields(lead);
+    return this.toLead(lead);
   }
 
   async remove(id: string): Promise<void> {

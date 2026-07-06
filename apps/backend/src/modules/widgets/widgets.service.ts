@@ -1,25 +1,27 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
-import { CreateWidgetDto, ClientWidget, WidgetType } from '@prompt-site-builder/shared';
+import { CreateWidgetDto, ClientWidget, WidgetType, BookingWidgetConfig, PaymentWidgetConfig } from '@prompt-site-builder/shared';
 
 @Injectable()
 export class WidgetsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateWidgetDto): Promise<ClientWidget> {
-    return this.prisma.clientWidget.create({
+    const widget = await this.prisma.clientWidget.create({
       data: {
         projectId: dto.projectId,
         type: dto.type,
-        config: dto.config,
+        config: dto.config as object,
       },
     });
+    return widget as unknown as ClientWidget;
   }
 
   async findByProject(projectId: string): Promise<ClientWidget[]> {
-    return this.prisma.clientWidget.findMany({
+    const widgets = await this.prisma.clientWidget.findMany({
       where: { projectId },
     });
+    return widgets as unknown as ClientWidget[];
   }
 
   async findOne(id: string): Promise<ClientWidget> {
@@ -31,16 +33,17 @@ export class WidgetsService {
       throw new NotFoundException(`Widget with ID ${id} not found`);
     }
 
-    return widget;
+    return widget as unknown as ClientWidget;
   }
 
   async toggleEnabled(id: string, enabled: boolean): Promise<ClientWidget> {
     await this.findOne(id);
 
-    return this.prisma.clientWidget.update({
+    const widget = await this.prisma.clientWidget.update({
       where: { id },
       data: { enabled },
     });
+    return widget as unknown as ClientWidget;
   }
 
   async remove(id: string): Promise<void> {
@@ -59,10 +62,10 @@ export class WidgetsService {
 
     for (const widget of enabledWidgets) {
       if (widget.type === WidgetType.BOOKING) {
-        const config = widget.config as any;
+        const config = widget.config as BookingWidgetConfig;
         html += this.generateBookingWidgetHtml(config);
       } else if (widget.type === WidgetType.PAYMENT) {
-        const config = widget.config as any;
+        const config = widget.config as PaymentWidgetConfig;
         html += this.generatePaymentWidgetHtml(config);
       }
     }
@@ -70,7 +73,7 @@ export class WidgetsService {
     return html;
   }
 
-  private generateBookingWidgetHtml(config: any): string {
+  private generateBookingWidgetHtml(config: BookingWidgetConfig): string {
     return `
 <!-- EasyWeek Booking Widget -->
 <div id="easyweek-widget" 
@@ -81,7 +84,7 @@ export class WidgetsService {
 `;
   }
 
-  private generatePaymentWidgetHtml(config: any): string {
+  private generatePaymentWidgetHtml(config: PaymentWidgetConfig): string {
     if (config.provider === 'wayforpay') {
       return `
 <!-- WayForPay Widget -->

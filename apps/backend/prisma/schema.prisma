@@ -24,6 +24,13 @@ enum ProjectStatus {
   FAILED
 }
 
+enum VariantStatus {
+  DRAFT
+  GENERATING
+  GENERATED
+  PUBLISHED
+}
+
 enum JobType {
   SCRAPE_LEAD
   ENRICH_LEAD
@@ -83,10 +90,48 @@ model Lead {
   status       LeadStatus @default(NEW)
   tags         String[]
   scrapedData  Json       @default("{}")
+
+  // Payment & Booking
+  easyweekEnabled   Boolean  @default(false)
+  easyweekApiKey    String?
+  wayforpayEnabled  Boolean  @default(false)
+  wayforpayMerchant String?
+  wayforpaySecret   String?
+  monobankEnabled   Boolean  @default(false)
+  monobankApiKey    String?
+
+  // Enrichment
+  enrichmentData    Json       @default("{}")
+  enrichedAt        DateTime?
+  enrichmentSources String[]   @default([])
+
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
   projects Project[]
+}
+
+model SiteVariant {
+  id           String        @id @default(uuid())
+  projectId    String
+  variantName  String
+  status       VariantStatus @default(DRAFT)
+  hugoConfig   Json          @default("{}")
+  content      Json          @default("{}")
+  modelUsed    String?
+  imageModel   String?
+  themeName    String?
+  previewUrl   String?
+  publishedAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+	  activeForProject   Project?      @relation("ActiveVariant")
+  assets       SiteAsset[]
+  jobs         GenerationJob[]
+
+  @@index([projectId])
 }
 
 model Project {
@@ -106,7 +151,11 @@ model Project {
   userId       String?
   jobs         GenerationJob[]
   assets       SiteAsset[]
-  widgets      ClientWidget[]
+  widgets         ClientWidget[]
+
+  activeVariantId String? @unique
+  activeVariant   SiteVariant? @relation("ActiveVariant", fields: [activeVariantId], references: [id])
+  variants        SiteVariant[]
 }
 
 model GenerationJob {
@@ -121,7 +170,10 @@ model GenerationJob {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  variantId   String?
+  variant     SiteVariant? @relation(fields: [variantId], references: [id])
 }
 
 model SiteAsset {
@@ -132,7 +184,10 @@ model SiteAsset {
   sourceUrl String?
   createdAt DateTime       @default(now())
 
-  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project   Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  variantId String?
+  variant   SiteVariant? @relation(fields: [variantId], references: [id])
 }
 
 model Setting {
