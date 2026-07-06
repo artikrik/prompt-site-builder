@@ -24,6 +24,7 @@ describe('ProjectsService', () => {
     delByPrefix: ReturnType<typeof vi.fn>;
     getOrSet: ReturnType<typeof vi.fn>;
   };
+  let configService: { get: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     prisma = {
@@ -46,9 +47,17 @@ describe('ProjectsService', () => {
       getOrSet: vi.fn((_key, factory) => factory()),
     };
 
+    configService = {
+      get: vi.fn((key: string, fallback?: string) => {
+        if (key === 'BASE_DOMAIN') return 'sitenow.pp.ua';
+        return fallback;
+      }),
+    };
+
     service = new ProjectsService(
       prisma as unknown as PrismaService,
       cache as unknown as CacheService,
+      configService as any,
     );
   });
 
