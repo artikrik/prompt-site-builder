@@ -20,8 +20,9 @@ export class HugoCompilerService {
     this.sitesPath = this.configService.get<string>('HUGO_SITES_PATH', '/var/www/client-sites');
   }
 
-  async build(slug: string, structure: GeneratedSiteStructure, theme?: string): Promise<HugoBuildResult> {
-    const tempDir = join(this.sitesPath, `.temp-${slug}`);
+  async build(slug: string, structure: GeneratedSiteStructure, theme?: string, variantId?: string): Promise<HugoBuildResult> {
+    const outputSlug = variantId ? `${slug}--${variantId}` : slug;
+    const tempDir = join(this.sitesPath, `.temp-${outputSlug}`);
 
     try {
       // Create project structure
@@ -38,11 +39,11 @@ export class HugoCompilerService {
         timeout: 60000,
       });
 
-      this.logger.log(`Hugo build output for ${slug}: ${stdout}`);
+      this.logger.log(`Hugo build output for ${outputSlug}: ${stdout}`);
 
       // Copy public/ to final location
       const publicDir = join(tempDir, 'public');
-      const finalDir = join(this.sitesPath, slug);
+      const finalDir = join(this.sitesPath, outputSlug);
 
       await rm(finalDir, { recursive: true, force: true });
       await this.copyDirectory(publicDir, finalDir);
@@ -57,7 +58,7 @@ export class HugoCompilerService {
         warnings: stderr ? [stderr] : [],
       };
     } catch (error) {
-      this.logger.error(`Hugo build failed for ${slug}: ${error}`);
+      this.logger.error(`Hugo build failed for ${outputSlug}: ${error}`);
 
       await rm(tempDir, { recursive: true, force: true }).catch(() => {});
 

@@ -13,6 +13,8 @@ export interface InstagramEnrichment {
   toneOfVoice: {
     style: string;
     formality: string;
+    keyPhrases: string[];
+    languageMix: string;
     emojiUsage: string;
     sampleBio: string;
   } | null;
@@ -192,6 +194,8 @@ export class InstagramProvider {
   ): {
     style: string;
     formality: string;
+    keyPhrases: string[];
+    languageMix: string;
     emojiUsage: string;
     sampleBio: string;
   } | null {
@@ -221,9 +225,24 @@ export class InstagramProvider {
     else if (text.length < 200) style = 'concise';
     else style = 'descriptive';
 
+    // Extract key phrases (hashtags + common patterns)
+    const hashtags = (text.match(/#([\wЀ-ӿ]+)/g) || []).map((t: string) => t.replace('#', ''));
+    const keyPhrases = [...new Set(hashtags)].slice(0, 6);
+
+    // Detect language mix
+    const hasUkrainian = /[іїєґ]/iu.test(text);
+    const hasEnglish = /\b[a-z]{3,}\b/gi.test(text);
+    let languageMix: string;
+    if (hasUkrainian && hasEnglish) languageMix = 'ukrainian + english';
+    else if (hasUkrainian) languageMix = 'ukrainian';
+    else if (hasEnglish) languageMix = 'english';
+    else languageMix = 'ukrainian';
+
     return {
       style,
       formality,
+      keyPhrases,
+      languageMix,
       emojiUsage,
       sampleBio: bio.slice(0, 200),
     };
