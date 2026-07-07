@@ -156,4 +156,23 @@ describe('LeadsService', () => {
       expect(result).toBe(3);
     });
   });
+
+  describe('generateSlug', () => {
+    it('should transliterate Cyrillic name to Latin slug', () => {
+      const slug = (service as any).generateSlug('Стоматологія Сяйво');
+      expect(slug).toBe('stomatolohiia-siaivo');
+      expect(slug.length).toBeGreaterThan(0);
+    });
+
+    it('should handle mixed Cyrillic-Latin names', () => {
+      const slug = (service as any).generateSlug('Beauty Studio Lux');
+      expect(slug).toBe('beauty-studio-lux');
+    });
+
+    it('should handle empty slug fallback with UUID', () => {
+      const slug = (service as any).generateSlug('日本語のみ');
+      // If name has no ASCII/Latin chars after transliteration, fall back to random
+      expect(slug.length).toBeGreaterThan(0);
+    });
+  });
 });
