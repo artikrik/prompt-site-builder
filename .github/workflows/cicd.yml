@@ -41,24 +41,7 @@ jobs:
         with:
           node-version: 22.22.3
 
-      - name: Restore node_modules cache
-        run: |
-          mkdir -p /opt/prompt-site-builder/.node_modules_cache
-          if [ -d /opt/prompt-site-builder/.node_modules_cache/node_modules ]; then
-            cp -r /opt/prompt-site-builder/.node_modules_cache/node_modules ./
-            echo "✅ node_modules restored from cache"
-          else
-            echo "⏭️ No node_modules cache found"
-          fi
-
-      - run: npm ci --prefer-offline
-
-      - name: Save node_modules cache
-        if: always()
-        run: |
-          rm -rf /opt/prompt-site-builder/.node_modules_cache/node_modules
-          cp -r node_modules /opt/prompt-site-builder/.node_modules_cache/node_modules
-          echo "✅ node_modules saved to cache"
+      - run: npm ci
 
       - run: npm run lint
 
@@ -80,24 +63,7 @@ jobs:
         with:
           node-version: 22.22.3
 
-      - name: Restore node_modules cache
-        run: |
-          mkdir -p /opt/prompt-site-builder/.node_modules_cache
-          if [ -d /opt/prompt-site-builder/.node_modules_cache/node_modules ]; then
-            cp -r /opt/prompt-site-builder/.node_modules_cache/node_modules ./
-            echo "✅ node_modules restored from cache"
-          else
-            echo "⏭️ No node_modules cache found"
-          fi
-
-      - run: npm ci --prefer-offline
-
-      - name: Save node_modules cache
-        if: always()
-        run: |
-          rm -rf /opt/prompt-site-builder/.node_modules_cache/node_modules
-          cp -r node_modules /opt/prompt-site-builder/.node_modules_cache/node_modules
-          echo "✅ node_modules saved to cache"
+      - run: npm ci
       - run: npm run build --workspace=packages/shared
       - run: npm run typecheck
 
@@ -134,24 +100,7 @@ jobs:
         with:
           node-version: 22.22.3
 
-      - name: Restore node_modules cache
-        run: |
-          mkdir -p /opt/prompt-site-builder/.node_modules_cache
-          if [ -d /opt/prompt-site-builder/.node_modules_cache/node_modules ]; then
-            cp -r /opt/prompt-site-builder/.node_modules_cache/node_modules ./
-            echo "✅ node_modules restored from cache"
-          else
-            echo "⏭️ No node_modules cache found"
-          fi
-
-      - run: npm ci --prefer-offline
-
-      - name: Save node_modules cache
-        if: always()
-        run: |
-          rm -rf /opt/prompt-site-builder/.node_modules_cache/node_modules
-          cp -r node_modules /opt/prompt-site-builder/.node_modules_cache/node_modules
-          echo "✅ node_modules saved to cache"
+      - run: npm ci
 
       - run: npm run build --workspace=packages/shared
 
@@ -182,24 +131,7 @@ jobs:
         with:
           node-version: 22.22.3
 
-      - name: Restore node_modules cache
-        run: |
-          mkdir -p /opt/prompt-site-builder/.node_modules_cache
-          if [ -d /opt/prompt-site-builder/.node_modules_cache/node_modules ]; then
-            cp -r /opt/prompt-site-builder/.node_modules_cache/node_modules ./
-            echo "✅ node_modules restored from cache"
-          else
-            echo "⏭️ No node_modules cache found"
-          fi
-
-      - run: npm ci --prefer-offline
-
-      - name: Save node_modules cache
-        if: always()
-        run: |
-          rm -rf /opt/prompt-site-builder/.node_modules_cache/node_modules
-          cp -r node_modules /opt/prompt-site-builder/.node_modules_cache/node_modules
-          echo "✅ node_modules saved to cache"
+      - run: npm ci
       - run: npm run build --workspace=packages/shared
       - name: Skip tests (manual override)
         if: ${{ inputs.skip_tests }}
@@ -231,24 +163,7 @@ jobs:
         with:
           node-version: 22.22.3
 
-      - name: Restore node_modules cache
-        run: |
-          mkdir -p /opt/prompt-site-builder/.node_modules_cache
-          if [ -d /opt/prompt-site-builder/.node_modules_cache/node_modules ]; then
-            cp -r /opt/prompt-site-builder/.node_modules_cache/node_modules ./
-            echo "✅ node_modules restored from cache"
-          else
-            echo "⏭️ No node_modules cache found"
-          fi
-
-      - run: npm ci --prefer-offline
-
-      - name: Save node_modules cache
-        if: always()
-        run: |
-          rm -rf /opt/prompt-site-builder/.node_modules_cache/node_modules
-          cp -r node_modules /opt/prompt-site-builder/.node_modules_cache/node_modules
-          echo "✅ node_modules saved to cache"
+      - run: npm ci
 
       - run: npm run build
 
