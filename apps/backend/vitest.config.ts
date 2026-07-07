@@ -7,6 +7,18 @@ export default defineConfig({
     environment: 'node',
     root: '.',
     include: ['src/**/*.spec.ts'],
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        minForks: 2,
+        maxForks: 4,
+      },
+    },
+    server: {
+      deps: {
+        inline: ['@nestjs/common', '@nestjs/core', '@nestjs/testing'],
+      },
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
