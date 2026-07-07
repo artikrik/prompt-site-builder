@@ -21,6 +21,13 @@ export default defineConfig({
   test: {
     include: ['src/**/*.{test,spec}.{js,ts}'],
     environment: 'jsdom',
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        minForks: 1,
+        maxForks: 2,
+      },
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
