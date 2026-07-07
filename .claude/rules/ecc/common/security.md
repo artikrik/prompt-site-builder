@@ -1,29 +1,22 @@
-# Security Guidelines
+# Security
 
-## Mandatory Security Checks
-
-Before ANY commit:
-- [ ] No hardcoded secrets (API keys, passwords, tokens)
-- [ ] All user inputs validated
-- [ ] SQL injection prevention (parameterized queries)
-- [ ] XSS prevention (sanitized HTML)
+## Pre-Commit Checklist
+- [ ] No hardcoded secrets (API keys, passwords, tokens) — use env vars
+- [ ] User input validated at system boundaries
+- [ ] SQL injection: parameterized queries (Prisma), never string concat
+- [ ] XSS: sanitize HTML, escape output
 - [ ] CSRF protection enabled
-- [ ] Authentication/authorization verified
+- [ ] Auth verified
 - [ ] Rate limiting on all endpoints
-- [ ] Error messages don't leak sensitive data
+- [ ] Error messages: no sensitive data leak
 
 ## Secret Management
+- NEVER hardcode. ALWAYS env vars or secret manager.
+- Validate required secrets at startup (validateEnv).
+- Rotate exposed secrets immediately.
 
-- NEVER hardcode secrets in source code
-- ALWAYS use environment variables or a secret manager
-- Validate that required secrets are present at startup
-- Rotate any secrets that may have been exposed
-
-## Security Response Protocol
-
-If security issue found:
-1. STOP immediately
-2. Use **security-reviewer** agent
-3. Fix CRITICAL issues before continuing
-4. Rotate any exposed secrets
-5. Review entire codebase for similar issues
+## Security Incident
+1. STOP → security-reviewer agent
+2. Fix CRITICAL issues first
+3. Rotate exposed secrets
+4. Audit codebase for similar issues

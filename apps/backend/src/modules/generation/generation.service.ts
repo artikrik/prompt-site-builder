@@ -147,7 +147,7 @@ export class GenerationService {
       this.logger.log(`Building site for ${request.slug} with theme ${request.theme || 'default'}`);
       let buildSuccess = false;
       try {
-        const buildResult = await this.hugoCompiler.build(request.slug, structure, request.theme);
+        const buildResult = await this.hugoCompiler.build(request.slug, structure, request.theme, variantId);
         buildSuccess = buildResult.success;
         if (!buildSuccess) {
           this.logger.warn(`Hugo build failed, using static fallback: ${buildResult.errors.join(', ')}`);

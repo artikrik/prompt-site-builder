@@ -10,26 +10,36 @@
   }
 }
 
-# Dashboard — HTTP only (TLS terminated by Nginx)
-http://sitenow.pp.ua, http://www.sitenow.pp.ua {
+# Dashboard
+https://sitenow.pp.ua, https://www.sitenow.pp.ua {
   reverse_proxy frontend:5173
 
   header {
     X-Content-Type-Options nosniff
     X-Frame-Options DENY
     Referrer-Policy strict-origin-when-cross-origin
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
   }
 }
 
-# API — HTTP only (TLS terminated by Nginx)
-http://api.sitenow.pp.ua {
+http://sitenow.pp.ua, http://www.sitenow.pp.ua {
+  redir https://sitenow.pp.ua{uri}
+}
+
+# API
+https://api.sitenow.pp.ua {
   reverse_proxy backend:3000
 
   header {
     X-Content-Type-Options nosniff
     X-Frame-Options DENY
     Referrer-Policy strict-origin-when-cross-origin
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
   }
+}
+
+http://api.sitenow.pp.ua {
+  redir https://api.sitenow.pp.ua{uri}
 }
 
 # On-Demand TLS for client subdomains

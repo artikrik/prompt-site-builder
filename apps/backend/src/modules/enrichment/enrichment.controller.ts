@@ -20,11 +20,11 @@ export class EnrichmentController {
 
   @Put(':id/enrichment-sources')
   async updateSources(@Param('id') id: string, @Body() dto: UpdateEnrichmentSourcesDto) {
-    return { sources: dto.sources };
+    return this.enrichmentService.updateEnrichmentSources(id, dto.sources);
   }
 
   @Get(':id/enrichment')
-  async getEnrichment(@Param('id') _id: string) {
-    return { data: null, enrichedAt: null, sources: [] };
+  async getEnrichment(@Param('id') id: string) {
+    return this.enrichmentService.getEnrichmentData(id);
   }
 }
