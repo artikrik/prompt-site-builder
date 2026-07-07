@@ -24,12 +24,16 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
 
+    // First user gets ADMIN role; subsequent registrations get OPERATOR
+    const userCount = await this.prisma.user.count();
+    const defaultRole = userCount === 0 ? UserRole.ADMIN : UserRole.OPERATOR;
+
     const user = await this.prisma.user.create({
       data: {
         email: dto.email,
         passwordHash,
         name: dto.name,
-        role: dto.role || UserRole.OPERATOR,
+        role: dto.role || defaultRole,
       },
     });
 

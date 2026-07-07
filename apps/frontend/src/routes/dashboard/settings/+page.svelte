@@ -10,14 +10,19 @@
   let imageModels = $state<ImageModel[]>([]);
   let saveStatus = $state<'idle' | 'saving' | 'saved'>('idle');
   let loading = $state(true);
+  let error = $state('');
 
   onMount(async () => {
-    settings = await api.get<AppSettings>('/settings');
-    // Fetch models from API instead of importing CJS module (Rollup compat)
-    const modelData = await api.get<{ content: ContentModel[]; image: ImageModel[] }>('/settings/models');
-    contentModels = modelData.content;
-    imageModels = modelData.image;
-    loading = false;
+    try {
+      settings = await api.get<AppSettings>('/settings');
+      const modelData = await api.get<{ content: ContentModel[]; image: ImageModel[] }>('/settings/models');
+      contentModels = modelData.content;
+      imageModels = modelData.image;
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Failed to load settings';
+    } finally {
+      loading = false;
+    }
   });
 
   async function saveSettings() {
@@ -64,6 +69,12 @@
 
   {#if loading}
     <p class="text-muted-foreground">Loading settings...</p>
+  {:else if error}
+    <div class="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
+      <h2 class="text-lg font-semibold text-destructive">Access Denied</h2>
+      <p class="mt-2 text-muted-foreground">{error}</p>
+      <p class="mt-1 text-sm text-muted-foreground">You need administrator privileges to access settings. Contact your system administrator.</p>
+    </div>
   {:else if settings}
     <!-- Section 1: API Keys -->
     <section class="space-y-4">

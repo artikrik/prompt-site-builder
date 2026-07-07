@@ -67,13 +67,16 @@ export class LeadsService {
   }
 
   async findAll(filter: LeadFilter = {}): Promise<Lead[]> {
-    const hasFilters =
-      filter.search ||
-      filter.status ||
-      filter.source ||
-      filter.city ||
-      filter.category ||
-      (filter.tags && filter.tags.length > 0);
+    // Normalize: treat empty strings and whitespace-only as undefined
+    const normalizedFilter: LeadFilter = {};
+    if (filter.search && filter.search.trim()) normalizedFilter.search = filter.search.trim();
+    if (filter.status) normalizedFilter.status = filter.status;
+    if (filter.source) normalizedFilter.source = filter.source;
+    if (filter.city) normalizedFilter.city = filter.city;
+    if (filter.category) normalizedFilter.category = filter.category;
+    if (filter.tags && filter.tags.length > 0) normalizedFilter.tags = filter.tags;
+
+    const hasFilters = Object.keys(normalizedFilter).length > 0;
 
     if (!hasFilters) {
       const leads: Lead[] = await this.cache.getOrSet<Lead[]>(
@@ -84,10 +87,11 @@ export class LeadsService {
       return leads.map(lead => this.toLead(lead));
     }
 
-    const cacheKey = `${CACHE_PREFIX}:filtered:${JSON.stringify(filter, Object.keys(filter).sort())}`;
+    // Use sorted keys for deterministic cache key
+    const cacheKey = `${CACHE_PREFIX}:filtered:${JSON.stringify(normalizedFilter, Object.keys(normalizedFilter).sort())}`;
     const leads: Lead[] = await this.cache.getOrSet<Lead[]>(
       cacheKey,
-      () => this.findAllFromDb(filter),
+      () => this.findAllFromDb(normalizedFilter),
       CACHE_TTL,
     );
     return leads.map(lead => this.toLead(lead));
@@ -189,9 +193,41 @@ export class LeadsService {
   }
 
   private generateSlug(name: string): string {
-    return name
+    // Transliterate Cyrillic and other non-Latin chars to Latin
+    const transliterated = this.transliterate(name);
+    const slug = transliterated
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
+
+    // Fallback: if slug is empty (all non-transliteratable chars), use random suffix
+    if (!slug) {
+      const randomSuffix = Math.random().toString(36).substring(2, 10);
+      return `lead-${randomSuffix}`;
+    }
+
+    return slug;
+  }
+
+  private transliterate(text: string): string {
+    const cyrillicMap: Record<string, string> = {
+      'а': 'a', 'б': 'b', 'в': 'v', 'г': 'h', 'ґ': 'g', 'д': 'd', 'е': 'e',
+      'є': 'ie', 'ж': 'zh', 'з': 'z', 'и': 'y', 'і': 'i', 'ї': 'i',
+      'й': 'i', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o',
+      'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f',
+      'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch',
+      'ь': '', 'ю': 'iu', 'я': 'ia',
+      'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'H', 'Ґ': 'G', 'Д': 'D',
+      'Е': 'E', 'Є': 'Ie', 'Ж': 'Zh', 'З': 'Z', 'И': 'Y', 'І': 'I',
+      'Ї': 'I', 'Й': 'I', 'К': 'K', 'Л': 'L', 'М': 'M', 'Н': 'N',
+      'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
+      'Ф': 'F', 'Х': 'Kh', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh',
+      'Щ': 'Shch', 'Ь': '', 'Ю': 'Iu', 'Я': 'Ia',
+    };
+
+    return text
+      .split('')
+      .map((char) => cyrillicMap[char] || char)
+      .join('');
   }
 }

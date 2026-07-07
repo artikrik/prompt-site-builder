@@ -10,8 +10,8 @@
 
   let { children } = $props();
 
-  onMount(() => {
-    auth.initialize();
+  onMount(async () => {
+    await auth.initialize();
     if (!$isAuthenticated) {
       goto(resolve('/auth/login'));
     }
