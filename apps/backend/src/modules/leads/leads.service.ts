@@ -67,13 +67,16 @@ export class LeadsService {
   }
 
   async findAll(filter: LeadFilter = {}): Promise<Lead[]> {
-    const hasFilters =
-      filter.search ||
-      filter.status ||
-      filter.source ||
-      filter.city ||
-      filter.category ||
-      (filter.tags && filter.tags.length > 0);
+    // Normalize: treat empty strings and whitespace-only as undefined
+    const normalizedFilter: LeadFilter = {};
+    if (filter.search && filter.search.trim()) normalizedFilter.search = filter.search.trim();
+    if (filter.status) normalizedFilter.status = filter.status;
+    if (filter.source) normalizedFilter.source = filter.source;
+    if (filter.city) normalizedFilter.city = filter.city;
+    if (filter.category) normalizedFilter.category = filter.category;
+    if (filter.tags && filter.tags.length > 0) normalizedFilter.tags = filter.tags;
+
+    const hasFilters = Object.keys(normalizedFilter).length > 0;
 
     if (!hasFilters) {
       const leads: Lead[] = await this.cache.getOrSet<Lead[]>(
@@ -84,10 +87,11 @@ export class LeadsService {
       return leads.map(lead => this.toLead(lead));
     }
 
-    const cacheKey = `${CACHE_PREFIX}:filtered:${JSON.stringify(filter, Object.keys(filter).sort())}`;
+    // Use sorted keys for deterministic cache key
+    const cacheKey = `${CACHE_PREFIX}:filtered:${JSON.stringify(normalizedFilter, Object.keys(normalizedFilter).sort())}`;
     const leads: Lead[] = await this.cache.getOrSet<Lead[]>(
       cacheKey,
-      () => this.findAllFromDb(filter),
+      () => this.findAllFromDb(normalizedFilter),
       CACHE_TTL,
     );
     return leads.map(lead => this.toLead(lead));

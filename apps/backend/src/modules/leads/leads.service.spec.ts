@@ -110,6 +110,57 @@ describe('LeadsService', () => {
         }),
       );
     });
+
+    it('should not apply search filter for empty string search', async () => {
+      prisma.lead.findMany.mockResolvedValue([]);
+      await service.findAll({ search: '' });
+      // Should treat empty search same as no filter → no where clause
+      expect(prisma.lead.findMany).toHaveBeenCalledWith({
+        orderBy: { createdAt: 'desc' },
+      });
+    });
+
+    it('should not apply search filter for whitespace-only search', async () => {
+      prisma.lead.findMany.mockResolvedValue([]);
+      await service.findAll({ search: '   ' });
+      // Whitespace-only should be normalized away → no where clause
+      expect(prisma.lead.findMany).toHaveBeenCalledWith({
+        orderBy: { createdAt: 'desc' },
+      });
+    });
+
+    it('should trim surrounding whitespace from search term', async () => {
+      prisma.lead.findMany.mockResolvedValue([]);
+      await service.findAll({ search: '  salon  ' });
+      // Should trim and use 'salon' as the search term
+      expect(prisma.lead.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: expect.arrayContaining([
+              expect.objectContaining({ businessName: expect.objectContaining({ contains: 'salon' }) }),
+            ]),
+          }),
+          orderBy: { createdAt: 'desc' },
+        }),
+      );
+    });
+
+    it('should combine valid search with status filter, ignoring empty params', async () => {
+      prisma.lead.findMany.mockResolvedValue([]);
+      // Mix: valid search + valid status + empty city should normalize properly
+      await service.findAll({ search: 'Beauty', status: 'NEW', city: '' });
+      expect(prisma.lead.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: expect.arrayContaining([
+              expect.objectContaining({ businessName: expect.objectContaining({ contains: 'Beauty' }) }),
+            ]),
+            status: 'NEW',
+          }),
+          orderBy: { createdAt: 'desc' },
+        }),
+      );
+    });
   });
 
   describe('findOne', () => {
