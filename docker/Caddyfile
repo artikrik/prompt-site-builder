@@ -42,6 +42,31 @@ http://api.sitenow.pp.ua {
   redir https://api.sitenow.pp.ua{uri}
 }
 
+# Client subdomains — HTTP (plain, no TLS)
+# Proxied from Nginx on port 80, TLS terminated by Nginx or Caddy on-demand
+http://*.sitenow.pp.ua {
+  root * /var/www/client-sites/{labels.3}
+
+  file_server {
+    precompressed gzip br
+  }
+
+  header {
+    X-Content-Type-Options nosniff
+    X-Frame-Options SAMEORIGIN
+    Referrer-Policy strict-origin-when-cross-origin
+  }
+
+  # SPA fallback for client sites
+  try_files {path} {path}/ /index.html
+
+  # Cache static assets
+  @static {
+    path /images/* /css/* /js/*
+  }
+  header @static Cache-Control "public, max-age=31536000, immutable"
+}
+
 # On-Demand TLS for client subdomains
 # Wildcard: *.sitenow.pp.ua
 https://*.sitenow.pp.ua {
@@ -49,7 +74,7 @@ https://*.sitenow.pp.ua {
     on_demand
   }
 
-  root * /var/www/client-sites/{labels.1}
+  root * /var/www/client-sites/{labels.3}
 
   file_server {
     precompressed gzip br
