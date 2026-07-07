@@ -165,15 +165,30 @@ export class GenerationService {
       this.logger.log(`Publishing site for ${request.slug}`);
       await this.publisher.publish(request.slug);
 
-      // 8. Update project
+      // 8. Update project — include hugoConfig sync + generatedAt timestamp
       const publishedUrl = `https://${request.slug}.${this.configService.get('BASE_DOMAIN')}`;
       await this.prisma.project.update({
         where: { id: projectId },
         data: {
           status: ProjectStatus.PUBLISHED,
+          generatedAt: new Date(),
           publishedAt: new Date(),
           publishedUrl,
           activeVariantId: variantId,
+          hugoConfig: {
+            theme: request.theme || 'hugo-theme-zen',
+            title: request.businessName,
+            params: {
+              businessName: request.businessName,
+              category: request.category,
+              phone: request.phone,
+              email: request.email,
+              address: request.address,
+            },
+            baseUrl: publishedUrl,
+            description: request.description || `Professional ${request.category?.toLowerCase() || ''} services`,
+            languageCode: 'uk',
+          },
         },
       });
 
