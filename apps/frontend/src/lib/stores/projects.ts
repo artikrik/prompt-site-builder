@@ -10,6 +10,7 @@ export interface Project {
   publishedUrl: string | null;
   publishedAt: string | null;
   createdAt: string;
+  updatedAt: string;
   lead?: {
     id: string;
     businessName: string;
