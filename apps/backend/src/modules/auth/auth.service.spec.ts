@@ -13,7 +13,7 @@ vi.mock('bcryptjs', () => ({
 
 describe('AuthService', () => {
   let service: AuthService;
-  let prisma: { user: { findUnique: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn> } };
+  let prisma: { user: { findUnique: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn>; count: ReturnType<typeof vi.fn> } };
   let jwtService: { sign: ReturnType<typeof vi.fn>; verify: ReturnType<typeof vi.fn> };
   let configService: { get: ReturnType<typeof vi.fn>; getOrThrow: ReturnType<typeof vi.fn> };
 
@@ -22,6 +22,7 @@ describe('AuthService', () => {
       user: {
         findUnique: vi.fn(),
         create: vi.fn(),
+        count: vi.fn(),
       },
     };
     jwtService = {
@@ -53,6 +54,7 @@ describe('AuthService', () => {
   describe('register', () => {
     it('should create a new user and return tokens', async () => {
       prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.count.mockResolvedValue(1);
       prisma.user.create.mockResolvedValue({
         id: 'user-1',
         email: 'test@example.com',
@@ -86,6 +88,82 @@ describe('AuthService', () => {
           name: 'Existing User',
         }),
       ).rejects.toThrow(ConflictException);
+    });
+
+    it('should assign ADMIN role to first registered user', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.count.mockResolvedValue(0);
+      prisma.user.create.mockResolvedValue({
+        id: 'user-1',
+        email: 'first@example.com',
+        name: 'First User',
+        role: UserRole.ADMIN,
+      });
+
+      await service.register({
+        email: 'first@example.com',
+        password: 'password123',
+        name: 'First User',
+      });
+
+      expect(prisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            role: UserRole.ADMIN,
+          }),
+        }),
+      );
+    });
+
+    it('should assign OPERATOR role to subsequent registrations', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.count.mockResolvedValue(5);
+      prisma.user.create.mockResolvedValue({
+        id: 'user-6',
+        email: 'sixth@example.com',
+        name: 'Sixth User',
+        role: UserRole.OPERATOR,
+      });
+
+      await service.register({
+        email: 'sixth@example.com',
+        password: 'password123',
+        name: 'Sixth User',
+      });
+
+      expect(prisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            role: UserRole.OPERATOR,
+          }),
+        }),
+      );
+    });
+
+    it('should respect explicit role from DTO over default', async () => {
+      prisma.user.findUnique.mockResolvedValue(null);
+      prisma.user.count.mockResolvedValue(0);
+      prisma.user.create.mockResolvedValue({
+        id: 'user-2',
+        email: 'operator@example.com',
+        name: 'Operator User',
+        role: UserRole.OPERATOR,
+      });
+
+      await service.register({
+        email: 'operator@example.com',
+        password: 'password123',
+        name: 'Operator User',
+        role: UserRole.OPERATOR,
+      });
+
+      expect(prisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            role: UserRole.OPERATOR,
+          }),
+        }),
+      );
     });
   });
 
