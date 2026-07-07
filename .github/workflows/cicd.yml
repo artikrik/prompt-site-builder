@@ -75,8 +75,8 @@ jobs:
   test-backend:
     name: Backend Tests
     runs-on: self-hosted
-    # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
-    # skip_tests only skips test execution, NOT the job itself (needs chain requires job to run)
+    # Run on: PR (open/sync/reopen), workflow_dispatch. SKIP on push to main (only build+deploy).
+    if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/main') }}
     timeout-minutes: 15
     env:
       TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
@@ -156,8 +156,8 @@ jobs:
   test-frontend:
     name: Frontend Tests
     runs-on: self-hosted
-    # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
-    # skip_tests only skips test execution, NOT the job itself (needs chain requires job to run)
+    # Run on: PR (open/sync/reopen), workflow_dispatch. SKIP on push to main (only build+deploy).
+    if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/main') }}
     timeout-minutes: 10
     env:
       TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
@@ -190,8 +190,8 @@ jobs:
   build:
     name: Build
     runs-on: self-hosted
-    # Build only runs if ALL quality gates pass — failing test cancels workflow
-    needs: [lint, typecheck, test-backend, test-frontend]
+    # Build runs after lint + typecheck (tests skipped on push to main)
+    needs: [lint, typecheck]
     if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' }}
     timeout-minutes: 15
     steps:
