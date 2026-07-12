@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
 import type { Request, Response, NextFunction } from 'express';
+import express from 'express';
 import { AppModule } from './app.module';
 
 /**
@@ -127,9 +128,15 @@ async function bootstrap(): Promise<void> {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
+  // Serve variant preview assets (CSS, JS, images) from Hugo sites directory
+  const hugoSitesPath = configService.get<string>('HUGO_SITES_PATH') || '/var/www/client-sites';
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.use('/variant-preview', express.static(hugoSitesPath));
+
   const port = configService.get<number>('PORT') || 3000;
   await app.listen(port);
   const logger = new Logger('Bootstrap');
+  logger.log(`Variant preview static serve: ${hugoSitesPath}`);
   logger.log(`Application running on: http://localhost:${port}`);
   logger.log(`Swagger docs: http://localhost:${port}/api/docs`);
 }

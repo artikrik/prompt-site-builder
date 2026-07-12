@@ -1,7 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { CacheService } from '../../shared/redis/cache.service';
 import { EncryptionService } from '../settings/encryption.service';
+import { QueueService } from '../queue/queue.service';
 import { CreateLeadDto, UpdateLeadDto, LeadFilter, Lead } from '@prompt-site-builder/shared';
 
 const CACHE_TTL = 60;
@@ -10,10 +12,14 @@ const ENCRYPTED_LEAD_FIELDS = ['easyweekApiKey', 'wayforpaySecret', 'monobankApi
 
 @Injectable()
 export class LeadsService {
+  private readonly logger = new Logger(LeadsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly cache: CacheService,
     private readonly encryption: EncryptionService,
+    private readonly configService: ConfigService,
+    private readonly queueService: QueueService,
   ) {}
 
   private encryptPaymentFields(dto: any): any {
@@ -53,14 +59,28 @@ export class LeadsService {
     const slug = this.generateSlug(dto.businessName);
     const encryptedData = this.encryptPaymentFields(dto);
 
+    // Apply default enrichment sources from env if not provided
+    const defaultSources = this.configService.get<string>('ENRICHMENT_DEFAULT_SOURCES');
+    const enrichmentSources = dto.enrichmentSources
+      ?? (defaultSources ? defaultSources.split(',').map((s) => s.trim()) : []);
+
     const lead = await this.prisma.lead.create({
       data: {
         ...encryptedData,
         slug,
         tags: dto.tags || [],
         scrapedData: dto.scrapedData || {},
+        enrichmentSources,
       },
     });
+
+    // Auto-run enrichment if configured
+    const autoRun = this.configService.get<string>('ENRICHMENT_AUTO_RUN');
+    if (autoRun === 'true' && enrichmentSources.length > 0) {
+      this.queueService.addEnrichmentJob(lead.id)
+        .then((job) => this.logger.log(`Auto-enrichment queued: ${job.id} for lead ${lead.id}`))
+        .catch((err) => this.logger.warn(`Auto-enrichment failed for lead ${lead.id}: ${err}`));
+    }
 
     await this.cache.delByPrefix(CACHE_PREFIX);
     return this.toLead(lead);

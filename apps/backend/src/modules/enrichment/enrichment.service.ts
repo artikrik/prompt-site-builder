@@ -26,22 +26,25 @@ export class EnrichmentService {
       return;
     }
 
-    const results: Partial<EnrichmentData>[] = [];
+    // Run all providers in parallel
+    const providerResults = await Promise.all(
+      sources.map(async (source) => {
+        const provider = this.factory.createForProvider(source as EnrichmentSource);
+        if (!provider) {
+          this.logger.warn(`No provider for source: ${source}`);
+          return null;
+        }
+        try {
+          this.logger.log(`Enriching lead ${leadId} from ${source}`);
+          return await provider.enrich(lead.businessName, lead.city || undefined);
+        } catch (err) {
+          this.logger.warn(`Provider ${source} failed for lead ${leadId}: ${err}`);
+          return null;
+        }
+      }),
+    );
 
-    for (const source of sources) {
-      const provider = this.factory.createForProvider(source as EnrichmentSource);
-      if (!provider) {
-        this.logger.warn(`No provider for source: ${source}`);
-        continue;
-      }
-      try {
-        this.logger.log(`Enriching lead ${leadId} from ${source}`);
-        const data = await provider.enrich(lead.businessName, lead.city || undefined);
-        results.push(data);
-      } catch (err) {
-        this.logger.warn(`Provider ${source} failed for lead ${leadId}: ${err}`);
-      }
-    }
+    const results = providerResults.filter((r): r is Partial<EnrichmentData> => r !== null);
 
     const merged = this.mergeResults(results);
 

@@ -11,6 +11,15 @@ export interface AppSettings {
   deepseekApiKey: string | null;
   mimoApiKey: string | null;
   bflApiKey: string | null;
+  // Enrichment API keys
+  facebookAppId: string | null;
+  facebookAppSecret: string | null;
+  facebookAccessToken: string | null;
+  googleMapsApiKey: string | null;
+  instagramAccessToken: string | null;
+  enrichmentAutoRun: boolean;
+  enrichmentDefaultSources: string;
+  // Integrations
   easyweekEnabled: boolean;
   easyweekApiKey: string | null;
   wayforpayEnabled: boolean;
@@ -31,6 +40,14 @@ export interface UpdateSettingsDto {
   deepseekApiKey?: string;
   mimoApiKey?: string;
   bflApiKey?: string;
+  // Enrichment API keys
+  facebookAppId?: string;
+  facebookAppSecret?: string;
+  facebookAccessToken?: string;
+  googleMapsApiKey?: string;
+  instagramAccessToken?: string;
+  enrichmentAutoRun?: string;
+  enrichmentDefaultSources?: string;
 }
 
 export interface SettingsResponse {

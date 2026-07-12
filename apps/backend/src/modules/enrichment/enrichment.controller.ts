@@ -14,8 +14,8 @@ export class EnrichmentController {
 
   @Post(':id/enrich')
   async enrichLead(@Param('id') id: string) {
-    await this.queueService.addEnrichmentJob(id);
-    return { message: 'Enrichment job queued' };
+    const job = await this.queueService.addEnrichmentJob(id);
+    return { jobId: job.id };
   }
 
   @Put(':id/enrichment-sources')

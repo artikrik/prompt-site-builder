@@ -49,10 +49,20 @@ describe('LeadsService', () => {
       decrypt: vi.fn((v: string) => v.startsWith('enc_') ? v.slice(4) : v),
     };
 
+    const mockConfigService = {
+      get: vi.fn().mockReturnValue(undefined),
+    };
+
+    const mockQueueService = {
+      addEnrichmentJob: vi.fn().mockResolvedValue({ id: 'job-1' }),
+    };
+
     service = new LeadsService(
       prisma as unknown as PrismaService,
       cache as unknown as CacheService,
       mockEncryption as any,
+      mockConfigService as any,
+      mockQueueService as any,
     );
   });
 
@@ -80,6 +90,7 @@ describe('LeadsService', () => {
           source: 'google-maps',
           tags: [],
           scrapedData: {},
+          enrichmentSources: [],
         },
       });
       expect(result.slug).toBe('test-business');

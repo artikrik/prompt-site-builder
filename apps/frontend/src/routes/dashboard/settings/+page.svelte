@@ -114,7 +114,107 @@
       </div>
     </section>
 
-    <!-- Section 2: Model Defaults -->
+    <!-- Section 2: Enrichment API Keys -->
+    <section class="space-y-4">
+      <h2 class="text-lg font-semibold">Enrichment API Keys</h2>
+      <p class="text-sm text-muted-foreground">Keys for lead enrichment from Instagram, Facebook, and Google Maps</p>
+
+      <details class="rounded-lg border bg-muted/30 p-4 text-sm">
+        <summary class="cursor-pointer font-medium">How to obtain API keys (click to expand)</summary>
+        <div class="mt-3 space-y-3 text-muted-foreground">
+          <div>
+            <strong class="text-foreground">Facebook App ID + Secret + Access Token:</strong>
+            <ol class="list-decimal pl-4 mt-1 space-y-1">
+              <li>Go to <a href="https://developers.facebook.com/" target="_blank" class="text-primary underline">developers.facebook.com</a> → Create App → Type: "Business"</li>
+              <li>App ID + Secret: Settings → Basic → copy App ID and App Secret</li>
+              <li>Access Token: Tools → Graph API Explorer → select your app → generate User Token with <code>pages_read_engagement</code> permission</li>
+              <li>For production: submit App Review for <code>pages_read_engagement</code> (2-7 days)</li>
+            </ol>
+          </div>
+          <div>
+            <strong class="text-foreground">Google Maps API Key:</strong>
+            <ol class="list-decimal pl-4 mt-1 space-y-1">
+              <li>Go to <a href="https://console.cloud.google.com/apis/" target="_blank" class="text-primary underline">Google Cloud Console</a> → APIs & Services → Credentials</li>
+              <li>Create API Key → restrict to: Places API, Geocoding API</li>
+              <li>Enable APIs: Places API, Maps JavaScript API, Geocoding API</li>
+            </ol>
+          </div>
+          <div>
+            <strong class="text-foreground">Instagram Access Token (optional):</strong>
+            <ol class="list-decimal pl-4 mt-1 space-y-1">
+              <li>Requires Facebook App with Instagram Basic Display API configured</li>
+              <li>Facebook App → Products → Instagram Basic Display → generate token</li>
+              <li>If not set: system uses unauthenticated scraping (limited data)</li>
+            </ol>
+          </div>
+        </div>
+      </details>
+
+      <div class="grid gap-4 md:grid-cols-2">
+        <ApiKeyInput
+          label="Facebook App ID"
+          placeholder="123456789..."
+          value=""
+          maskedPreview={settings.facebookAppId ?? ''}
+          onChange={(v: string) => saveApiKey('facebookAppId', v)}
+        />
+        <ApiKeyInput
+          label="Facebook App Secret"
+          placeholder="abc123..."
+          value=""
+          maskedPreview={settings.facebookAppSecret ?? ''}
+          onChange={(v: string) => saveApiKey('facebookAppSecret', v)}
+        />
+        <ApiKeyInput
+          label="Facebook Access Token"
+          placeholder="EAA..."
+          value=""
+          maskedPreview={settings.facebookAccessToken ?? ''}
+          onChange={(v: string) => saveApiKey('facebookAccessToken', v)}
+        />
+        <ApiKeyInput
+          label="Google Maps API Key"
+          placeholder="AIza..."
+          value=""
+          maskedPreview={settings.googleMapsApiKey ?? ''}
+          onChange={(v: string) => saveApiKey('googleMapsApiKey', v)}
+        />
+        <ApiKeyInput
+          label="Instagram Access Token"
+          placeholder="IG..."
+          value=""
+          maskedPreview={settings.instagramAccessToken ?? ''}
+          onChange={(v: string) => saveApiKey('instagramAccessToken', v)}
+        />
+      </div>
+      <div class="grid gap-4 md:grid-cols-2">
+        <label class="flex items-center gap-3 rounded-lg border p-4">
+          <input
+            type="checkbox"
+            checked={settings.enrichmentAutoRun}
+            onchange={(e: any) => saveApiKey('enrichmentAutoRun', e.target.checked ? 'true' : 'false')}
+            class="h-4 w-4"
+          />
+          <div>
+            <p class="font-medium">Auto-Run Enrichment</p>
+            <p class="text-sm text-muted-foreground">Auto-enrich leads on creation</p>
+          </div>
+        </label>
+        <label class="rounded-lg border p-4">
+          <p class="font-medium mb-1">Default Sources</p>
+          <p class="text-sm text-muted-foreground mb-2">Comma-separated: instagram,facebook,googleMaps</p>
+          <input
+            type="text"
+            value={settings.enrichmentDefaultSources ?? 'instagram,facebook,googleMaps'}
+            onchange={(e: any) => saveApiKey('enrichmentDefaultSources', e.target.value)}
+            class="w-full rounded border p-2 text-sm"
+            placeholder="instagram,facebook,googleMaps"
+          />
+        </label>
+      </div>
+    </section>
+
+    <!-- Section 3: Model Defaults -->
     <section class="space-y-4">
       <h2 class="text-lg font-semibold">Model Defaults</h2>
       <div class="grid gap-6 md:grid-cols-2">
