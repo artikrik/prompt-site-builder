@@ -1,0 +1,77 @@
+# Coolify hybrid deployment
+# PostgreSQL + Redis managed as Coolify Services (not in this compose)
+# Caddy here handles ONLY client-site wildcard TLS (*.sitenow.pp.ua)
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile.coolify
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
+      IMAGE_PROVIDER: ${IMAGE_PROVIDER:-openai}
+      BASE_DOMAIN: ${BASE_DOMAIN:-sitenow.pp.ua}
+      HUGO_SITES_PATH: /var/www/client-sites
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL:-tencent/hy3:free}
+      ENRICHMENT_AUTO_RUN: ${ENRICHMENT_AUTO_RUN:-true}
+      ENRICHMENT_DEFAULT_SOURCES: ${ENRICHMENT_DEFAULT_SOURCES:-instagram,facebook,googleMaps}
+      FACEBOOK_APP_ID: ${FACEBOOK_APP_ID}
+      FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET}
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      MIMO_API_KEY: ${MIMO_API_KEY}
+      BFL_API_KEY: ${BFL_API_KEY}
+      APIFY_TOKEN: ${APIFY_TOKEN}
+    ports:
+      - "3001:3001"
+    volumes:
+      - client_sites:/var/www/client-sites
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile.coolify
+    restart: unless-stopped
+    environment:
+      PUBLIC_API_URL: ${PUBLIC_API_URL:-/api}
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./docker/Caddyfile.client:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - client_sites:/var/www/client-sites:ro
+    networks:
+      - app-network
+
+volumes:
+  client_sites:
+  caddy_data:
+  caddy_config:
+
+networks:
+  app-network:
+    driver: bridge
