@@ -8,6 +8,7 @@
   import { variants, type VariantListItem } from '$lib/stores/variants';
   import { api } from '$lib/api/client.js';
   import VariantList from '$lib/components/variants/VariantList.svelte';
+  import VariantGenerator from '$lib/components/variants/VariantGenerator.svelte';
   import AddonList from '$lib/components/addons/AddonList.svelte';
   import { addons, type ProjectAddon, type AddonType } from '$lib/stores/addons';
   import { Button } from '$lib/components/ui/button/index.js';
@@ -25,6 +26,8 @@
   let activeVariantId = $state<string | null>(null);
   let projectAddons = $state<ProjectAddon[]>([]);
   let addonsLoading = $state(false);
+  let showAdvancedGenerator = $state(false);
+  let isGenerating = $state(false);
 
   let themeLabel = $derived(
     selectedTheme === 'auto'
@@ -84,6 +87,26 @@
 
   async function handleConfigureAddon(addonType: AddonType) {
     alert(`Configuration for ${addonType} will be available in the next update.`);
+  }
+
+  async function handleVariantGenerate(config: { model: string; imageModel: string; theme: string }) {
+    if (!project) return;
+    isGenerating = true;
+    try {
+      // Pass model/imageModel via the API call
+      await api.post(`/generation/${project.id}/generate`, {
+        theme: config.theme || 'auto',
+        model: config.model,
+        imageModel: config.imageModel,
+      });
+      project = await projects.fetchOne(project.id);
+      activeVariantId = (project as any).activeVariantId || null;
+      await loadVariants();
+    } catch {
+      alert('Failed to generate variant');
+    } finally {
+      isGenerating = false;
+    }
   }
 
   async function handleGenerate() {
@@ -165,6 +188,9 @@
               </Select.Content>
             </Select.Root>
             <Button onclick={handleGenerate}>Generate Site</Button>
+            <Button variant="outline" size="sm" onclick={() => showAdvancedGenerator = !showAdvancedGenerator}>
+              {showAdvancedGenerator ? 'Hide Advanced' : 'Advanced'}
+            </Button>
           </div>
         {/if}
         {#if project.status === 'PUBLISHED' && project.publishedUrl}
@@ -175,6 +201,18 @@
         {/if}
       </div>
     </div>
+
+    {#if showAdvancedGenerator}
+      <div class="mt-4">
+        <VariantGenerator
+          models={['gpt-4o', 'gpt-4-turbo', 'claude-sonnet-4-20250514', 'deepseek-v4-pro', 'gemini-2.5-pro']}
+          imageModels={['dall-e-3', 'imagen-3', 'flux-pro']}
+          themes={themes.map((t) => ({ name: t.name, label: t.name }))}
+          generating={isGenerating}
+          onGenerate={handleVariantGenerate}
+        />
+      </div>
+    {/if}
 
     <!-- Variants Section -->
     <section>

@@ -22,6 +22,8 @@ description: "Test"
       },
     ],
     layouts: [],
+    partials: [],
+    shortcodes: [],
     static: [],
     assets: [],
   };
