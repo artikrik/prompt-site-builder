@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { EnrichmentController } from './enrichment.controller';
 import { EnrichmentService } from './enrichment.service';
 import { EnrichmentAnalysisService } from './enrichment-analysis.service';
+import { SalesScriptGenerator } from './sales-script-generator';
 import { EnrichmentFactory } from './providers/enrichment-factory';
 import { FacebookProvider } from './providers/facebook.provider';
 import { GoogleMapsProvider } from './providers/google-maps.provider';
@@ -17,6 +18,7 @@ import { GenerationModule } from '../generation/generation.module';
   providers: [
     EnrichmentService,
     EnrichmentAnalysisService,
+    SalesScriptGenerator,
     EnrichmentFactory,
     FacebookProvider,
     GoogleMapsProvider,

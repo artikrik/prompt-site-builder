@@ -36,7 +36,7 @@
     <div class="flex items-start justify-between">
       <div class="space-y-1 flex-1">
         <div class="flex items-center gap-2">
-          <a href={resolve('/dashboard/variants/{variant.id}')} class="font-semibold text-sm hover:underline">{variant.variantName}</a>
+          <a href={resolve(`/dashboard/variants/${variant.id}`)} class="font-semibold text-sm hover:underline">{variant.variantName}</a>
           <Badge variant={statusVariant(variant.status)} class="text-xs">
             {variant.status}
           </Badge>
