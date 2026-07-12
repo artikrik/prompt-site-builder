@@ -71,7 +71,8 @@ Git URLs: github.com/theNewDynamic/gohugo-theme-ananke, /StefMa/hugo-fresh, /zer
 | `ssh-mcp` | stdio | Remote SSH to production (192.168.31.22, user: redage) |
 
 ### ssh-mcp Usage
-- Remote command execution via `mcp__ssh-mcp__ssh_execute`
+- Remote command execution via `mcp__ssh-mcp__exec`
+- Sudo commands via `mcp__ssh-mcp__sudo-exec`
 - Sudo support enabled (`--sudoPassword` configured)
 - 30s timeout, no char limit
 - Production server: 192.168.31.22
