@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { EnrichmentFactory } from './providers/enrichment-factory';
 import { EnrichmentSource } from './providers/types';
 import { PrismaService } from '../../shared/prisma/prisma.service';
+import { EnrichmentAnalysisService } from './enrichment-analysis.service';
 import { EnrichmentData } from '@prompt-site-builder/shared';
 
 @Injectable()
@@ -11,6 +12,7 @@ export class EnrichmentService {
   constructor(
     private readonly factory: EnrichmentFactory,
     private readonly prisma: PrismaService,
+    private readonly analysisService: EnrichmentAnalysisService,
   ) {}
 
   async enrichLead(leadId: string): Promise<void> {
@@ -26,7 +28,7 @@ export class EnrichmentService {
       return;
     }
 
-    // Run all providers in parallel
+    // Phase 1: Run all providers in parallel (raw data collection)
     const providerResults = await Promise.all(
       sources.map(async (source) => {
         const provider = this.factory.createForProvider(source as EnrichmentSource);
@@ -36,7 +38,8 @@ export class EnrichmentService {
         }
         try {
           this.logger.log(`Enriching lead ${leadId} from ${source}`);
-          return await provider.enrich(lead.businessName, lead.city || undefined);
+          const data = await provider.enrich(lead.businessName, lead.city || undefined);
+          return { source, data };
         } catch (err) {
           this.logger.warn(`Provider ${source} failed for lead ${leadId}: ${err}`);
           return null;
@@ -44,14 +47,22 @@ export class EnrichmentService {
       }),
     );
 
-    const results = providerResults.filter((r): r is Partial<EnrichmentData> => r !== null);
+    const validResults = providerResults.filter((r): r is { source: string; data: Partial<EnrichmentData> } => r !== null);
 
-    const merged = this.mergeResults(results);
+    // Phase 2: Merge raw data + run LLM analysis (brand, competitors, sales script)
+    const merged = this.mergeResults(validResults.map((r) => r.data));
+    const analyzed = await this.analysisService.analyze(
+      validResults.map((r) => ({ source: r.source, data: r.data as Record<string, unknown> })),
+      merged,
+    );
 
+    const finalData = this.mergeResults([merged, analyzed]);
+
+    // Phase 3: Save
     await this.prisma.lead.update({
       where: { id: leadId },
       data: {
-        enrichmentData: merged as any,
+        enrichmentData: finalData as any,
         enrichedAt: new Date(),
       },
     });

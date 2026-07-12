@@ -44,6 +44,6 @@ import { LeadsModule } from '../leads/leads.module';
     ThemeService,
     ThemeSelector,
   ],
-  exports: [GenerationService, HugoCompilerService, ThemeService, ThemeSelector],
+  exports: [GenerationService, HugoCompilerService, ThemeService, ThemeSelector, LLMStrategyFactory],
 })
 export class GenerationModule {}

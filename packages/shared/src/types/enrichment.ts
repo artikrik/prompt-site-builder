@@ -117,6 +117,7 @@ export interface EnrichmentData {
   competitors: CompetitorInfo[];
   marketGap?: MarketGap;
   salesOpportunities: SalesOpportunity[];
+  salesScript?: Record<string, unknown>;
   sourceUrls: EnrichmentSourceUrls;
   stats: EnrichmentStats;
 }
