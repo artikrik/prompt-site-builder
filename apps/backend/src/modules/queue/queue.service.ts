@@ -9,7 +9,7 @@ export class QueueService {
   constructor(
     @InjectQueue('generation') private readonly generationQueue: Queue,
     @InjectQueue('scraping') private readonly scrapingQueue: Queue,
-    @InjectQueue('scraping') private readonly enrichmentQueue: Queue,
+    @InjectQueue('enrichment') private readonly enrichmentQueue: Queue,
   ) {}
 
   async addGenerationJob(data: {
@@ -78,6 +78,13 @@ export class QueueService {
 
   async getScrapingJobStatus(jobId: string) {
     const job = await this.scrapingQueue.getJob(jobId);
+    if (!job) return null;
+    const state = await job.getState();
+    return { id: job.id, state, progress: job.progress, data: job.data, returnvalue: job.returnvalue, failedReason: job.failedReason };
+  }
+
+  async getEnrichmentJobStatus(jobId: string) {
+    const job = await this.enrichmentQueue.getJob(jobId);
     if (!job) return null;
     const state = await job.getState();
     return { id: job.id, state, progress: job.progress, data: job.data, returnvalue: job.returnvalue, failedReason: job.failedReason };

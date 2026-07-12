@@ -20,155 +20,132 @@ export class SalesScriptGenerator {
     const weaknesses = this.collectWeaknesses(existing);
     const competitors = (existing.competitors || []) as CompetitorInfo[];
 
-    const [opening, discovery, value, objections, closing, followUp, strategy, opportunities] = await Promise.all([
-      this.generateSection(llm, 'opening', this.openingPrompt(businessName, niche, city)),
-      this.generateSection(llm, 'discovery', this.discoveryPrompt(businessName, niche, weaknesses)),
-      this.generateSection(llm, 'value', this.valuePrompt(businessName, niche, weaknesses)),
-      this.generateSection(llm, 'objections', this.objectionsPrompt(businessName, niche, weaknesses, competitors)),
-      this.generateSection(llm, 'closing', this.closingPrompt(businessName, niche)),
-      this.generateSection(llm, 'followUp', this.followUpPrompt(businessName, niche)),
-      this.generateSection(llm, 'strategy', this.strategyPrompt(businessName, niche, competitors)),
-      this.generateOpportunities(llm, businessName, niche, weaknesses, competitors),
-    ]);
+    const result = await this.generateCombined(
+      llm,
+      businessName,
+      niche,
+      city,
+      weaknesses,
+      competitors,
+    );
 
     return {
-      salesScript: { opening, discovery, valueProposition: value, objections, closing, followUp, strategy } as unknown as Record<string, unknown>,
-      salesOpportunities: opportunities,
+      salesScript: {
+        opening: result.opening,
+        discovery: result.discovery,
+        valueProposition: result.valueProposition,
+        objections: result.objections,
+        closing: result.closing,
+        followUp: result.followUp,
+        strategy: result.strategy,
+      } as unknown as Record<string, unknown>,
+      salesOpportunities: (result.salesOpportunities as SalesOpportunity[] | undefined) || [],
     };
   }
 
-  // ── Section Generators ────────────────────────────────────
+  // ── Combined Generation (1 LLM call instead of 8) ──────
 
-  private async generateSection(
+  private buildCompetitorAnalysis(competitors: CompetitorInfo[]): string {
+    if (!competitors.length) return 'No competitor data available.';
+
+    return competitors.map((c) => {
+      const parts: string[] = [`${c.name} (rating: ${c.rating}, reviews: ${c.reviewCount})`];
+      if (c.services?.length) parts.push(`  Services: ${c.services.map((s) => s.name).join(', ')}`);
+      if (c.websiteAnalysis) {
+        const a = c.websiteAnalysis;
+        parts.push(`  Online presence: booking=${a.hasOnlineBooking}, prices=${a.hasPriceList}, portfolio=${a.hasPortfolio}, reviews=${a.hasReviews}`);
+        if (a.strengths?.length) parts.push(`  Strengths: ${a.strengths.join(', ')}`);
+      }
+      return parts.join('\n');
+    }).join('\n\n');
+  }
+
+  private async generateCombined(
     llm: ReturnType<LLMStrategyFactory['create']>,
-    _section: string,
-    prompt: string,
+    businessName: string,
+    niche: string,
+    city: string,
+    weaknesses: string[],
+    competitors: CompetitorInfo[],
   ): Promise<Record<string, unknown>> {
+    const competitorNames = competitors.map((c) => c.name).join(', ') || 'unknown';
+    const competitorAnalysis = this.buildCompetitorAnalysis(competitors);
+
+    const prompt = `You are a senior sales trainer and business analyst in Ukraine. Generate a COMPLETE sales script and strategy for "${businessName}" (${niche}, ${city}).
+
+Known weaknesses: ${weaknesses.join(', ') || 'none detected'}
+Competitors nearby: ${competitorNames}
+
+Competitive analysis (use this to craft targeted objection-handling and competitive advantages):
+${competitorAnalysis}
+
+Return ONLY a single JSON object with ALL sections below. Use Ukrainian or Russian language matching the business. Be specific — reference real data points, not generic placeholders.
+
+{
+  "opening": {
+    "greeting": "exact greeting in Ukrainian/Russian",
+    "icebreaker": "1-2 sentences personalized to this business",
+    "hook": "1 sentence value hook that gets attention"
+  },
+
+  "discovery": {
+    "qualificationQuestions": [{"question": "exact question", "purpose": "what this reveals"}],
+    "painPointProbes": [{"question": "probe question", "target": "which weakness this targets"}],
+    "budgetSignals": ["phrase indicating budget", "phrase indicating no budget"]
+  },
+
+  "valueProposition": {
+    "corePromise": "1 sentence",
+    "tailoredToBusiness": "2-3 sentences specific to this business",
+    "roiExamples": [{"scenario": "specific", "result": "concrete result with numbers"}]
+  },
+
+  "objections": [{
+    "objection": "exact words client will say (Ukrainian/Russian)",
+    "rootCause": "psychological reason behind this objection",
+    "response": "exact 2-3 sentence response",
+    "followUp": "what to say if they push back again",
+    "evidence": "data point or example to counter this objection"
+  }],
+
+  "closing": {
+    "trialCloses": ["trial close phrase 1", "trial close phrase 2"],
+    "assumptiveClose": "exact assumptive close script",
+    "urgencyBuilder": "urgency statement with reason",
+    "alternativeClose": "alternative approach if assumptive fails"
+  },
+
+  "followUp": {
+    "sameDaySms": "SMS text to send same day",
+    "nextDayEmail": "Email subject and body for next day",
+    "threeDayCallback": "call script for 3-day follow-up",
+    "referralAsk": "how to ask for referrals even if prospect says no"
+  },
+
+  "strategy": {
+    "targetDecisionMaker": "who to talk to, age range, gender",
+    "bestTimeToCall": "optimal day and time for calling",
+    "dealBreakers": ["situation that kills the deal"],
+    "quickWins": ["easy concession to keep deal alive"],
+    "competitiveAdvantages": ["our strength vs each specific competitor"]
+  },
+
+  "salesOpportunities": [{
+    "gap": "what they are missing compared to competitors",
+    "currentState": "how they operate now",
+    "recommendation": "what we propose to close this gap",
+    "pitchAngle": "how to pitch this specific gap",
+    "revenueImpact": "estimated revenue impact in UAH/month",
+    "scriptExcerpt": "relevant sales script excerpt for this opportunity"
+  }]
+}`;
+
     try {
-      const response = await llm.generateContent(prompt, { temperature: 0.4, maxTokens: 2000 });
+      const response = await llm.generateContent(prompt, { temperature: 0.4, maxTokens: 8000 });
       return this.parseJson(response.content) as Record<string, unknown>;
     } catch {
       return {};
     }
-  }
-
-  private async generateOpportunities(
-    llm: ReturnType<LLMStrategyFactory['create']>,
-    businessName: string, niche: string, weaknesses: string[], competitors: CompetitorInfo[],
-  ): Promise<SalesOpportunity[]> {
-    const prompt = `You are a business analyst. Generate 3-5 sales opportunities for "${businessName}" (${niche}).
-
-Weaknesses: ${weaknesses.join(', ') || 'unknown'}
-Competitors: ${competitors.map((c) => c.name).join(', ') || 'unknown'}
-
-Return ONLY JSON array:
-[{
-  "gap": "what they're missing",
-  "currentState": "how they operate now",
-  "recommendation": "what we propose",
-  "pitchAngle": "how to pitch this specific gap",
-  "revenueImpact": "estimated revenue impact in UAH/month",
-  "scriptExcerpt": "relevant sales script excerpt for this gap"
-}]`;
-
-    try {
-      const response = await llm.generateContent(prompt, { temperature: 0.5, maxTokens: 2000 });
-      const parsed = this.parseJson(response.content);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }
-
-  // ── Prompts ───────────────────────────────────────────────
-
-  private openingPrompt(businessName: string, niche: string, city: string): string {
-    return `You are a sales trainer in Ukraine. Write a phone call opening for pitching a website to "${businessName}" (${niche}, ${city}).
-
-Return ONLY JSON:
-{
-  "greeting": "exact greeting in Ukrainian/Russian (match business language)",
-  "icebreaker": "1-2 sentences personalized to the business",
-  "hook": "1 sentence value hook that gets attention"
-}`;
-  }
-
-  private discoveryPrompt(businessName: string, niche: string, weaknesses: string[]): string {
-    return `You are a sales trainer. Create discovery questions for "${businessName}" (${niche}).
-Known weaknesses: ${weaknesses.join(', ') || 'unknown'}
-
-Return ONLY JSON:
-{
-  "qualificationQuestions": [{"question": "exact question in Ukrainian", "purpose": "what this reveals"}],
-  "painPointProbes": [{"question": "probe question", "target": "which weakness this targets"}],
-  "budgetSignals": ["phrase indicating budget", "phrase indicating no budget"]
-}`;
-  }
-
-  private valuePrompt(businessName: string, niche: string, weaknesses: string[]): string {
-    return `You are a sales consultant. Create value proposition for "${businessName}" (${niche}).
-Weaknesses: ${weaknesses.join(', ') || 'unknown'}
-
-Return ONLY JSON:
-{
-  "corePromise": "1 sentence",
-  "tailoredToBusiness": "2-3 sentences specific to this business",
-  "roiExamples": [{"scenario": "specific", "result": "concrete result with numbers"}]
-}`;
-  }
-
-  private objectionsPrompt(businessName: string, niche: string, weaknesses: string[], competitors: CompetitorInfo[]): string {
-    return `You are a senior sales trainer in Ukraine. Generate 5-7 objections "${businessName}" (${niche}) will raise when pitched a new website.
-
-Weaknesses: ${weaknesses.join(', ') || 'unknown'}
-Competitors: ${competitors.map((c) => c.name).join(', ') || 'unknown'}
-
-Return ONLY JSON array of:
-{
-  "objection": "exact words they'll say (Ukrainian/Russian)",
-  "rootCause": "psychological reason",
-  "response": "exact 2-3 sentence response",
-  "followUp": "what to say if they push back again",
-  "evidence": "data point or example"
-}`;
-  }
-
-  private closingPrompt(businessName: string, niche: string): string {
-    return `You are a sales closer. Write closing techniques for "${businessName}" (${niche}).
-
-Return ONLY JSON:
-{
-  "trialCloses": ["trial close 1", "trial close 2"],
-  "assumptiveClose": "exact assumptive close script",
-  "urgencyBuilder": "urgency statement",
-  "alternativeClose": "alternative if assumptive fails"
-}`;
-  }
-
-  private followUpPrompt(businessName: string, niche: string): string {
-    return `You are a sales follow-up expert. Write follow-up templates for "${businessName}" (${niche}).
-
-Return ONLY JSON:
-{
-  "sameDaySms": "SMS text (Ukrainian/Russian)",
-  "nextDayEmail": "Email subject + body",
-  "threeDayCallback": "call script for 3-day follow-up",
-  "referralAsk": "how to ask for referrals even if they say no"
-}`;
-  }
-
-  private strategyPrompt(businessName: string, niche: string, competitors: CompetitorInfo[]): string {
-    return `You are a sales strategist. Plan sales approach for "${businessName}" (${niche}).
-Competitors: ${competitors.map((c) => c.name).join(', ') || 'unknown'}
-
-Return ONLY JSON:
-{
-  "targetDecisionMaker": "who to talk to, age range, gender",
-  "bestTimeToCall": "optimal day/time",
-  "dealBreakers": ["thing that kills deal"],
-  "quickWins": ["easy concession to keep deal alive"],
-  "competitiveAdvantages": ["our strength vs their current setup"]
-}`;
   }
 
   // ── Helpers ─────────────────────────────────────────────

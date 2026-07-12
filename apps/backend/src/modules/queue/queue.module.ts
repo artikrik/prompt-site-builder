@@ -17,6 +17,7 @@ import { QueueService } from './queue.service';
     BullModule.registerQueue(
       { name: 'generation' },
       { name: 'scraping' },
+      { name: 'enrichment' },
     ),
   ],
   providers: [QueueService],

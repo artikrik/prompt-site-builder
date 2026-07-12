@@ -31,4 +31,4 @@ Descriptive: "returns empty array when no markets match query", "throws error wh
 ## Rules
 - External API calls MUST be mocked.
 - If test fails: check isolation → verify mocks → fix implementation (not tests, unless tests wrong).
-- CI: bash scripts/ci-local.sh (lint → typecheck → test → build).
+- CI: bash scripts/ci-local.sh --compact (lint → typecheck → test → build).
