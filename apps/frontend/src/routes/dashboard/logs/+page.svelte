@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* global URLSearchParams */
   import { onMount } from 'svelte';
   import { t } from '$lib/i18n/uk';
   import { api } from '$lib/api/client';
@@ -146,7 +147,7 @@
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {#each genJobs as job}
+              {#each genJobs as job, i (i)}
                 <Table.Row>
                   <Table.Cell class="font-medium text-sm">{(job.project as any)?.slug || job.projectId as string}</Table.Cell>
                   <Table.Cell class="text-sm">{job.type as string}</Table.Cell>
@@ -194,7 +195,7 @@
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {#each sysLogs as log}
+              {#each sysLogs as log, i (i)}
                 <Table.Row>
                   <Table.Cell><Badge variant={getLevelBadge(log.level as string)}>{log.level as string}</Badge></Table.Cell>
                   <Table.Cell class="text-sm">{log.module as string}</Table.Cell>

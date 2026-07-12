@@ -73,7 +73,7 @@
     }
   }
 
-  async function createProject(leadId: string, e: Event) {
+  async function createProject(leadId: string, e: MouseEvent) {
     e.stopPropagation();
     try {
       const project = await projects.create(leadId);
@@ -154,7 +154,7 @@
           </div>
           <div class="space-y-2">
             <Label>{t.leads.socialLinks}</Label>
-            {#each newLead.socialUrls as _, i}
+            {#each newLead.socialUrls as _, i (i)}
               <div class="flex gap-2">
                 <Input bind:value={newLead.socialUrls[i]} placeholder="https://instagram.com/..." />
                 {#if newLead.socialUrls.length > 1}
@@ -236,7 +236,7 @@
                   <Badge variant={getStatusVariant(lead.status)}>{t.status[lead.status as keyof typeof t.status] ?? lead.status}</Badge>
                 </Table.Cell>
                 <Table.Cell class="text-right">
-                  <Button variant="ghost" size="sm" onclick={(e) => createProject(lead.id, e)}>Створити сайт</Button>
+                  <Button variant="ghost" size="sm" onclick={(e: MouseEvent) => createProject(lead.id, e)}>Створити сайт</Button>
                 </Table.Cell>
               </Table.Row>
             {/each}

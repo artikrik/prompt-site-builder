@@ -83,7 +83,7 @@ export class GenerationController {
       address: lead.address,
       phone: lead.phone,
       email: lead.email,
-      socialUrls: lead.socialUrl ? [lead.socialUrl] : [],
+      socialUrl: lead.socialUrl,
       theme: selectedTheme,
       variantId,
     });

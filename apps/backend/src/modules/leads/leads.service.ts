@@ -208,10 +208,10 @@ export class LeadsService {
   }
 
   async queueScrape(leadId: string, platforms: string[]): Promise<{ id: string }> {
-    await this.findOne(leadId);
+    const lead = await this.findOne(leadId);
 
     // Queue scraping job via BullMQ
-    const job = await this.queueService.addScrapeJob(leadId, platforms);
+    const job = await this.queueService.addScrapingJob({ city: lead.city || '', category: lead.category || '' });
 
     // Mark scraping as enabled
     await this.prisma.lead.update({
@@ -219,7 +219,7 @@ export class LeadsService {
       data: { scrapingEnabled: true },
     });
 
-    return { id: job.id };
+    return { id: job.id! };
   }
 
   async getScrapeStatus(leadId: string): Promise<{
@@ -243,7 +243,14 @@ export class LeadsService {
       select: { id: true, status: true, result: true, error: true },
     });
 
-    return { jobs };
+    return {
+      jobs: jobs.map(j => ({
+        id: j.id,
+        status: j.status,
+        result: j.result ?? undefined,
+        error: j.error ?? undefined,
+      })),
+    };
   }
 
   async bulkUpdateStatus(ids: string[], status: string): Promise<number> {

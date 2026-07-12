@@ -8,6 +8,7 @@
     "start": "node dist/main.js",
     "start:prod": "node dist/main.js",
     "lint": "eslint \"{src,test}/**/*.ts\"",
+    "pretypecheck": "cd ../../packages/shared && npx tsc",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

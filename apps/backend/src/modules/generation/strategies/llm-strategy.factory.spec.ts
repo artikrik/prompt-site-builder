@@ -6,6 +6,7 @@ import { OpenAIStrategy } from './openai.strategy';
 import { DeepseekStrategy } from './deepseek.strategy';
 import { MimoStrategy } from './mimo.strategy';
 import { GeminiStrategy } from './gemini.strategy';
+import { OpenRouterStrategy } from './openrouter.strategy';
 
 describe('LLMStrategyFactory', () => {
   let factory: LLMStrategyFactory;
@@ -27,6 +28,7 @@ describe('LLMStrategyFactory', () => {
       {} as DeepseekStrategy,
       {} as MimoStrategy,
       geminiStrategy,
+      {} as OpenRouterStrategy,
     );
   });
 

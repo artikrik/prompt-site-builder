@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* global fetch */
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
@@ -66,7 +67,7 @@
     <div class="text-center py-12 text-muted-foreground">{t.leads.noLeads}</div>
   {:else}
     <div class="flex border-b gap-1">
-      {#each tabs as tab}
+      {#each tabs as tab (tab.id)}
         <button
           class="px-4 py-2 text-sm font-medium border-b-2 transition-colors
             {activeTab === tab.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-muted-foreground hover:text-foreground'}"
@@ -101,8 +102,8 @@
               <dd>
                 {#if lead.socialUrls && lead.socialUrls.length > 0}
                   <ul class="space-y-1">
-                    {#each lead.socialUrls as url}
-                      <li><a href={url} target="_blank" class="text-blue-600 hover:underline text-sm">{url}</a></li>
+                    {#each lead.socialUrls as url, i (i)}
+                      <li><a href={url} target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline text-sm">{url}</a></li>
                     {/each}
                   </ul>
                 {:else}—{/if}
@@ -134,7 +135,7 @@
           <div class="text-center py-12 text-muted-foreground">{t.projects.noProjects}</div>
         {:else}
           <div class="grid gap-4">
-            {#each leadProjects as project}
+            {#each leadProjects as project (project.id)}
               <Card.Root class="cursor-pointer hover:shadow-md transition-shadow" onclick={() => goto(resolve(`/dashboard/projects/${project.id}`))}>
                 <Card.Content class="flex items-center justify-between py-4">
                   <div>

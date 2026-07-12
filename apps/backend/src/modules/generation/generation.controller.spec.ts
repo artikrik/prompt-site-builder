@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { ConfigService } from '@nestjs/config';
 import { GenerationController } from './generation.controller';
 
 describe('GenerationController.getStatus', () => {
@@ -8,6 +9,7 @@ describe('GenerationController.getStatus', () => {
   let themeService: { listAvailableThemes: ReturnType<typeof vi.fn>; getDefaultTheme: ReturnType<typeof vi.fn> };
   let themeSelector: { selectThemeForBusiness: ReturnType<typeof vi.fn> };
   let cache: { getOrSet: ReturnType<typeof vi.fn> };
+  let configService: { get: ReturnType<typeof vi.fn> };
   let prisma: { generationJob: { findFirst: ReturnType<typeof vi.fn> } };
 
   const projectId = 'proj-1';
@@ -21,6 +23,7 @@ describe('GenerationController.getStatus', () => {
     };
     themeSelector = { selectThemeForBusiness: vi.fn() };
     cache = { getOrSet: vi.fn() };
+    configService = { get: vi.fn() };
     prisma = { generationJob: { findFirst: vi.fn() } };
 
     controller = new GenerationController(
@@ -30,6 +33,7 @@ describe('GenerationController.getStatus', () => {
       themeService as any,
       themeSelector as any,
       cache as any,
+      configService as any,
     );
   });
 
