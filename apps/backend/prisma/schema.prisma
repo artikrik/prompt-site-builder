@@ -97,11 +97,20 @@ model Lead {
   category     String?
   description  String?
   website      String?
-  socialUrl    String?
+  socialUrls   String[]   @default([])
+  country      String?
+  region       String?
   source       String
   status       LeadStatus @default(NEW)
   tags         String[]
   scrapedData  Json       @default("{}")
+
+  // Scraping
+  scrapingEnabled  Boolean  @default(false)
+  scrapedPhotos    String[] @default([])
+  scrapedReviews   Json[]   @default([])
+  scrapedContacts  Json     @default("{}")
+  scrapedHours     Json     @default("{}")
 
   // Payment & Booking
   easyweekEnabled   Boolean  @default(false)
@@ -240,4 +249,15 @@ model ClientWidget {
   updatedAt DateTime   @updatedAt
 
   project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model CategoryPrompt {
+  id               String   @id @default(uuid())
+  category         String   @unique
+  contentPrompt    String
+  designPrompt     String
+  competitorPrompt String
+  isCustom         Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }

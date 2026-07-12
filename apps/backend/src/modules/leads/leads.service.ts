@@ -101,7 +101,7 @@ export class LeadsService {
     if (!hasFilters) {
       const leads: Lead[] = await this.cache.getOrSet<Lead[]>(
         `${CACHE_PREFIX}:all`,
-        () => this.prisma.lead.findMany({ orderBy: { createdAt: 'desc' } }) as Promise<Lead[]>,
+        () => this.prisma.lead.findMany({ orderBy: { createdAt: 'desc' } }) as unknown as Promise<Lead[]>,
         CACHE_TTL,
       );
       return leads.map(lead => this.toLead(lead));
