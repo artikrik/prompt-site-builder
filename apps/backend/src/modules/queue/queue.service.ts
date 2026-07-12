@@ -36,7 +36,15 @@ export class QueueService {
     return job;
   }
 
-  async addScrapingJob(data: { city: string; category: string; limit?: number }) {
+  async addScrapingJob(data: {
+    leadId?: string;
+    businessName?: string;
+    city: string;
+    category: string;
+    platforms?: string[];
+    socialUrls?: string[];
+    limit?: number;
+  }) {
     const job = await this.scrapingQueue.add('scrape-leads', data, {
       attempts: 2,
       backoff: { type: 'exponential', delay: 10000 },

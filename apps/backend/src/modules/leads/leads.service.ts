@@ -52,11 +52,17 @@ export class LeadsService {
       ...decrypted,
       enrichmentData: (decrypted.enrichmentData as any) ?? null,
       scrapedData: decrypted.scrapedData ?? {},
+      socialUrls: decrypted.socialUrls ?? [],
+      scrapedPhotos: decrypted.scrapedPhotos ?? [],
+      scrapedReviews: decrypted.scrapedReviews ?? [],
+      scrapedContacts: decrypted.scrapedContacts ?? {},
+      scrapedHours: decrypted.scrapedHours ?? {},
     } as Lead;
   }
 
   async create(dto: CreateLeadDto): Promise<Lead> {
-    const slug = this.generateSlug(dto.businessName);
+    const baseSlug = this.generateSlug(dto.businessName);
+    const slug = await this.ensureUniqueSlug(baseSlug);
     const encryptedData = this.encryptPaymentFields(dto);
 
     // Apply default enrichment sources from env if not provided
@@ -101,7 +107,7 @@ export class LeadsService {
     if (!hasFilters) {
       const leads: Lead[] = await this.cache.getOrSet<Lead[]>(
         `${CACHE_PREFIX}:all`,
-        () => this.prisma.lead.findMany({ orderBy: { createdAt: 'desc' } }) as Promise<Lead[]>,
+        () => this.prisma.lead.findMany({ orderBy: { createdAt: 'desc' } }) as unknown as Promise<Lead[]>,
         CACHE_TTL,
       );
       return leads.map(lead => this.toLead(lead));
@@ -202,6 +208,58 @@ export class LeadsService {
     await this.cache.delByPrefix(CACHE_PREFIX);
   }
 
+  async queueScrape(leadId: string, platforms: string[]): Promise<{ id: string }> {
+    const lead = await this.findOne(leadId);
+
+    const job = await this.queueService.addScrapingJob({
+      leadId: lead.id,
+      businessName: lead.businessName,
+      city: lead.city || '',
+      category: lead.category || '',
+      platforms,
+      socialUrls: lead.socialUrls || [],
+    });
+
+    // Mark scraping as enabled
+    await this.prisma.lead.update({
+      where: { id: leadId },
+      data: { scrapingEnabled: true },
+    });
+
+    return { id: job.id! };
+  }
+
+  async getScrapeStatus(leadId: string): Promise<{
+    jobs: Array<{ id: string; status: string; result?: unknown; error?: string }>;
+  }> {
+    // Find projects for this lead, then find scrape jobs for those projects
+    const projects = await this.prisma.project.findMany({
+      where: { leadId },
+      select: { id: true },
+    });
+
+    const projectIds = projects.map(p => p.id);
+
+    const jobs = await this.prisma.generationJob.findMany({
+      where: {
+        projectId: { in: projectIds },
+        type: 'SCRAPE_LEAD',
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      select: { id: true, status: true, result: true, error: true },
+    });
+
+    return {
+      jobs: jobs.map(j => ({
+        id: j.id,
+        status: j.status,
+        result: j.result ?? undefined,
+        error: j.error ?? undefined,
+      })),
+    };
+  }
+
   async bulkUpdateStatus(ids: string[], status: string): Promise<number> {
     const result = await this.prisma.lead.updateMany({
       where: { id: { in: ids } },
@@ -210,6 +268,23 @@ export class LeadsService {
 
     await this.cache.delByPrefix(CACHE_PREFIX);
     return result.count;
+  }
+
+  private async ensureUniqueSlug(baseSlug: string): Promise<string> {
+    let slug = baseSlug;
+    let suffix = 1;
+
+    while (true) {
+      const existing = await this.prisma.lead.findUnique({
+        where: { slug },
+        select: { id: true },
+      });
+
+      if (!existing) return slug;
+
+      slug = `${baseSlug}-${suffix}`;
+      suffix++;
+    }
   }
 
   private generateSlug(name: string): string {

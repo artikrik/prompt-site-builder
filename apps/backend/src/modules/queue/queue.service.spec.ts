@@ -44,7 +44,7 @@ describe('QueueService', () => {
 
   describe('addScrapingJob', () => {
     it('should add a job to scraping queue', async () => {
-      const jobData = { city: 'Kyiv', category: 'salon', limit: 10 };
+      const jobData = { leadId: 'lead-1', businessName: 'Test', city: 'Kyiv', category: 'salon', platforms: ['googleMaps'], socialUrls: [], limit: 10 };
       scrapingQueue.add.mockResolvedValue({ id: 'job-2', data: jobData });
 
       const result = await service.addScrapingJob(jobData);

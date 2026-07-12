@@ -1,0 +1,31 @@
+# Caddy — Client Sites Only (wildcard TLS)
+# Used by Coolify deployment. Main domain TLS handled by Coolify.
+# Only *.sitenow.pp.ua routes go through this Caddy.
+
+{
+  on_demand_tls {
+    ask http://backend:3001/api/caddy/check-domain
+    interval 2m
+    burst 5
+  }
+}
+
+*.sitenow.pp.ua {
+  tls {
+    on_demand
+  }
+
+  @clientSite {
+    not path /api/*
+  }
+
+  handle @clientSite {
+    root * /var/www/client-sites/{host}
+    file_server
+    try_files {path} /index.html
+  }
+
+  handle {
+    respond "Not Found" 404
+  }
+}

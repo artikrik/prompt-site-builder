@@ -7,6 +7,7 @@
   import { projects, type Project } from '$lib/stores/projects';
   import { variants, type VariantListItem } from '$lib/stores/variants';
   import { api } from '$lib/api/client.js';
+  import { t } from '$lib/i18n/uk';
   import VariantList from '$lib/components/variants/VariantList.svelte';
   import VariantGenerator from '$lib/components/variants/VariantGenerator.svelte';
   import AddonList from '$lib/components/addons/AddonList.svelte';
@@ -85,8 +86,8 @@
     }
   }
 
-  async function handleConfigureAddon(addonType: AddonType) {
-    alert(`Configuration for ${addonType} will be available in the next update.`);
+  async function handleConfigureAddon(_addonType: AddonType) {
+    // Configure modal not yet implemented in template
   }
 
   async function handleVariantGenerate(config: { model: string; imageModel: string; theme: string }) {
@@ -154,13 +155,13 @@
   }
 </script>
 
-<svelte:head><title>Project Details - Prompt Site Builder</title></svelte:head>
+<svelte:head><title>{project?.lead?.businessName || t.projects.title} - {t.app.name}</title></svelte:head>
 
 <div class="space-y-6">
   <div>
     <Button variant="ghost" size="sm" onclick={() => goto(resolve('/dashboard/projects'))} class="mb-4">
       <ArrowLeft class="w-4 h-4 mr-2" />
-      Back to Projects
+      {t.common.back}
     </Button>
   </div>
 
@@ -196,7 +197,7 @@
         {#if project.status === 'PUBLISHED' && project.publishedUrl}
           <Button onclick={() => window.open(project!.publishedUrl!, '_blank')}>
             <ExternalLink class="w-4 h-4 mr-2" />
-            View Live Site
+            {t.projects.viewSite}
           </Button>
         {/if}
       </div>
@@ -272,7 +273,9 @@
             <Card.Title>Site Preview</Card.Title>
           </Card.Header>
           <Card.Content>
-            <iframe src={`${project.publishedUrl}?v=${project.updatedAt}`} class="w-full h-96 border border-border rounded-md" title="Site Preview"></iframe>
+            <Button onclick={() => window.open(project!.publishedUrl!, '_blank')}>
+            <ExternalLink class="w-4 h-4 mr-2" /> {t.projects.viewSite}
+          </Button>
           </Card.Content>
         </Card.Root>
       {/if}

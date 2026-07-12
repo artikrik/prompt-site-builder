@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { VariantsService } from './variants.service';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
+import { SitePublisherService } from '../../publishing/site-publisher.service';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('VariantsService', () => {
@@ -18,6 +19,7 @@ describe('VariantsService', () => {
       update: ReturnType<typeof vi.fn>;
     };
   };
+  let publisher: { switchActiveVariant: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     prisma = {
@@ -33,8 +35,14 @@ describe('VariantsService', () => {
         update: vi.fn(),
       },
     };
+    publisher = {
+      switchActiveVariant: vi.fn(),
+    };
 
-    service = new VariantsService(prisma as unknown as PrismaService);
+    service = new VariantsService(
+      prisma as unknown as PrismaService,
+      publisher as unknown as SitePublisherService,
+    );
   });
 
   describe('create', () => {
@@ -159,6 +167,7 @@ describe('VariantsService', () => {
       prisma.siteVariant.updateMany.mockResolvedValue({ count: 1 });
       prisma.siteVariant.update.mockResolvedValue({ id: 'variant-2', status: 'PUBLISHED' });
       prisma.project.update.mockResolvedValue({ id: 'project-1', status: 'PUBLISHED' });
+      publisher.switchActiveVariant.mockResolvedValue(undefined);
 
       await service.activate('variant-2');
 
@@ -179,6 +188,7 @@ describe('VariantsService', () => {
           publishedUrl: 'https://my-slug.sitenow.pp.ua',
         },
       });
+      expect(publisher.switchActiveVariant).toHaveBeenCalledWith('my-slug', 'variant-2');
     });
 
     it('should throw BadRequestException if variant already PUBLISHED', async () => {

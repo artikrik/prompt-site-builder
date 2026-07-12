@@ -14,7 +14,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { LeadsService } from './leads.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
-import { CreateLeadDto, UpdateLeadDto, LeadFilter, Lead } from '@prompt-site-builder/shared';
+import { CreateLeadDto, UpdateLeadDto, LeadFilter, Lead, ScrapeRequest } from '@prompt-site-builder/shared';
 
 @ApiTags('Leads')
 @ApiBearerAuth()
@@ -71,5 +71,25 @@ export class LeadsController {
   ): Promise<{ count: number }> {
     const count = await this.leadsService.bulkUpdateStatus(ids, status);
     return { count };
+  }
+
+  @Post(':id/scrape')
+  @ApiOperation({ summary: 'Queue social media scraping for a lead' })
+  @ApiResponse({ status: 202, description: 'Scraping queued' })
+  async scrape(
+    @Param('id') id: string,
+    @Body() dto: ScrapeRequest,
+  ): Promise<{ jobId: string }> {
+    const result = await this.leadsService.queueScrape(id, dto.platforms);
+    return { jobId: result.id };
+  }
+
+  @Get(':id/scrape-status')
+  @ApiOperation({ summary: 'Get scraping job status and results' })
+  @ApiResponse({ status: 200, description: 'Scraping status' })
+  async getScrapeStatus(@Param('id') id: string): Promise<{
+    jobs: Array<{ id: string; status: string; result?: unknown; error?: string }>;
+  }> {
+    return this.leadsService.getScrapeStatus(id);
   }
 }
