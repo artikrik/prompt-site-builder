@@ -25,7 +25,6 @@ jobs:
   lint:
     name: Lint
     runs-on: self-hosted
-    if: github.event_name == 'pull_request'
     timeout-minutes: 10
     env:
       TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
@@ -47,7 +46,6 @@ jobs:
   typecheck:
     name: Type Check
     runs-on: self-hosted
-    if: github.event_name == 'pull_request'
     timeout-minutes: 10
     env:
       TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
@@ -177,6 +175,7 @@ jobs:
   build:
     name: Build
     runs-on: self-hosted
+    needs: [lint, typecheck]
     if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.deploy) }}
     timeout-minutes: 15
     steps:

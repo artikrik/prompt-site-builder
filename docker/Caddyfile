@@ -23,6 +23,12 @@ https://sitenow.pp.ua, https://www.sitenow.pp.ua {
     }
   }
 
+  # Variant preview — static files from Hugo build output
+  handle_path /variant-preview/* {
+    root * /var/www/client-sites
+    file_server
+  }
+
   # Everything else → frontend
   handle {
     reverse_proxy frontend:5173
