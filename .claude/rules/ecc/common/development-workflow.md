@@ -7,4 +7,4 @@ Before ANY commit or push, run full CI locally:
 3. `npm run test` — vitest all passing
 4. `npm run build` — production build exit 0
 
-Also available: `bash scripts/ci-local.sh`
+Also available: `bash scripts/ci-local.sh --compact`

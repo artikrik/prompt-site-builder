@@ -82,4 +82,11 @@ export class QueueService {
     const state = await job.getState();
     return { id: job.id, state, progress: job.progress, data: job.data, returnvalue: job.returnvalue, failedReason: job.failedReason };
   }
+
+  async getEnrichmentJobStatus(jobId: string) {
+    const job = await this.enrichmentQueue.getJob(jobId);
+    if (!job) return null;
+    const state = await job.getState();
+    return { id: job.id, state, progress: job.progress, data: job.data, returnvalue: job.returnvalue, failedReason: job.failedReason };
+  }
 }

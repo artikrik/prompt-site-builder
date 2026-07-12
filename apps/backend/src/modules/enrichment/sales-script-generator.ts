@@ -19,7 +19,6 @@ export class SalesScriptGenerator {
     const city = this.extract(rawData, 'city') || 'Ukraine';
     const weaknesses = this.collectWeaknesses(existing);
     const competitors = (existing.competitors || []) as CompetitorInfo[];
-    const competitorNames = competitors.map((c) => c.name).join(', ') || 'unknown';
 
     const result = await this.generateCombined(
       llm,
@@ -27,7 +26,6 @@ export class SalesScriptGenerator {
       niche,
       city,
       weaknesses,
-      competitorNames,
       competitors,
     );
 
@@ -47,91 +45,103 @@ export class SalesScriptGenerator {
 
   // ── Combined Generation (1 LLM call instead of 8) ──────
 
+  private buildCompetitorAnalysis(competitors: CompetitorInfo[]): string {
+    if (!competitors.length) return 'No competitor data available.';
+
+    return competitors.map((c) => {
+      const parts: string[] = [`${c.name} (rating: ${c.rating}, reviews: ${c.reviewCount})`];
+      if (c.services?.length) parts.push(`  Services: ${c.services.map((s) => s.name).join(', ')}`);
+      if (c.websiteAnalysis) {
+        const a = c.websiteAnalysis;
+        parts.push(`  Online presence: booking=${a.hasOnlineBooking}, prices=${a.hasPriceList}, portfolio=${a.hasPortfolio}, reviews=${a.hasReviews}`);
+        if (a.strengths?.length) parts.push(`  Strengths: ${a.strengths.join(', ')}`);
+      }
+      return parts.join('\n');
+    }).join('\n\n');
+  }
+
   private async generateCombined(
     llm: ReturnType<LLMStrategyFactory['create']>,
     businessName: string,
     niche: string,
     city: string,
     weaknesses: string[],
-    competitorNames: string,
-    _competitors: CompetitorInfo[],
+    competitors: CompetitorInfo[],
   ): Promise<Record<string, unknown>> {
+    const competitorNames = competitors.map((c) => c.name).join(', ') || 'unknown';
+    const competitorAnalysis = this.buildCompetitorAnalysis(competitors);
+
     const prompt = `You are a senior sales trainer and business analyst in Ukraine. Generate a COMPLETE sales script and strategy for "${businessName}" (${niche}, ${city}).
 
 Known weaknesses: ${weaknesses.join(', ') || 'none detected'}
-Competitors nearby: ${competitorNames || 'unknown'}
+Competitors nearby: ${competitorNames}
+
+Competitive analysis (use this to craft targeted objection-handling and competitive advantages):
+${competitorAnalysis}
 
 Return ONLY a single JSON object with ALL sections below. Use Ukrainian or Russian language matching the business. Be specific — reference real data points, not generic placeholders.
 
 {
-  // 1. OPENING — phone call opening
   "opening": {
     "greeting": "exact greeting in Ukrainian/Russian",
     "icebreaker": "1-2 sentences personalized to this business",
     "hook": "1 sentence value hook that gets attention"
   },
 
-  // 2. DISCOVERY — qualification questions
   "discovery": {
     "qualificationQuestions": [{"question": "exact question", "purpose": "what this reveals"}],
     "painPointProbes": [{"question": "probe question", "target": "which weakness this targets"}],
     "budgetSignals": ["phrase indicating budget", "phrase indicating no budget"]
   },
 
-  // 3. VALUE PROPOSITION
   "valueProposition": {
     "corePromise": "1 sentence",
     "tailoredToBusiness": "2-3 sentences specific to this business",
     "roiExamples": [{"scenario": "specific", "result": "concrete result with numbers"}]
   },
 
-  // 4. OBJECTIONS — 5-7 anticipated objections
   "objections": [{
-    "objection": "exact words they'll say (Ukrainian/Russian)",
-    "rootCause": "psychological reason",
+    "objection": "exact words client will say (Ukrainian/Russian)",
+    "rootCause": "psychological reason behind this objection",
     "response": "exact 2-3 sentence response",
     "followUp": "what to say if they push back again",
-    "evidence": "data point or example"
+    "evidence": "data point or example to counter this objection"
   }],
 
-  // 5. CLOSING techniques
   "closing": {
-    "trialCloses": ["trial close 1", "trial close 2"],
+    "trialCloses": ["trial close phrase 1", "trial close phrase 2"],
     "assumptiveClose": "exact assumptive close script",
-    "urgencyBuilder": "urgency statement",
-    "alternativeClose": "alternative if assumptive fails"
+    "urgencyBuilder": "urgency statement with reason",
+    "alternativeClose": "alternative approach if assumptive fails"
   },
 
-  // 6. FOLLOW-UP
   "followUp": {
-    "sameDaySms": "SMS text",
-    "nextDayEmail": "Email subject + body",
+    "sameDaySms": "SMS text to send same day",
+    "nextDayEmail": "Email subject and body for next day",
     "threeDayCallback": "call script for 3-day follow-up",
-    "referralAsk": "how to ask for referrals even if they say no"
+    "referralAsk": "how to ask for referrals even if prospect says no"
   },
 
-  // 7. STRATEGY
   "strategy": {
     "targetDecisionMaker": "who to talk to, age range, gender",
-    "bestTimeToCall": "optimal day/time",
-    "dealBreakers": ["thing that kills deal"],
+    "bestTimeToCall": "optimal day and time for calling",
+    "dealBreakers": ["situation that kills the deal"],
     "quickWins": ["easy concession to keep deal alive"],
-    "competitiveAdvantages": ["our strength vs their current setup"]
+    "competitiveAdvantages": ["our strength vs each specific competitor"]
   },
 
-  // 8. SALES OPPORTUNITIES — 3-5 concrete gaps
   "salesOpportunities": [{
-    "gap": "what they're missing",
+    "gap": "what they are missing compared to competitors",
     "currentState": "how they operate now",
-    "recommendation": "what we propose",
+    "recommendation": "what we propose to close this gap",
     "pitchAngle": "how to pitch this specific gap",
     "revenueImpact": "estimated revenue impact in UAH/month",
-    "scriptExcerpt": "relevant sales script excerpt for this gap"
+    "scriptExcerpt": "relevant sales script excerpt for this opportunity"
   }]
 }`;
 
     try {
-      const response = await llm.generateContent(prompt, { temperature: 0.4, maxTokens: 4000 });
+      const response = await llm.generateContent(prompt, { temperature: 0.4, maxTokens: 8000 });
       return this.parseJson(response.content) as Record<string, unknown>;
     } catch {
       return {};

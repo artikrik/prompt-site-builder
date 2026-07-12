@@ -57,7 +57,7 @@ You are a pragmatic, direct Senior Developer and Quality Engineer. Your code is 
 
 ## Standard Git Flow (MANDATORY)
 After completing development:
-1. **Pre-commit CI**: bash scripts/ci-local.sh (lint, typecheck, test, build)
+1. **Pre-commit CI**: bash scripts/ci-local.sh --compact (lint, typecheck, test, build)
 2. **Fix** failures, re-run CI
 3. **Commit** with Conventional Commits format
 4. **Push** branch to origin
@@ -82,13 +82,14 @@ Infra: Docker Compose, Caddy, GitHub Actions
 Monorepo: Turborepo (apps/backend, apps/frontend, packages/shared)
 
 ## Model Selection
-- deepseek-v4-flash: mechanical — docs, grep, format, commits, PRs, config, CI, dead-code
-- deepseek-v4-pro[1m]: code — edits, bugs, refactors, features, tests, review, security, debug
+- deepseek-v4-flash: mechanical — docs, grep, format, commits, PRs, config, CI, dead-code, Caddy config, turbo lint/typecheck
+- deepseek-v4-pro[1m]: code — edits, bugs, refactors, features, tests, review, security, debug, NestJS logic (RolesGuard, validateEnv)
 - Subagents: flash for mechanical; pro for code
+- Hygiene: switch to flash via `/model flash` for mechanical tasks. Pro[1m] reserved for logic changes — load only relevant app folder (e.g., apps/backend for NestJS refactors), skip unrelated context.
 
 ## Commands
 - `turbo dev|build|test|lint|typecheck|format`
-- Pre-commit CI: `bash scripts/ci-local.sh` (lint → typecheck → test → build)
+- Pre-commit CI: `bash scripts/ci-local.sh --compact` (lint → typecheck → test → build, minimal output)
 - Hugo: `hugo --source ./client-sites/<slug>`
 
 ## Branching
@@ -123,6 +124,9 @@ Git URLs: github.com/theNewDynamic/gohugo-theme-ananke, /StefMa/hugo-fresh, /zer
 - System prompt MUST include theme's config schema (params, sections, front matter).
 - Build: generate → `hugo --source ./client-sites/<slug>` → parse errors → fix → EXIT 0.
 - Verify: `node scripts/test-pipeline.js`
+
+### Hugo Build Debugging
+When `hugo build` fails: parse ONLY first 10 lines of error log. Identify the specific file + line (hugo.toml or Markdown Front Matter). Do NOT ingest full stack traces. Fix the identified line → rebuild → repeat until EXIT 0.
 
 ## Key Constraints
 - External API calls MUST be mocked in tests.
@@ -162,4 +166,4 @@ Before ANY commit or push, run full CI locally:
 2. `npm run typecheck` — tsc + svelte-check 0 errors
 3. `npm run test` — vitest all passing
 4. `npm run build` — production build exit 0
-Also: `bash scripts/ci-local.sh`
+Also: `bash scripts/ci-local.sh --compact`
