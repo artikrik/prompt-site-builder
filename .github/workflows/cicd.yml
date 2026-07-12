@@ -39,7 +39,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.22.3
+          node-version: 24
 
       - run: npm ci
 
@@ -61,7 +61,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.22.3
+          node-version: 24
 
       - run: npm ci
       - run: npm run build --workspace=packages/shared
@@ -99,7 +99,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.22.3
+          node-version: 24
 
       - run: npm ci
 
@@ -131,7 +131,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.22.3
+          node-version: 24
 
       - run: npm ci
       - run: npm run build --workspace=packages/shared
@@ -163,7 +163,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.22.3
+          node-version: 24
 
       - run: npm ci
 
