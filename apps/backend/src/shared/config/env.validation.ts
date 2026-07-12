@@ -30,7 +30,9 @@ const envSchema = z.object({
   GOOGLE_API_KEY: z.string().optional(),
   BFL_API_KEY: z.string().optional(),
   ENCRYPTION_KEY: z.string().optional(),
-  LLM_PROVIDER: z.enum(['openai', 'anthropic', 'deepseek', 'mimo', 'google']).default('openai'),
+  LLM_PROVIDER: z.enum(['openai', 'anthropic', 'deepseek', 'mimo', 'google', 'openrouter']).default('openai'),
+  OPENROUTER_API_KEY: z.string().optional(),
+  OPENROUTER_MODEL: z.string().optional(),
 
   // Image Generation
   IMAGE_PROVIDER: z.enum(['dall-e-3', 'openai', 'google', 'bfl']).default('dall-e-3'),

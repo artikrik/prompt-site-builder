@@ -61,7 +61,8 @@ export class LeadsService {
   }
 
   async create(dto: CreateLeadDto): Promise<Lead> {
-    const slug = this.generateSlug(dto.businessName);
+    const baseSlug = this.generateSlug(dto.businessName);
+    const slug = await this.ensureUniqueSlug(baseSlug);
     const encryptedData = this.encryptPaymentFields(dto);
 
     // Apply default enrichment sources from env if not provided
@@ -207,11 +208,17 @@ export class LeadsService {
     await this.cache.delByPrefix(CACHE_PREFIX);
   }
 
-  async queueScrape(leadId: string, _platforms: string[]): Promise<{ id: string }> {
+  async queueScrape(leadId: string, platforms: string[]): Promise<{ id: string }> {
     const lead = await this.findOne(leadId);
 
-    // Queue scraping job via BullMQ
-    const job = await this.queueService.addScrapingJob({ city: lead.city || '', category: lead.category || '' });
+    const job = await this.queueService.addScrapingJob({
+      leadId: lead.id,
+      businessName: lead.businessName,
+      city: lead.city || '',
+      category: lead.category || '',
+      platforms,
+      socialUrls: lead.socialUrls || [],
+    });
 
     // Mark scraping as enabled
     await this.prisma.lead.update({
@@ -261,6 +268,23 @@ export class LeadsService {
 
     await this.cache.delByPrefix(CACHE_PREFIX);
     return result.count;
+  }
+
+  private async ensureUniqueSlug(baseSlug: string): Promise<string> {
+    let slug = baseSlug;
+    let suffix = 1;
+
+    while (true) {
+      const existing = await this.prisma.lead.findUnique({
+        where: { slug },
+        select: { id: true },
+      });
+
+      if (!existing) return slug;
+
+      slug = `${baseSlug}-${suffix}`;
+      suffix++;
+    }
   }
 
   private generateSlug(name: string): string {

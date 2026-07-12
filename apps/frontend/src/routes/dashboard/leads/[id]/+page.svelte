@@ -10,7 +10,8 @@
   import { Button } from '$lib/components/ui/button/index.js';
   import { Badge } from '$lib/components/ui/badge/index.js';
   import * as Card from '$lib/components/ui/card/index.js';
-  import { ArrowLeft, Plus } from '@lucide/svelte';
+  import EnrichmentPanel from '$lib/components/enrichment/EnrichmentPanel.svelte';
+  import { ArrowLeft, Plus, Loader2, Play } from '@lucide/svelte';
 
   let lead = $state<Lead | null>(null);
   let leadProjects = $state<Array<{ id: string; status: string; slug: string; createdAt: string }>>([]);
@@ -44,6 +45,21 @@
       case 'FAILED': return 'destructive';
       default: return 'outline';
     }
+  }
+
+  let scrapePlatforms = $state({ instagram: true, facebook: true, googleMaps: true });
+  let scrapingBusy = $state(false);
+  let scrapeResult = $state<Record<string, unknown> | null>(null);
+
+  async function handleStartScraping() {
+    if (!lead || scrapingBusy) return;
+    scrapingBusy = true;
+    try {
+      const selected = Object.entries(scrapePlatforms).filter(([, v]) => v).map(([k]) => k);
+      const result = await leads.scrape(lead.id, selected as Array<'instagram' | 'facebook' | 'googleMaps'>);
+      scrapeResult = result as unknown as Record<string, unknown> || { jobId: 'started' };
+    } catch { scrapeResult = { error: 'Failed to start scraping' }; }
+    scrapingBusy = false;
   }
 
   const tabs = [
@@ -113,16 +129,11 @@
         </Card.Content>
       </Card.Root>
     {:else if activeTab === 'enrichment'}
-      <Card.Root>
-        <Card.Header><Card.Title>{t.enrichment.title}</Card.Title></Card.Header>
-        <Card.Content>
-          {#if lead.enrichmentData}
-            <pre class="bg-muted p-4 rounded-md text-sm overflow-auto max-h-96">{JSON.stringify(lead.enrichmentData, null, 2)}</pre>
-          {:else}
-            <p class="text-muted-foreground">{t.enrichment.never}</p>
-          {/if}
-        </Card.Content>
-      </Card.Root>
+      <EnrichmentPanel
+        data={lead.enrichmentData as any}
+        sources={lead.enrichmentSources || []}
+        enrichedAt={lead.enrichedAt || null}
+      />
     {:else if activeTab === 'projects'}
       <div class="space-y-4">
         <div class="flex justify-between items-center">
@@ -150,12 +161,96 @@
         {/if}
       </div>
     {:else if activeTab === 'scraping'}
-      <Card.Root>
-        <Card.Header><Card.Title>{t.scraping.title}</Card.Title></Card.Header>
-        <Card.Content>
-          <p class="text-muted-foreground">{t.scraping.noResults}</p>
-        </Card.Content>
-      </Card.Root>
+      <div class="space-y-4">
+        <Card.Root>
+          <Card.Header><Card.Title>{t.scraping.title}</Card.Title></Card.Header>
+          <Card.Content class="space-y-4">
+            <p class="text-sm text-muted-foreground">{t.scraping.selectPlatforms}</p>
+            <div class="flex gap-4 flex-wrap">
+              {#each ['instagram', 'facebook', 'googleMaps'] as platform}
+                <label class="flex items-center gap-2 cursor-pointer text-sm">
+                  <input
+                    type="checkbox"
+                    checked={scrapePlatforms[platform as keyof typeof scrapePlatforms]}
+                    onchange={(e) => { scrapePlatforms[platform as keyof typeof scrapePlatforms] = (e.target as HTMLInputElement).checked; }}
+                    class="rounded"
+                  />
+                  {platform}
+                </label>
+              {/each}
+            </div>
+            <Button onclick={handleStartScraping} disabled={scrapingBusy}>
+              {#if scrapingBusy}<Loader2 class="size-4 mr-2 animate-spin" />{/if}
+              <Play class="size-4 mr-2" /> {scrapingBusy ? t.scraping.scraping : t.scraping.runScraping}
+            </Button>
+          </Card.Content>
+        </Card.Root>
+
+        {#if scrapeResult}
+          <Card.Root>
+            <Card.Header><Card.Title>{t.scraping.results}</Card.Title></Card.Header>
+            <Card.Content class="space-y-4">
+              {#if scrapeResult.error}
+                <p class="text-red-600 text-sm">{scrapeResult.error as string}</p>
+              {:else if scrapeResult.jobId}
+                <p class="text-sm text-muted-foreground">{t.notifications.scrapingStarted} (Job: {scrapeResult.jobId as string})</p>
+              {/if}
+
+              {#if lead.scrapedPhotos && lead.scrapedPhotos.length > 0}
+                <div>
+                  <h4 class="text-sm font-semibold mb-2">{t.scraping.photos} ({lead.scrapedPhotos.length})</h4>
+                  <div class="flex gap-2 flex-wrap">
+                    {#each lead.scrapedPhotos as photo (photo)}
+                      <img src={photo} alt="" class="w-20 h-20 rounded object-cover border" />
+                    {/each}
+                  </div>
+                </div>
+              {/if}
+
+              {#if lead.scrapedReviews && lead.scrapedReviews.length > 0}
+                <div>
+                  <h4 class="text-sm font-semibold mb-2">{t.scraping.reviews} ({lead.scrapedReviews.length})</h4>
+                  <div class="space-y-2 max-h-60 overflow-y-auto">
+                    {#each lead.scrapedReviews as review, i (i)}
+                      <div class="text-xs border-l-2 pl-2 border-muted">
+                        <span class="font-medium">{(review as Record<string, unknown>).author || 'Anonymous'}</span>
+                        <span class="text-yellow-500 ml-1">{'★'.repeat(Math.round((review as Record<string, unknown>).rating as number || 0))}</span>
+                        <p class="text-muted-foreground">{((review as Record<string, unknown>).text as string)?.slice(0, 150)}</p>
+                      </div>
+                    {/each}
+                  </div>
+                </div>
+              {/if}
+
+              {#if lead.scrapedContacts && Object.keys(lead.scrapedContacts).length > 0}
+                <div>
+                  <h4 class="text-sm font-semibold mb-2">{t.scraping.contacts}</h4>
+                  <dl class="grid grid-cols-2 gap-2 text-xs">
+                    {#each Object.entries(lead.scrapedContacts) as [key, value] (key)}
+                      <div class="flex justify-between"><dt class="text-muted-foreground">{key}</dt><dd>{value as string}</dd></div>
+                    {/each}
+                  </dl>
+                </div>
+              {/if}
+
+              {#if lead.scrapedHours && Object.keys(lead.scrapedHours).length > 0}
+                <div>
+                  <h4 class="text-sm font-semibold mb-2">{t.scraping.hours}</h4>
+                  <dl class="grid grid-cols-2 gap-2 text-xs">
+                    {#each Object.entries(lead.scrapedHours) as [day, hours] (day)}
+                      <div class="flex justify-between"><dt class="text-muted-foreground">{day}</dt><dd>{hours as string}</dd></div>
+                    {/each}
+                  </dl>
+                </div>
+              {/if}
+
+              {#if !lead.scrapedPhotos?.length && !lead.scrapedReviews?.length && !Object.keys(lead.scrapedContacts || {}).length && !Object.keys(lead.scrapedHours || {}).length && !scrapeResult.error}
+                <p class="text-muted-foreground text-sm">{t.scraping.noResults}</p>
+              {/if}
+            </Card.Content>
+          </Card.Root>
+        {/if}
+      </div>
     {/if}
   {/if}
 </div>

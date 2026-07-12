@@ -27,15 +27,15 @@
   const PAGE_SIZE = 50;
 
   const statusOptions = [
-    { value: '', label: 'Всі статуси' },
-    { value: 'PENDING', label: 'Очікує' },
-    { value: 'PROCESSING', label: 'Обробляється' },
-    { value: 'COMPLETED', label: 'Завершено' },
-    { value: 'FAILED', label: 'Помилка' },
+    { value: '', label: t.logs.allStatuses },
+    { value: 'PENDING', label: t.status.PENDING },
+    { value: 'PROCESSING', label: t.status.PROCESSING },
+    { value: 'COMPLETED', label: t.status.COMPLETED },
+    { value: 'FAILED', label: t.status.FAILED },
   ];
 
   const levelOptions = [
-    { value: '', label: 'Всі рівні' },
+    { value: '', label: t.logs.allLevels },
     { value: 'ERROR', label: 'ERROR' },
     { value: 'WARN', label: 'WARN' },
     { value: 'INFO', label: 'INFO' },
@@ -92,8 +92,8 @@
     return new Date(date).toLocaleString('uk-UA');
   }
 
-  let statusLabel = $derived(statusOptions.find(o => o.value === genStatus)?.label ?? 'Всі статуси');
-  let levelLabel = $derived(levelOptions.find(o => o.value === sysLevel)?.label ?? 'Всі рівні');
+  let statusLabel = $derived(statusOptions.find(o => o.value === genStatus)?.label ?? t.logs.allStatuses);
+  let levelLabel = $derived(levelOptions.find(o => o.value === sysLevel)?.label ?? t.logs.allLevels);
 </script>
 
 <svelte:head><title>{t.nav.logs} - {t.app.name}</title></svelte:head>
@@ -105,12 +105,12 @@
     <button class="px-4 py-2 text-sm font-medium border-b-2 transition-colors
       {activeTab === 'generation' ? 'border-blue-600 text-blue-600' : 'border-transparent text-muted-foreground hover:text-foreground'}"
       onclick={() => { activeTab = 'generation'; }}>
-      Логи генерації
+      {t.logs.generationLogs}
     </button>
     <button class="px-4 py-2 text-sm font-medium border-b-2 transition-colors
       {activeTab === 'system' ? 'border-blue-600 text-blue-600' : 'border-transparent text-muted-foreground hover:text-foreground'}"
       onclick={() => { activeTab = 'system'; loadSystemLogs(); }}>
-      Системні логи
+      {t.logs.systemLogs}
     </button>
   </div>
 
@@ -125,7 +125,7 @@
         </Select.Content>
       </Select.Root>
       <Button variant="outline" size="sm" onclick={loadGenerationLogs}>
-        <RefreshCw class="size-4 mr-1" /> Оновити
+        <RefreshCw class="size-4 mr-1" /> {t.logs.refresh}
       </Button>
     </div>
 
@@ -139,11 +139,11 @@
           <Table.Root>
             <Table.Header>
               <Table.Row>
-                <Table.Head>Проект</Table.Head>
-                <Table.Head>Тип</Table.Head>
-                <Table.Head>Статус</Table.Head>
-                <Table.Head>Час</Table.Head>
-                <Table.Head>Помилка</Table.Head>
+                <Table.Head>{t.logs.project}</Table.Head>
+                <Table.Head>{t.logs.type}</Table.Head>
+                <Table.Head>{t.logs.status}</Table.Head>
+                <Table.Head>{t.logs.time}</Table.Head>
+                <Table.Head>{t.logs.error}</Table.Head>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -175,7 +175,7 @@
         <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
         <Input bind:value={sysSearch} onkeyup={() => { sysOffset = 0; loadSystemLogs(); }} placeholder={t.common.search} class="pl-9" />
       </div>
-      <span class="text-sm text-muted-foreground">Всього: {sysTotal}</span>
+      <span class="text-sm text-muted-foreground">{t.logs.total} {sysTotal}</span>
     </div>
 
     <Card.Root>
@@ -188,10 +188,10 @@
           <Table.Root>
             <Table.Header>
               <Table.Row>
-                <Table.Head>Рівень</Table.Head>
-                <Table.Head>Модуль</Table.Head>
-                <Table.Head>Повідомлення</Table.Head>
-                <Table.Head>Час</Table.Head>
+                <Table.Head>{t.logs.level}</Table.Head>
+                <Table.Head>{t.logs.module}</Table.Head>
+                <Table.Head>{t.logs.message}</Table.Head>
+                <Table.Head>{t.logs.time}</Table.Head>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -206,8 +206,8 @@
             </Table.Body>
           </Table.Root>
           <div class="flex justify-between mt-4">
-            <Button variant="outline" size="sm" disabled={sysOffset === 0} onclick={() => { sysOffset -= PAGE_SIZE; loadSystemLogs(); }}>Попередні</Button>
-            <Button variant="outline" size="sm" disabled={sysLogs.length < PAGE_SIZE} onclick={() => { sysOffset += PAGE_SIZE; loadSystemLogs(); }}>Наступні</Button>
+            <Button variant="outline" size="sm" disabled={sysOffset === 0} onclick={() => { sysOffset -= PAGE_SIZE; loadSystemLogs(); }}>{t.logs.prev}</Button>
+            <Button variant="outline" size="sm" disabled={sysLogs.length < PAGE_SIZE} onclick={() => { sysOffset += PAGE_SIZE; loadSystemLogs(); }}>{t.logs.next}</Button>
           </div>
         {/if}
       </Card.Content>
