@@ -62,3 +62,36 @@ Git URLs: github.com/theNewDynamic/gohugo-theme-ananke, /StefMa/hugo-fresh, /zer
 - `RolesGuard` exists but NOT connected in app.module.ts.
 - Hugo themes via git submodule — never commit theme code.
 - Generated sites MUST pass `hugo build` EXIT 0 before publishing.
+
+## MCP Servers
+| Server | Transport | Purpose |
+|--------|-----------|---------|
+| `context-mode` | plugin | Context-aware execution, batch commands, search |
+| `playwright` | stdio | Browser automation, E2E testing, screenshots |
+| `ssh-mcp` | stdio | Remote SSH to production (192.168.31.22, user: redage) |
+
+### ssh-mcp Usage
+- Remote command execution via `mcp__ssh-mcp__ssh_execute`
+- Sudo support enabled (`--sudoPassword` configured)
+- 30s timeout, no char limit
+- Production server: 192.168.31.22
+
+## Skills
+| Skill | Source | Purpose |
+|-------|--------|---------|
+| `superpowers:brainstorming` | marketplace | Turn ideas into designs |
+| `superpowers:writing-plans` | marketplace | Implementation plans from specs |
+| `superpowers:subagent-driven-development` | marketplace | Execute plans via subagents |
+| `superpowers:requesting-code-review` | marketplace | Code review via subagents |
+| `superpowers:using-superpowers` | marketplace | Skill discovery and invocation |
+| `playwright-best-practices` | local (.claude/skills) | Playwright testing patterns |
+| `webapp-testing` | local (.claude/skills) | Web app testing workflows |
+| `openwiki` | npm global | Knowledge management (`openwiki code --init`) |
+
+## Pre-Commit/Pre-Push Rule (MANDATORY)
+Before ANY commit or push, run full CI locally:
+1. `npm run lint` — ESLint 0 errors
+2. `npm run typecheck` — tsc + svelte-check 0 errors
+3. `npm run test` — vitest all passing
+4. `npm run build` — production build exit 0
+Also: `bash scripts/ci-local.sh`
