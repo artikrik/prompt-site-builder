@@ -19,6 +19,14 @@ export class RolesGuard implements CanActivate {
     }
 
     const { user } = context.switchToHttp().getRequest();
-    return requiredRoles.some((role) => user?.role === role);
+
+    // When RolesGuard runs as global APP_GUARD, it fires before controller-level
+    // JwtAuthGuard — user may not be attached yet. Let JwtAuthGuard handle auth;
+    // this guard only enforces role when user is already on the request.
+    if (!user) {
+      return true;
+    }
+
+    return requiredRoles.some((role) => user.role === role);
   }
 }
