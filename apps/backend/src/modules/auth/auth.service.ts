@@ -37,7 +37,7 @@ export class AuthService {
       },
     });
 
-    return this.generateTokens(user.id, user.email);
+    return this.generateTokens(user.id, user.email, user.role);
   }
 
   async login(dto: LoginDto): Promise<AuthTokens> {
@@ -55,7 +55,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    return this.generateTokens(user.id, user.email);
+    return this.generateTokens(user.id, user.email, user.role);
   }
 
   async refreshToken(refreshToken: string): Promise<AuthTokens> {
@@ -72,14 +72,14 @@ export class AuthService {
         throw new UnauthorizedException('User not found');
       }
 
-      return this.generateTokens(user.id, user.email);
+      return this.generateTokens(user.id, user.email, user.role);
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
   }
 
-  private generateTokens(userId: string, email: string): AuthTokens {
-    const payload = { sub: userId, email };
+  private generateTokens(userId: string, email: string, role?: string): AuthTokens {
+    const payload = { sub: userId, email, role };
 
     const accessToken = this.jwtService.sign(payload);
 
