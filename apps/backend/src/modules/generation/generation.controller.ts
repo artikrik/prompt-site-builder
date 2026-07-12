@@ -159,4 +159,15 @@ export class GenerationController {
       error: latestJob.error,
     };
   }
+
+  @Get(':projectId/history')
+  @ApiOperation({ summary: 'Get generation job history for a project' })
+  async getHistory(@Param('projectId') projectId: string, @Query('limit') limit?: string) {
+    const jobs = await this.prisma.generationJob.findMany({
+      where: { projectId },
+      orderBy: { createdAt: 'desc' },
+      take: limit ? parseInt(limit, 10) : 20,
+    });
+    return { projectId, jobs };
+  }
 }

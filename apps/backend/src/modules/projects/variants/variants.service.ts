@@ -1,12 +1,16 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../shared/prisma/prisma.service';
+import { SitePublisherService } from '../../publishing/site-publisher.service';
 import { CreateVariantDto, VariantListItem, SiteVariant } from '@prompt-site-builder/shared';
 
 @Injectable()
 export class VariantsService {
   private readonly logger = new Logger(VariantsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly publisher: SitePublisherService,
+  ) {}
 
   async create(projectId: string, dto: CreateVariantDto): Promise<SiteVariant> {
     const variantName = this.generateVariantName(dto.model, dto.imageModel, dto.theme);
@@ -83,6 +87,8 @@ export class VariantsService {
         publishedUrl,
       },
     });
+
+    await this.publisher.switchActiveVariant(variant.project.slug, variantId);
 
     this.logger.log(`Variant ${variantId} activated for project ${variant.projectId}`);
   }

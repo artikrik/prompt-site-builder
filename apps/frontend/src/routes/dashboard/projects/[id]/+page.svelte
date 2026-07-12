@@ -7,6 +7,7 @@
   import { projects, type Project } from '$lib/stores/projects';
   import { variants, type VariantListItem } from '$lib/stores/variants';
   import { api } from '$lib/api/client.js';
+  import { t } from '$lib/i18n/uk';
   import VariantList from '$lib/components/variants/VariantList.svelte';
   import VariantGenerator from '$lib/components/variants/VariantGenerator.svelte';
   import AddonList from '$lib/components/addons/AddonList.svelte';
@@ -14,7 +15,10 @@
   import { Button } from '$lib/components/ui/button/index.js';
   import { Badge } from '$lib/components/ui/badge/index.js';
   import * as Card from '$lib/components/ui/card/index.js';
+  import * as Dialog from '$lib/components/ui/dialog/index.js';
   import * as Select from '$lib/components/ui/select/index.js';
+  import { Input } from '$lib/components/ui/input/index.js';
+  import { Label } from '$lib/components/ui/label/index.js';
   import { ArrowLeft, ExternalLink } from '@lucide/svelte';
 
   let project = $state<Project | null>(null);
@@ -28,6 +32,9 @@
   let addonsLoading = $state(false);
   let showAdvancedGenerator = $state(false);
   let isGenerating = $state(false);
+  let showAddonConfig = $state(false);
+  let configAddonType = $state<AddonType | null>(null);
+  let addonConfig = $state<Record<string, string>>({});
 
   let themeLabel = $derived(
     selectedTheme === 'auto'
@@ -86,7 +93,21 @@
   }
 
   async function handleConfigureAddon(addonType: AddonType) {
-    alert(`Configuration for ${addonType} will be available in the next update.`);
+    configAddonType = addonType;
+    addonConfig = {};
+    showAddonConfig = true;
+  }
+
+  async function handleSaveAddonConfig() {
+    if (!project || !configAddonType) return;
+    try {
+      await addons.updateConfig(project.id, configAddonType, addonConfig as Record<string, unknown>);
+      showAddonConfig = false;
+      configAddonType = null;
+      projectAddons = await addons.fetchForProject(project.id);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed to save config');
+    }
   }
 
   async function handleVariantGenerate(config: { model: string; imageModel: string; theme: string }) {
@@ -154,13 +175,13 @@
   }
 </script>
 
-<svelte:head><title>Project Details - Prompt Site Builder</title></svelte:head>
+<svelte:head><title>{project?.lead?.businessName || t.projects.title} - {t.app.name}</title></svelte:head>
 
 <div class="space-y-6">
   <div>
     <Button variant="ghost" size="sm" onclick={() => goto(resolve('/dashboard/projects'))} class="mb-4">
       <ArrowLeft class="w-4 h-4 mr-2" />
-      Back to Projects
+      {t.common.back}
     </Button>
   </div>
 
@@ -196,7 +217,7 @@
         {#if project.status === 'PUBLISHED' && project.publishedUrl}
           <Button onclick={() => window.open(project!.publishedUrl!, '_blank')}>
             <ExternalLink class="w-4 h-4 mr-2" />
-            View Live Site
+            {t.projects.viewSite}
           </Button>
         {/if}
       </div>
@@ -272,7 +293,9 @@
             <Card.Title>Site Preview</Card.Title>
           </Card.Header>
           <Card.Content>
-            <iframe src={`${project.publishedUrl}?v=${project.updatedAt}`} class="w-full h-96 border border-border rounded-md" title="Site Preview"></iframe>
+            <Button onclick={() => window.open(project!.publishedUrl!, '_blank')}>
+            <ExternalLink class="w-4 h-4 mr-2" /> {t.projects.viewSite}
+          </Button>
           </Card.Content>
         </Card.Root>
       {/if}
