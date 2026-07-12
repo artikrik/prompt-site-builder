@@ -17,6 +17,8 @@ concurrency:
   group: cicd-${{ github.ref }}
   cancel-in-progress: true
 
+# Suppress Node.js 20 deprecation warnings (actions/checkout@v4, setup-node@v4)
+# Remove when actions update to Node.js 24 runtime
 env:
   ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: 'true'
 
@@ -42,7 +44,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22.22.3
 
       - run: npm ci
 
@@ -64,7 +66,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22.22.3
 
       - run: npm ci
       - run: npm run build --workspace=packages/shared
@@ -102,7 +104,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22.22.3
 
       - run: npm ci
 
@@ -134,7 +136,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22.22.3
 
       - run: npm ci
       - run: npm run build --workspace=packages/shared
@@ -166,7 +168,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22.22.3
 
       - run: npm ci
 
