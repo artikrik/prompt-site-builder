@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { EnrichmentService } from '../enrichment.service';
 
-@Processor('scraping')
+@Processor('enrichment')
 export class EnrichmentProcessor extends WorkerHost {
   private readonly logger = new Logger(EnrichmentProcessor.name);
 

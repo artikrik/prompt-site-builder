@@ -11,7 +11,9 @@ export class ScrapingProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<{ city: string; category: string; limit?: number }>): Promise<void> {
+  async process(job: Job): Promise<void> {
+    if (job.name !== 'scrape-leads') return;
+
     this.logger.log(`Processing scraping job ${job.id} for ${job.data.city}/${job.data.category}`);
 
     try {

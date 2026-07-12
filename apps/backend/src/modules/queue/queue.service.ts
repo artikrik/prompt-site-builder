@@ -9,7 +9,7 @@ export class QueueService {
   constructor(
     @InjectQueue('generation') private readonly generationQueue: Queue,
     @InjectQueue('scraping') private readonly scrapingQueue: Queue,
-    @InjectQueue('scraping') private readonly enrichmentQueue: Queue,
+    @InjectQueue('enrichment') private readonly enrichmentQueue: Queue,
   ) {}
 
   async addGenerationJob(data: {
