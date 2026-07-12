@@ -10,9 +10,23 @@
   }
 }
 
-# Dashboard
+# Dashboard + API (same domain to avoid DNS subdomain requirement)
 https://sitenow.pp.ua, https://www.sitenow.pp.ua {
-  reverse_proxy frontend:5173
+  # API proxy — /api/* routes to backend (strip /api prefix)
+  handle_path /api/* {
+    reverse_proxy backend:3000
+
+    header {
+      X-Content-Type-Options nosniff
+      X-Frame-Options DENY
+      Referrer-Policy strict-origin-when-cross-origin
+    }
+  }
+
+  # Everything else → frontend
+  handle {
+    reverse_proxy frontend:5173
+  }
 
   header {
     X-Content-Type-Options nosniff
