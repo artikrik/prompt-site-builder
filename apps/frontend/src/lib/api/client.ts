@@ -1,15 +1,15 @@
 function resolveApiBase(): string {
-  // Client-side: derive API host from the browser's location.
-  //   sitenow.pp.ua        → https://api.sitenow.pp.ua
-  //   www.sitenow.pp.ua    → https://api.sitenow.pp.ua
+  // Client-side: derive API URL from the browser's location.
   //   localhost / 127.0.0.1 → http://localhost:3000 (dev)
+  //   production            → {origin}/api (Caddy proxies /api/* → backend:3000)
+  // SSR fallback: build-time env var or dev default
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.')) {
       return 'http://localhost:3000';
     }
-    const baseDomain = hostname.replace(/^www\./, '');
-    return `https://api.${baseDomain}`;
+    // Same-origin API path — avoids DNS dependency on api.* subdomain
+    return `${window.location.origin}/api`;
   }
 
   // SSR fallback: use build-time env var or dev default
