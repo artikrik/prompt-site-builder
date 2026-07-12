@@ -8,30 +8,24 @@ on:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
-      skip_tests:
-        description: 'Skip tests (emergency deploy only)'
+      deploy:
+        description: 'Deploy to production after build'
         type: boolean
         default: false
 
 concurrency:
-  group: cicd-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
-# Suppress Node.js 20 deprecation warnings (actions/checkout@v4, setup-node@v4)
-# Remove when actions update to Node.js 24 runtime
-env:
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: 'true'
 
 jobs:
   # ═══════════════════════════════════════════════════════════
-  #  Quality Gates (push, PR checks, workflow_dispatch)
+  #  Quality Gates (PR only — opened, synchronize, reopened)
   # ═══════════════════════════════════════════════════════════
 
   lint:
     name: Lint
     runs-on: self-hosted
-    # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
-    # Skip only: PR closed without merge
+    if: github.event_name == 'pull_request'
     timeout-minutes: 10
     env:
       TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
@@ -45,15 +39,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22.22.3
+          cache: npm
 
       - run: npm ci
-
       - run: npm run lint
 
   typecheck:
     name: Type Check
     runs-on: self-hosted
-    # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
+    if: github.event_name == 'pull_request'
     timeout-minutes: 10
     env:
       TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
@@ -67,10 +61,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22.22.3
+          cache: npm
 
       - run: npm ci
       - run: npm run build --workspace=packages/shared
-      - run: npx prisma generate --schema=apps/backend/prisma/schema.prisma
       - run: npm run typecheck
 
   # ═══════════════════════════════════════════════════════════
@@ -80,12 +74,13 @@ jobs:
   test-backend:
     name: Backend Tests
     runs-on: self-hosted
-    # Run on: PR (open/sync/reopen), workflow_dispatch. SKIP on push to main (only build+deploy).
-    # Tests mock PrismaService — no real PostgreSQL/Redis needed.
-    if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/main') }}
-    timeout-minutes: 10
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 15
     env:
       TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
+      DATABASE_URL: postgresql://promptsite:testpassword@localhost:5434/promptsite_test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6381
       JWT_SECRET: test-secret-key-for-ci-environment-32chars
       JWT_REFRESH_SECRET: test-refresh-secret-key-for-ci-environment-32chars
       ANTHROPIC_API_KEY: test-key
@@ -105,25 +100,56 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22.22.3
+          cache: npm
+
+      - name: Start PostgreSQL
+        run: |
+          docker rm -f pg-test 2>/dev/null || true
+          docker run -d --name pg-test \
+            -e POSTGRES_DB=promptsite_test \
+            -e POSTGRES_USER=promptsite \
+            -e POSTGRES_PASSWORD=testpassword \
+            -p 5434:5432 \
+            postgres:16-alpine
+          for i in $(seq 1 20); do
+            if docker exec pg-test pg_isready -U promptsite > /dev/null 2>&1; then
+              echo "✅ PostgreSQL ready"
+              break
+            fi
+            echo "⏳ Waiting for PostgreSQL ($i/20)..."
+            sleep 1
+          done
+
+      - name: Start Redis
+        run: |
+          docker rm -f redis-test 2>/dev/null || true
+          docker run -d --name redis-test \
+            -p 6381:6379 \
+            redis:7-alpine
+          for i in $(seq 1 10); do
+            if docker exec redis-test redis-cli ping | grep -q PONG; then
+              echo "✅ Redis ready"
+              break
+            fi
+            echo "⏳ Waiting for Redis ($i/10)..."
+            sleep 1
+          done
 
       - run: npm ci
-
       - run: npm run build --workspace=packages/shared
       - run: npx prisma generate --schema=apps/backend/prisma/schema.prisma
-
-      - name: Skip tests (manual override)
-        if: ${{ inputs.skip_tests }}
-        run: echo "⏭️ Backend tests skipped via workflow_dispatch skip_tests"
-
+      - run: npx prisma migrate deploy --schema=apps/backend/prisma/schema.prisma
       - name: Run backend tests
-        if: ${{ !inputs.skip_tests }}
         run: npm run test --workspace=apps/backend
+
+      - name: Cleanup services
+        if: always()
+        run: docker rm -f pg-test redis-test 2>/dev/null || true
 
   test-frontend:
     name: Frontend Tests
     runs-on: self-hosted
-    # Run on: PR (open/sync/reopen), workflow_dispatch. SKIP on push to main (only build+deploy).
-    if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+    if: github.event_name == 'pull_request'
     timeout-minutes: 10
     env:
       TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
@@ -137,27 +163,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22.22.3
+          cache: npm
 
       - run: npm ci
       - run: npm run build --workspace=packages/shared
-      - name: Skip tests (manual override)
-        if: ${{ inputs.skip_tests }}
-        run: echo "⏭️ Frontend tests skipped via workflow_dispatch skip_tests"
-
       - name: Run frontend tests
-        if: ${{ !inputs.skip_tests }}
         run: npm run test --workspace=apps/frontend
 
   # ═══════════════════════════════════════════════════════════
-  #  Build + Deploy (PR merge to main or manual trigger)
+  #  Build + Deploy (push to main or manual trigger)
   # ═══════════════════════════════════════════════════════════
 
   build:
     name: Build
     runs-on: self-hosted
-    # Build runs after lint + typecheck (tests skipped on push to main)
-    needs: [lint, typecheck]
-    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.deploy) }}
     timeout-minutes: 15
     steps:
       - name: Clean root-owned files (Docker residue)
@@ -169,20 +189,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22.22.3
+          cache: npm
 
       - run: npm ci
-
       - run: npm run build
 
   # ═══════════════════════════════════════════════════════════
-  #  Deploy (on PR merge to main or manual trigger)
+  #  Deploy (on push to main or manual trigger)
   # ═══════════════════════════════════════════════════════════
 
   deploy:
     name: Deploy to Production
     runs-on: self-hosted
     needs: [build]
-    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     environment: production
     timeout-minutes: 30
     env:
