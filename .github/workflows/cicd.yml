@@ -8,13 +8,13 @@ on:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
-      skip_tests:
-        description: 'Skip tests (emergency deploy only)'
+      deploy:
+        description: 'Deploy to production after build'
         type: boolean
         default: false
 
 concurrency:
-  group: cicd-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -22,14 +22,12 @@ env:
 
 jobs:
   # ═══════════════════════════════════════════════════════════
-  #  Quality Gates (push, PR checks, workflow_dispatch)
+  #  Quality Gates (PR only — opened, synchronize, reopened)
   # ═══════════════════════════════════════════════════════════
 
   lint:
     name: Lint
     runs-on: self-hosted
-    # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
-    # Skip only: PR closed without merge
     timeout-minutes: 10
     env:
       TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
@@ -45,13 +43,11 @@ jobs:
           node-version: 24
 
       - run: npm ci
-
       - run: npm run lint
 
   typecheck:
     name: Type Check
     runs-on: self-hosted
-    # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
     timeout-minutes: 10
     env:
       TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
@@ -78,9 +74,8 @@ jobs:
   test-backend:
     name: Backend Tests
     runs-on: self-hosted
-    # Run on: PR (open/sync/reopen), workflow_dispatch. SKIP on push to main (only build+deploy).
     # Tests mock PrismaService — no real PostgreSQL/Redis needed.
-    if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+    if: github.event_name == 'pull_request'
     timeout-minutes: 10
     env:
       TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
@@ -105,23 +100,15 @@ jobs:
           node-version: 24
 
       - run: npm ci
-
       - run: npm run build --workspace=packages/shared
       - run: npx prisma generate --schema=apps/backend/prisma/schema.prisma
-
-      - name: Skip tests (manual override)
-        if: ${{ inputs.skip_tests }}
-        run: echo "⏭️ Backend tests skipped via workflow_dispatch skip_tests"
-
       - name: Run backend tests
-        if: ${{ !inputs.skip_tests }}
         run: npm run test --workspace=apps/backend
 
   test-frontend:
     name: Frontend Tests
     runs-on: self-hosted
-    # Run on: PR (open/sync/reopen), workflow_dispatch. SKIP on push to main (only build+deploy).
-    if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+    if: github.event_name == 'pull_request'
     timeout-minutes: 10
     env:
       TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
@@ -138,24 +125,18 @@ jobs:
 
       - run: npm ci
       - run: npm run build --workspace=packages/shared
-      - name: Skip tests (manual override)
-        if: ${{ inputs.skip_tests }}
-        run: echo "⏭️ Frontend tests skipped via workflow_dispatch skip_tests"
-
       - name: Run frontend tests
-        if: ${{ !inputs.skip_tests }}
         run: npm run test --workspace=apps/frontend
 
   # ═══════════════════════════════════════════════════════════
-  #  Build + Deploy (PR merge to main or manual trigger)
+  #  Build + Deploy (push to main or manual trigger)
   # ═══════════════════════════════════════════════════════════
 
   build:
     name: Build
     runs-on: self-hosted
-    # Build runs after lint + typecheck (tests skipped on push to main)
     needs: [lint, typecheck]
-    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.deploy) }}
     timeout-minutes: 15
     steps:
       - name: Clean root-owned files (Docker residue)
@@ -169,18 +150,17 @@ jobs:
           node-version: 24
 
       - run: npm ci
-
       - run: npm run build
 
   # ═══════════════════════════════════════════════════════════
-  #  Deploy (on PR merge to main or manual trigger)
+  #  Deploy (on push to main or manual trigger)
   # ═══════════════════════════════════════════════════════════
 
   deploy:
     name: Deploy to Production
     runs-on: self-hosted
     needs: [build]
-    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     environment: production
     timeout-minutes: 30
     env:
