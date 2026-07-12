@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ConfigService } from '@nestjs/config';
 import { GenerationController } from './generation.controller';
 
 describe('GenerationController.getStatus', () => {

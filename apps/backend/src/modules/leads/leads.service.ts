@@ -207,7 +207,7 @@ export class LeadsService {
     await this.cache.delByPrefix(CACHE_PREFIX);
   }
 
-  async queueScrape(leadId: string, platforms: string[]): Promise<{ id: string }> {
+  async queueScrape(leadId: string, _platforms: string[]): Promise<{ id: string }> {
     const lead = await this.findOne(leadId);
 
     // Queue scraping job via BullMQ
