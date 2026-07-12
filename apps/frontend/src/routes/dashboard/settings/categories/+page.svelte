@@ -1,6 +1,6 @@
 <script lang="ts">
   import { t } from '$lib/i18n/uk';
-  import { BUSINESS_CATEGORIES, type CategoryWithTheme } from '@prompt-site-builder/shared';
+  import { BUSINESS_CATEGORIES, type CategoryWithTheme } from '$lib/i18n/categories';
   import { api } from '$lib/api/client';
   import { Button } from '$lib/components/ui/button/index.js';
   import { Badge } from '$lib/components/ui/badge/index.js';
@@ -88,17 +88,17 @@
           <div class="space-y-2">
             <label for="contentPrompt" class="text-sm font-medium">{t.categories.contentPrompt}</label>
             <textarea id="contentPrompt" bind:value={contentPrompt} rows={6}
-              class="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600" />
+              class="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"></textarea>
           </div>
           <div class="space-y-2">
             <label for="designPrompt" class="text-sm font-medium">{t.categories.designPrompt}</label>
             <textarea id="designPrompt" bind:value={designPrompt} rows={4}
-              class="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600" />
+              class="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"></textarea>
           </div>
           <div class="space-y-2">
             <label for="competitorPrompt" class="text-sm font-medium">{t.categories.competitorPrompt}</label>
             <textarea id="competitorPrompt" bind:value={competitorPrompt} rows={6}
-              class="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600" />
+              class="w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"></textarea>
           </div>
         </div>
       {/if}

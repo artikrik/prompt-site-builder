@@ -6,7 +6,7 @@
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { t } from '$lib/i18n/uk';
-  import { CATEGORY_LABELS } from '@prompt-site-builder/shared';
+  import { CATEGORY_LABELS } from '$lib/i18n/categories';
   import { Button } from '$lib/components/ui/button/index.js';
   import { Input } from '$lib/components/ui/input/index.js';
   import { Label } from '$lib/components/ui/label/index.js';
@@ -47,7 +47,7 @@
     { value: 'REJECTED', label: t.status.REJECTED },
   ];
 
-  const categoryOptions = CATEGORY_LABELS.map(c => ({ value: c, label: c }));
+  const categoryOptions = CATEGORY_LABELS.map((c: string) => ({ value: c, label: c }));
 
   let sourceLabel = $derived(sourceOptions.find((o) => o.value === newLead.source)?.label ?? 'Вручну');
   let statusLabel = $derived(statusOptions.find((o) => o.value === statusFilter)?.label ?? 'Всі статуси');
