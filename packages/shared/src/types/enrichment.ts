@@ -84,6 +84,7 @@ export interface SalesOpportunity {
   recommendation: string;
   pitchAngle: string;
   revenueImpact: string;
+  scriptExcerpt?: string;
 }
 
 export interface EnrichmentSourceUrls {

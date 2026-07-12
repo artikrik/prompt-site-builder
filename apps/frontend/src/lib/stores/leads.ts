@@ -14,6 +14,9 @@ export interface Lead {
   source: string;
   status: string;
   tags: string[];
+  enrichmentData?: Record<string, unknown> | null;
+  enrichedAt?: string | null;
+  enrichmentSources?: string[];
   createdAt: string;
 }
 

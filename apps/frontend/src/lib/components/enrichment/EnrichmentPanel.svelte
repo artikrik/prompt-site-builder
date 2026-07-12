@@ -53,7 +53,7 @@
             <div class="flex gap-2 flex-wrap">
               <Badge>Style: {data.toneOfVoice.style}</Badge>
               <Badge>Formality: {data.toneOfVoice.formality}</Badge>
-              <Badge>Emoji: {toneEmoji(data.toneOfVoice.emojiUsage)} {data.toneOfVoice.emojiUsage}</Badge>
+              <Badge>Emoji: {toneEmoji(data.toneOfVoice.emojiUsage || 'none')} {data.toneOfVoice.emojiUsage || 'none'}</Badge>
             </div>
           </div>
         {/if}
@@ -109,7 +109,7 @@
               {#each data.reviews.slice(0, 5) as review (review.author)}
                 <div class="text-xs border-l-2 pl-2 border-muted">
                   <span class="font-medium">{review.author}</span>
-                  <span class="text-yellow-500 ml-1">{'★'.repeat(Math.round(review.rating))}</span>
+                  <span class="text-yellow-500 ml-1">{'★'.repeat(Math.round(review.rating || 0))}</span>
                   <p class="text-muted-foreground">{review.text.slice(0, 120)}</p>
                 </div>
               {/each}
@@ -137,11 +137,14 @@
         {#if data.salesOpportunities && data.salesOpportunities.length > 0}
           <div>
             <h4 class="text-sm font-semibold mb-1">Sales Opportunities</h4>
-            <div class="space-y-1">
-              {#each data.salesOpportunities as opp (opp.title)}
-                <div class="text-xs">
-                  <span class="font-medium">{opp.title}</span>
-                  <span class="text-muted-foreground"> — {opp.description}</span>
+            <div class="space-y-2">
+              {#each data.salesOpportunities as opp (opp.gap)}
+                <div class="text-xs border rounded p-2">
+                  <p class="font-medium">{opp.gap}</p>
+                  <p class="text-muted-foreground">{opp.pitchAngle}</p>
+                  {#if opp.revenueImpact}
+                    <p class="text-green-600 font-medium mt-1">{opp.revenueImpact}</p>
+                  {/if}
                 </div>
               {/each}
             </div>
@@ -155,15 +158,15 @@
             <div class="grid grid-cols-3 gap-2 text-xs">
               <div>
                 <span class="font-medium">Booking:</span>
-                <span class="text-muted-foreground">{data.customerJourney.bookingChannels.join(', ') || '—'}</span>
+                <span class="text-muted-foreground">{(data.customerJourney.bookingChannels || []).join(', ') || '—'}</span>
               </div>
               <div>
                 <span class="font-medium">Payment:</span>
-                <span class="text-muted-foreground">{data.customerJourney.paymentMethods.join(', ') || '—'}</span>
+                <span class="text-muted-foreground">{(data.customerJourney.paymentMethods || []).join(', ') || '—'}</span>
               </div>
               <div>
                 <span class="font-medium">Messaging:</span>
-                <span class="text-muted-foreground">{data.customerJourney.messagingApps.join(', ') || '—'}</span>
+                <span class="text-muted-foreground">{(data.customerJourney.messagingApps || []).join(', ') || '—'}</span>
               </div>
             </div>
           </div>
