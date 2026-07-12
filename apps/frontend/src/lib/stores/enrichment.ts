@@ -1,17 +1,20 @@
 import { writable } from 'svelte/store';
 import { api } from '$lib/api/client';
 
+// Note: This is a simplified view of the full EnrichmentData from @prompt-site-builder/shared.
+// The shared type has required array fields and additional analysis fields.
 export interface EnrichmentData {
   photos?: string[];
   logoUrl?: string;
-  brandColors?: { primary?: string; secondary?: string; accent?: string };
-  toneOfVoice?: { style: string; formality: string; emojiUsage: string };
+  brandColors?: { primary?: string; secondary?: string; accent?: string; extractedFrom?: string };
+  toneOfVoice?: { style?: string; formality?: string; emojiUsage?: string; keyPhrases?: string[]; languageMix?: string; sampleBio?: string };
   businessHours?: Record<string, string>;
   services?: Array<{ name: string; price?: string }>;
-  reviews?: Array<{ author: string; rating: number; text: string }>;
-  competitors?: Array<{ name: string; distance?: number; rating?: number }>;
-  salesOpportunities?: Array<{ title: string; description: string }>;
-  customerJourney?: { bookingChannels: string[]; paymentMethods: string[]; messagingApps: string[] };
+  reviews?: Array<{ author: string; rating?: number; text: string }>;
+  competitors?: Array<{ name: string; distance?: string; rating?: number; website?: string; positioning?: string; uniqueSellingPoints?: string[]; websiteAnalysis?: Record<string, unknown> }>;
+  salesOpportunities?: Array<{ gap?: string; currentState?: string; recommendation?: string; pitchAngle?: string; revenueImpact?: string; scriptExcerpt?: string }>;
+  salesScript?: Record<string, unknown>;
+  customerJourney?: { bookingChannels?: string[]; paymentMethods?: string[]; messagingApps?: string[] };
   stats?: Record<string, number>;
   sourceUrl?: string;
 }

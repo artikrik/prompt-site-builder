@@ -232,10 +232,10 @@ export class GoogleMapsProvider implements IEnrichmentProvider {
 
   private buildPhotoUrls(photos?: GooglePhoto[]): string[] {
     if (!photos || photos.length === 0) return [];
-    return photos.map(
+    return photos.slice(0, 10).map(
       (p) =>
         `https://maps.googleapis.com/maps/api/place/photo` +
-        `?maxwidth=800` +
+        `?maxwidth=1600` +
         `&photoreference=${p.photo_reference}` +
         `&key=${this.apiKey}`,
     );

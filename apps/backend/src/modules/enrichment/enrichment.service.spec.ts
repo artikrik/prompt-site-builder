@@ -3,6 +3,7 @@ import { EnrichmentService } from './enrichment.service';
 import { EnrichmentFactory } from './providers/enrichment-factory';
 import { IEnrichmentProvider } from './providers/types';
 import { PrismaService } from '../../shared/prisma/prisma.service';
+import { EnrichmentAnalysisService } from './enrichment-analysis.service';
 import { EnrichmentData } from '@prompt-site-builder/shared';
 
 function makeMockFactory(providers: Record<string, IEnrichmentProvider>): EnrichmentFactory {
@@ -18,6 +19,12 @@ function makeMockPrisma(_leadData: Record<string, unknown> = {}): PrismaService 
       update: vi.fn(),
     },
   } as unknown as PrismaService;
+}
+
+function makeMockAnalysisService(): EnrichmentAnalysisService {
+  return {
+    analyze: vi.fn().mockResolvedValue({}),
+  } as unknown as EnrichmentAnalysisService;
 }
 
 function makeProvider(
@@ -49,11 +56,13 @@ describe('EnrichmentService', () => {
   let service: EnrichmentService;
   let mockPrisma: PrismaService;
   let mockFactory: EnrichmentFactory;
+  let mockAnalysis: EnrichmentAnalysisService;
 
   beforeEach(() => {
     mockPrisma = makeMockPrisma();
     mockFactory = makeMockFactory({});
-    service = new EnrichmentService(mockFactory, mockPrisma);
+    mockAnalysis = makeMockAnalysisService();
+    service = new EnrichmentService(mockFactory, mockPrisma, mockAnalysis);
   });
 
   describe('enrichLead', () => {
@@ -78,7 +87,7 @@ describe('EnrichmentService', () => {
       });
 
       mockFactory = makeMockFactory({ facebook: facebookProvider, googleMaps: googleProvider });
-      service = new EnrichmentService(mockFactory, mockPrisma);
+      service = new EnrichmentService(mockFactory, mockPrisma, mockAnalysis);
 
       const lead = makeLead();
       (mockPrisma.lead.findUnique as any).mockResolvedValue(lead);
@@ -119,7 +128,7 @@ describe('EnrichmentService', () => {
       });
 
       mockFactory = makeMockFactory({ facebook: failingProvider, googleMaps: successProvider });
-      service = new EnrichmentService(mockFactory, mockPrisma);
+      service = new EnrichmentService(mockFactory, mockPrisma, mockAnalysis);
 
       const lead = makeLead();
       (mockPrisma.lead.findUnique as any).mockResolvedValue(lead);
@@ -147,7 +156,9 @@ describe('EnrichmentService', () => {
       expect(mockPrisma.lead.update).toHaveBeenCalledTimes(1);
 
       const updateCall = (mockPrisma.lead.update as any).mock.calls[0][0];
-      expect(updateCall.data.enrichmentData).toEqual({});
+      expect(updateCall.data.enrichmentData).toBeDefined();
+      expect(updateCall.data.enrichmentData.services).toEqual([]);
+      expect(updateCall.data.enrichmentData.reviews).toEqual([]);
     });
   });
 

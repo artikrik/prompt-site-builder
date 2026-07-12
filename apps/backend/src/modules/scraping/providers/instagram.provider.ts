@@ -23,6 +23,13 @@ export interface InstagramEnrichment {
     paymentMethods: string[];
     messagingApps: string[];
   };
+  contacts: {
+    email?: string;
+    phone?: string;
+    whatsapp?: string;
+    telegram?: string;
+    viber?: string;
+  };
   sourceUrl: string;
 }
 
@@ -91,6 +98,7 @@ export class InstagramProvider {
     const photos = this.collectPhotos(profile);
     const customerJourney = this.detectCustomerJourney(allText);
     const toneOfVoice = this.analyzeTone(allText, profile.bio || '');
+    const contacts = this.extractContacts(profile.bio || '');
 
     return {
       services,
@@ -104,6 +112,7 @@ export class InstagramProvider {
       recentPostTexts: profile.recentPosts.map((p) => p.caption || '').filter(Boolean),
       toneOfVoice,
       customerJourney,
+      contacts,
       sourceUrl: `https://www.instagram.com/${username}/`,
     };
   }
@@ -140,9 +149,24 @@ export class InstagramProvider {
   private collectPhotos(profile: InstagramProfile): string[] {
     const photos: string[] = [];
     if (profile.profilePicUrl) {
-      photos.push(profile.profilePicUrl);
+      // Use HD version if available, fall back to original
+      const hdUrl = profile.profilePicUrl.replace(/\/s150x150\//, '/s1080x1080/');
+      photos.push(hdUrl);
     }
+    // Note: post images not available via unauthenticated web_profile_info API.
+    // Using INSTAGRAM_ACCESS_TOKEN enables Graph API which provides full post images.
     return photos;
+  }
+
+  private extractContacts(bio: string): {
+    email?: string; phone?: string; whatsapp?: string; telegram?: string; viber?: string;
+  } {
+    const email = bio.match(/[\w.-]+@[\w.-]+\.\w+/)?.[0];
+    const phone = bio.match(/\+?[\d\s()-]{7,15}/)?.[0];
+    const whatsapp = bio.match(/(?:whatsapp|wa|ватсап)[\s:]*\+?[\d\s()-]{7,15}/i)?.[0];
+    const telegram = bio.match(/(?:telegram|tg|телеграм)[\s:@]*[\w]+/i)?.[0];
+    const viber = bio.match(/(?:viber|вайбер)[\s:]*\+?[\d\s()-]{7,15}/i)?.[0];
+    return { email, phone, whatsapp, telegram, viber };
   }
 
   private detectCustomerJourney(text: string): {

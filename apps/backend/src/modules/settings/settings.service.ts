@@ -8,6 +8,8 @@ import { getDefaultModel } from '@prompt-site-builder/shared';
 const ENCRYPTED_KEYS = new Set([
   'openai_api_key', 'anthropic_api_key', 'google_api_key',
   'deepseek_api_key', 'mimo_api_key', 'bfl_api_key',
+  'facebook_app_secret', 'facebook_access_token',
+  'google_maps_api_key', 'instagram_access_token',
 ]);
 
 const ENV_KEY_MAP: Record<string, string> = {
@@ -19,6 +21,13 @@ const ENV_KEY_MAP: Record<string, string> = {
   bfl_api_key: 'BFL_API_KEY',
   llm_provider: 'LLM_PROVIDER',
   image_provider: 'IMAGE_PROVIDER',
+  facebook_app_id: 'FACEBOOK_APP_ID',
+  facebook_app_secret: 'FACEBOOK_APP_SECRET',
+  facebook_access_token: 'FACEBOOK_ACCESS_TOKEN',
+  google_maps_api_key: 'GOOGLE_MAPS_API_KEY',
+  instagram_access_token: 'INSTAGRAM_ACCESS_TOKEN',
+  enrichment_auto_run: 'ENRICHMENT_AUTO_RUN',
+  enrichment_default_sources: 'ENRICHMENT_DEFAULT_SOURCES',
 };
 
 const DEFAULTS: Record<string, string | null> = {
@@ -69,6 +78,9 @@ export class SettingsService {
       'llm_provider', 'llm_model', 'image_provider', 'image_model',
       'openai_api_key', 'anthropic_api_key', 'google_api_key',
       'deepseek_api_key', 'mimo_api_key', 'bfl_api_key',
+      'facebook_app_id', 'facebook_app_secret', 'facebook_access_token',
+      'google_maps_api_key', 'instagram_access_token',
+      'enrichment_auto_run', 'enrichment_default_sources',
     ];
 
     const results = await Promise.all(keys.map((k) => this.get(k)));
@@ -88,6 +100,13 @@ export class SettingsService {
       deepseekApiKey: maskApiKey(values.deepseek_api_key),
       mimoApiKey: maskApiKey(values.mimo_api_key),
       bflApiKey: maskApiKey(values.bfl_api_key),
+      facebookAppId: values.facebook_app_id ?? null,
+      facebookAppSecret: maskApiKey(values.facebook_app_secret),
+      facebookAccessToken: maskApiKey(values.facebook_access_token),
+      googleMapsApiKey: maskApiKey(values.google_maps_api_key),
+      instagramAccessToken: maskApiKey(values.instagram_access_token),
+      enrichmentAutoRun: values.enrichment_auto_run === 'true',
+      enrichmentDefaultSources: values.enrichment_default_sources ?? 'instagram,facebook,googleMaps',
       easyweekEnabled: false,
       easyweekApiKey: null,
       wayforpayEnabled: false,

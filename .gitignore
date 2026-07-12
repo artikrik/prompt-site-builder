@@ -23,6 +23,9 @@ Thumbs.db
 *.swp
 *.swo
 
+# Backups
+$BACKUP_DIR/
+
 # Cache
 .cache/
 *.tsbuildinfo

@@ -8,6 +8,8 @@
   import { variants, type VariantListItem } from '$lib/stores/variants';
   import { api } from '$lib/api/client.js';
   import VariantList from '$lib/components/variants/VariantList.svelte';
+  import AddonList from '$lib/components/addons/AddonList.svelte';
+  import { addons, type ProjectAddon, type AddonType } from '$lib/stores/addons';
   import { Button } from '$lib/components/ui/button/index.js';
   import { Badge } from '$lib/components/ui/badge/index.js';
   import * as Card from '$lib/components/ui/card/index.js';
@@ -21,6 +23,8 @@
   let projectVariants = $state<VariantListItem[]>([]);
   let variantsLoading = $state(false);
   let activeVariantId = $state<string | null>(null);
+  let projectAddons = $state<ProjectAddon[]>([]);
+  let addonsLoading = $state(false);
 
   let themeLabel = $derived(
     selectedTheme === 'auto'
@@ -34,7 +38,7 @@
       activeVariantId = (project as any).activeVariantId || null;
       const themeList = await api.get<any[]>('/generation/themes');
       themes = themeList;
-      await loadVariants();
+      await Promise.all([loadVariants(), loadAddons()]);
     } catch (_e) {
       // eslint-disable-next-line no-console
       console.error('Failed to load:', _e);
@@ -48,6 +52,38 @@
     variantsLoading = true;
     projectVariants = await variants.fetchForProject(project.id);
     variantsLoading = false;
+  }
+
+  async function loadAddons() {
+    if (!project) return;
+    addonsLoading = true;
+    projectAddons = await addons.fetchForProject(project.id);
+    addonsLoading = false;
+  }
+
+  async function handleActivateAddon(addonType: AddonType) {
+    if (!project) return;
+    try {
+      await addons.activate(project.id, addonType);
+      projectAddons = await addons.fetchForProject(project.id);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed to activate add-on');
+    }
+  }
+
+  async function handleDeactivateAddon(addonType: AddonType) {
+    if (!project) return;
+    if (!window.confirm(`Deactivate ${addonType}? This will stop monthly billing.`)) return;
+    try {
+      await addons.deactivate(project.id, addonType);
+      projectAddons = await addons.fetchForProject(project.id);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed to deactivate add-on');
+    }
+  }
+
+  async function handleConfigureAddon(addonType: AddonType) {
+    alert(`Configuration for ${addonType} will be available in the next update.`);
   }
 
   async function handleGenerate() {
@@ -148,6 +184,19 @@
         onActivate={handleActivate}
         onDelete={handleDelete}
         isLoading={variantsLoading}
+      />
+    </section>
+
+    <!-- Add-ons Section -->
+    <section class="mt-6">
+      <h2 class="text-xl font-semibold mb-4">Add-on Services</h2>
+      <AddonList
+        projectId={project.id}
+        addons={projectAddons}
+        isLoading={addonsLoading}
+        onActivate={handleActivateAddon}
+        onDeactivate={handleDeactivateAddon}
+        onConfigure={handleConfigureAddon}
       />
     </section>
 

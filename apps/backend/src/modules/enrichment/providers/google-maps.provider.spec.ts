@@ -121,7 +121,7 @@ describe('GoogleMapsProvider', () => {
 
       expect(result.photos).toBeDefined();
       expect(result.photos!.length).toBe(2);
-      expect(result.photos![0]).toContain('maxwidth=800');
+      expect(result.photos![0]).toContain('maxwidth=1600');
       expect(result.photos![0]).toContain('photoreference=photo-ref-1');
       expect(result.photos![0]).toContain('key=test-api-key-123');
       expect(result.reviews).toBeDefined();
@@ -206,10 +206,10 @@ describe('GoogleMapsProvider', () => {
 
       expect(urls).toHaveLength(2);
       expect(urls[0]).toBe(
-        'https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=ref-abc&key=test-api-key-123',
+        'https://maps.googleapis.com/maps/api/place/photo?maxwidth=1600&photoreference=ref-abc&key=test-api-key-123',
       );
       expect(urls[1]).toBe(
-        'https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=ref-xyz&key=test-api-key-123',
+        'https://maps.googleapis.com/maps/api/place/photo?maxwidth=1600&photoreference=ref-xyz&key=test-api-key-123',
       );
     });
 

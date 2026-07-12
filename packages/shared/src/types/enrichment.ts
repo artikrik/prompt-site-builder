@@ -84,6 +84,7 @@ export interface SalesOpportunity {
   recommendation: string;
   pitchAngle: string;
   revenueImpact: string;
+  scriptExcerpt?: string;
 }
 
 export interface EnrichmentSourceUrls {
@@ -117,6 +118,7 @@ export interface EnrichmentData {
   competitors: CompetitorInfo[];
   marketGap?: MarketGap;
   salesOpportunities: SalesOpportunity[];
+  salesScript?: Record<string, unknown>;
   sourceUrls: EnrichmentSourceUrls;
   stats: EnrichmentStats;
 }
