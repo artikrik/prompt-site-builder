@@ -8,6 +8,7 @@ import { OpenAIStrategy } from './strategies/openai.strategy';
 import { DeepseekStrategy } from './strategies/deepseek.strategy';
 import { MimoStrategy } from './strategies/mimo.strategy';
 import { GeminiStrategy } from './strategies/gemini.strategy';
+import { OpenRouterStrategy } from './strategies/openrouter.strategy';
 import { DallE3Strategy } from './strategies/dalle3.strategy';
 import { ImagenStrategy } from './strategies/imagen.strategy';
 import { FluxStrategy } from './strategies/flux.strategy';
@@ -36,6 +37,7 @@ import { AddonModule } from '../addons/addon.module';
     DeepseekStrategy,
     MimoStrategy,
     GeminiStrategy,
+    OpenRouterStrategy,
     DallE3Strategy,
     ImagenStrategy,
     FluxStrategy,

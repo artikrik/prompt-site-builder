@@ -7,4 +7,5 @@ export * from './types/models';
 export * from './types/settings';
 export * from './types/enrichment';
 export * from './types/variant';
+export * from './types/category';
 export * from './enums';
