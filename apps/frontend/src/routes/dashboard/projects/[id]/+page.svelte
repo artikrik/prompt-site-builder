@@ -15,10 +15,7 @@
   import { Button } from '$lib/components/ui/button/index.js';
   import { Badge } from '$lib/components/ui/badge/index.js';
   import * as Card from '$lib/components/ui/card/index.js';
-  import * as Dialog from '$lib/components/ui/dialog/index.js';
   import * as Select from '$lib/components/ui/select/index.js';
-  import { Input } from '$lib/components/ui/input/index.js';
-  import { Label } from '$lib/components/ui/label/index.js';
   import { ArrowLeft, ExternalLink } from '@lucide/svelte';
 
   let project = $state<Project | null>(null);
@@ -32,9 +29,6 @@
   let addonsLoading = $state(false);
   let showAdvancedGenerator = $state(false);
   let isGenerating = $state(false);
-  let showAddonConfig = $state(false);
-  let configAddonType = $state<AddonType | null>(null);
-  let addonConfig = $state<Record<string, string>>({});
 
   let themeLabel = $derived(
     selectedTheme === 'auto'
@@ -92,22 +86,8 @@
     }
   }
 
-  async function handleConfigureAddon(addonType: AddonType) {
-    configAddonType = addonType;
-    addonConfig = {};
-    showAddonConfig = true;
-  }
-
-  async function handleSaveAddonConfig() {
-    if (!project || !configAddonType) return;
-    try {
-      await addons.updateConfig(project.id, configAddonType, addonConfig as Record<string, unknown>);
-      showAddonConfig = false;
-      configAddonType = null;
-      projectAddons = await addons.fetchForProject(project.id);
-    } catch (e) {
-      alert(e instanceof Error ? e.message : 'Failed to save config');
-    }
+  async function handleConfigureAddon(_addonType: AddonType) {
+    // Configure modal not yet implemented in template
   }
 
   async function handleVariantGenerate(config: { model: string; imageModel: string; theme: string }) {

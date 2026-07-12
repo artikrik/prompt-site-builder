@@ -1,5 +1,5 @@
 <script lang="ts">
-  /* global fetch */
+  /* global fetch, window */
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
@@ -103,7 +103,7 @@
                 {#if lead.socialUrls && lead.socialUrls.length > 0}
                   <ul class="space-y-1">
                     {#each lead.socialUrls as url, i (i)}
-                      <li><a href={url} target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline text-sm">{url}</a></li>
+                      <li><button onclick={() => window.open(url, '_blank')} class="text-blue-600 hover:underline text-sm">{url}</button></li>
                     {/each}
                   </ul>
                 {:else}—{/if}

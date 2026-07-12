@@ -73,8 +73,7 @@
     }
   }
 
-  async function createProject(leadId: string, e: MouseEvent) {
-    e.stopPropagation();
+  async function createProject(leadId: string) {
     try {
       const project = await projects.create(leadId);
       goto(resolve(`/dashboard/projects/${project.id}`));
@@ -236,7 +235,7 @@
                   <Badge variant={getStatusVariant(lead.status)}>{t.status[lead.status as keyof typeof t.status] ?? lead.status}</Badge>
                 </Table.Cell>
                 <Table.Cell class="text-right">
-                  <Button variant="ghost" size="sm" onclick={(e: MouseEvent) => createProject(lead.id, e)}>Створити сайт</Button>
+                  <Button variant="ghost" size="sm" onclick={(e) => { e.stopPropagation(); createProject(lead.id); }}>Створити сайт</Button>
                 </Table.Cell>
               </Table.Row>
             {/each}

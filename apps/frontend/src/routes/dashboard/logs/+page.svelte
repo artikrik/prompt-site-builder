@@ -1,5 +1,4 @@
 <script lang="ts">
-  /* global URLSearchParams */
   import { onMount } from 'svelte';
   import { t } from '$lib/i18n/uk';
   import { api } from '$lib/api/client';
@@ -47,10 +46,10 @@
   async function loadGenerationLogs() {
     genLoading = true;
     try {
-      const params = new URLSearchParams();
-      if (genStatus) params.set('status', genStatus);
-      params.set('limit', '50');
-      const data = await api.get<{ jobs: Array<Record<string, unknown>> }>(`/logs/generation?${params}`);
+      const parts: string[] = ['limit=50'];
+      if (genStatus) parts.push(`status=${encodeURIComponent(genStatus)}`);
+      const query = parts.join('&');
+      const data = await api.get<{ jobs: Array<Record<string, unknown>> }>(`/logs/generation?${query}`);
       genJobs = data.jobs || [];
     } catch { genJobs = []; }
     genLoading = false;
@@ -59,12 +58,13 @@
   async function loadSystemLogs() {
     sysLoading = true;
     try {
-      const params = new URLSearchParams();
-      if (sysLevel) params.set('level', sysLevel);
-      if (sysSearch) params.set('search', sysSearch);
-      params.set('limit', String(PAGE_SIZE));
-      params.set('offset', String(sysOffset));
-      const data = await api.get<{ logs: Array<Record<string, unknown>>; total: number }>(`/logs/system?${params}`);
+      const parts: string[] = [];
+      if (sysLevel) parts.push(`level=${encodeURIComponent(sysLevel)}`);
+      if (sysSearch) parts.push(`search=${encodeURIComponent(sysSearch)}`);
+      parts.push(`limit=${PAGE_SIZE}`);
+      parts.push(`offset=${sysOffset}`);
+      const query = parts.join('&');
+      const data = await api.get<{ logs: Array<Record<string, unknown>>; total: number }>(`/logs/system?${query}`);
       sysLogs = data.logs || [];
       sysTotal = data.total || 0;
     } catch { sysLogs = []; }
