@@ -22,9 +22,10 @@ import { PrismaModule } from '../../shared/prisma/prisma.module';
 import { QueueModule } from '../queue/queue.module';
 import { SettingsModule } from '../settings/settings.module';
 import { LeadsModule } from '../leads/leads.module';
+import { AddonModule } from '../addons/addon.module';
 
 @Module({
-  imports: [PublishingModule, ProjectsModule, PrismaModule, QueueModule, SettingsModule, LeadsModule],
+  imports: [PublishingModule, ProjectsModule, PrismaModule, QueueModule, SettingsModule, LeadsModule, AddonModule],
   controllers: [GenerationController],
   providers: [
     GenerationService,

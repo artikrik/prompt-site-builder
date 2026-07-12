@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GenerationService } from './generation.service';
+import { AddonInjectorService } from '../addons/addon-injector.service';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { LLMStrategyFactory } from './strategies/llm-strategy.factory';
@@ -29,6 +30,7 @@ describe('GenerationService', () => {
   let settingsService: { get: ReturnType<typeof vi.fn>; getEffectiveModel: ReturnType<typeof vi.fn> };
   let leadsService: { findOne: ReturnType<typeof vi.fn> };
   let variantsService: { create: ReturnType<typeof vi.fn> };
+  let addonInjector: { injectAddons: ReturnType<typeof vi.fn> };
 
   const siteRequest = {
     projectId: 'proj-1',
@@ -132,6 +134,10 @@ describe('GenerationService', () => {
       }),
     };
 
+    addonInjector = {
+      injectAddons: vi.fn().mockResolvedValue(undefined),
+    };
+
     service = new GenerationService(
       prisma as unknown as PrismaService,
       configService as unknown as ConfigService,
@@ -143,6 +149,7 @@ describe('GenerationService', () => {
       settingsService as unknown as SettingsService,
       leadsService as unknown as LeadsService,
       variantsService as unknown as VariantsService,
+      addonInjector as unknown as AddonInjectorService,
     );
   });
 

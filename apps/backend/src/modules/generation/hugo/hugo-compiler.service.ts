@@ -262,6 +262,8 @@ min_version = "0.100.0"
   private async createProjectStructure(dir: string, structure: GeneratedSiteStructure): Promise<void> {
     await mkdir(join(dir, 'content'), { recursive: true });
     await mkdir(join(dir, 'layouts'), { recursive: true });
+    await mkdir(join(dir, 'layouts', 'partials'), { recursive: true });
+    await mkdir(join(dir, 'layouts', 'shortcodes'), { recursive: true });
     await mkdir(join(dir, 'static', 'images'), { recursive: true });
     await mkdir(join(dir, 'archetypes'), { recursive: true });
 
@@ -272,6 +274,14 @@ min_version = "0.100.0"
     }
 
     for (const file of structure.layouts) {
+      await writeFile(join(dir, file.path), file.body);
+    }
+
+    for (const file of structure.partials || []) {
+      await writeFile(join(dir, file.path), file.body);
+    }
+
+    for (const file of structure.shortcodes || []) {
       await writeFile(join(dir, file.path), file.body);
     }
 

@@ -9,6 +9,7 @@ import { SitePublisherService } from '../publishing/site-publisher.service';
 import { SettingsService } from '../settings/settings.service';
 import { LeadsService } from '../leads/leads.service';
 import { VariantsService } from '../projects/variants/variants.service';
+import { AddonInjectorService } from '../addons/addon-injector.service';
 import { SiteGenerationRequest, GeneratedSiteStructure, ProjectStatus, JobStatus } from '@prompt-site-builder/shared';
 
 @Injectable()
@@ -26,6 +27,7 @@ export class GenerationService {
     private readonly settingsService: SettingsService,
     private readonly leadsService: LeadsService,
     private readonly variantsService: VariantsService,
+    private readonly addonInjector: AddonInjectorService,
   ) {}
 
   async generateSite(request: SiteGenerationRequest): Promise<void> {
@@ -110,6 +112,13 @@ export class GenerationService {
 
       // 2. Build site structure
       const structure = this.buildSiteStructure(request, hugoContent);
+
+      // 2.5 Inject active add-ons (payment, booking, CMS shortcodes)
+      try {
+        await this.addonInjector.injectAddons(structure, projectId);
+      } catch (addonErr) {
+        this.logger.warn(`Addon injection skipped: ${addonErr}`);
+      }
 
       // 3. Generate hero image (optional — skip if API fails)
       try {
@@ -259,6 +268,8 @@ export class GenerationService {
         { path: 'content/contact.md', body: hugoContent.contactMd },
       ],
       layouts: [],
+      partials: [],
+      shortcodes: [],
       static: [],
       assets: [],
     };

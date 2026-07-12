@@ -54,6 +54,8 @@ export interface GeneratedSiteStructure {
   config: string;
   content: Array<{ path: string; body: string }>;
   layouts: Array<{ path: string; body: string }>;
+  partials: Array<{ path: string; body: string }>;
+  shortcodes: Array<{ path: string; body: string }>;
   static: Array<{ path: string; body: string }>;
   assets: Array<{ path: string; data: Buffer }>;
 }
