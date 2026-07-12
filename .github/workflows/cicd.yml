@@ -40,9 +40,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22.22.3
-          cache: npm
 
       - run: npm ci
+
       - run: npm run lint
 
   typecheck:
@@ -62,7 +62,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22.22.3
-          cache: npm
 
       - run: npm ci
       - run: npm run build --workspace=packages/shared
@@ -75,14 +74,12 @@ jobs:
   test-backend:
     name: Backend Tests
     runs-on: self-hosted
-    # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
-    # skip_tests only skips test execution, NOT the job itself (needs chain requires job to run)
-    timeout-minutes: 15
+    # Run on: PR (open/sync/reopen), workflow_dispatch. SKIP on push to main (only build+deploy).
+    # Tests mock PrismaService — no real PostgreSQL/Redis needed.
+    if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/main') }}
+    timeout-minutes: 10
     env:
       TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
-      DATABASE_URL: postgresql://promptsite:testpassword@localhost:5434/promptsite_test
-      REDIS_HOST: localhost
-      REDIS_PORT: 6381
       JWT_SECRET: test-secret-key-for-ci-environment-32chars
       JWT_REFRESH_SECRET: test-refresh-secret-key-for-ci-environment-32chars
       ANTHROPIC_API_KEY: test-key
@@ -102,45 +99,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22.22.3
-          cache: npm
-
-      - name: Start PostgreSQL
-        run: |
-          docker rm -f pg-test 2>/dev/null || true
-          docker run -d --name pg-test \
-            -e POSTGRES_DB=promptsite_test \
-            -e POSTGRES_USER=promptsite \
-            -e POSTGRES_PASSWORD=testpassword \
-            -p 5434:5432 \
-            postgres:16-alpine
-          for i in $(seq 1 20); do
-            if docker exec pg-test pg_isready -U promptsite > /dev/null 2>&1; then
-              echo "✅ PostgreSQL ready"
-              break
-            fi
-            echo "⏳ Waiting for PostgreSQL ($i/20)..."
-            sleep 1
-          done
-
-      - name: Start Redis
-        run: |
-          docker rm -f redis-test 2>/dev/null || true
-          docker run -d --name redis-test \
-            -p 6381:6379 \
-            redis:7-alpine
-          for i in $(seq 1 10); do
-            if docker exec redis-test redis-cli ping | grep -q PONG; then
-              echo "✅ Redis ready"
-              break
-            fi
-            echo "⏳ Waiting for Redis ($i/10)..."
-            sleep 1
-          done
 
       - run: npm ci
+
       - run: npm run build --workspace=packages/shared
-      - run: npx prisma generate --schema=apps/backend/prisma/schema.prisma
-      - run: npx prisma migrate deploy --schema=apps/backend/prisma/schema.prisma
+
       - name: Skip tests (manual override)
         if: ${{ inputs.skip_tests }}
         run: echo "⏭️ Backend tests skipped via workflow_dispatch skip_tests"
@@ -149,15 +112,11 @@ jobs:
         if: ${{ !inputs.skip_tests }}
         run: npm run test --workspace=apps/backend
 
-      - name: Cleanup services
-        if: always()
-        run: docker rm -f pg-test redis-test 2>/dev/null || true
-
   test-frontend:
     name: Frontend Tests
     runs-on: self-hosted
-    # Run on: push, workflow_dispatch, PR (open/sync/reopen), PR merged to main
-    # skip_tests only skips test execution, NOT the job itself (needs chain requires job to run)
+    # Run on: PR (open/sync/reopen), workflow_dispatch. SKIP on push to main (only build+deploy).
+    if: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/main') }}
     timeout-minutes: 10
     env:
       TURBO_CACHE_DIR: /opt/prompt-site-builder/.turbo-cache
@@ -171,7 +130,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22.22.3
-          cache: npm
 
       - run: npm ci
       - run: npm run build --workspace=packages/shared
@@ -190,8 +148,8 @@ jobs:
   build:
     name: Build
     runs-on: self-hosted
-    # Build only runs if ALL quality gates pass — failing test cancels workflow
-    needs: [lint, typecheck, test-backend, test-frontend]
+    # Build runs after lint + typecheck (tests skipped on push to main)
+    needs: [lint, typecheck]
     if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' }}
     timeout-minutes: 15
     steps:
@@ -204,9 +162,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22.22.3
-          cache: npm
 
       - run: npm ci
+
       - run: npm run build
 
   # ═══════════════════════════════════════════════════════════

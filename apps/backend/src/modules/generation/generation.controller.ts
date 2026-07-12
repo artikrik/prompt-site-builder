@@ -1,6 +1,7 @@
 import { Controller, Post, Get, Param, Body, HttpCode, HttpStatus, UseGuards, NotFoundException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
+import { PrismaService } from '../../shared/prisma/prisma.service';
 import { CacheService } from '../../shared/redis/cache.service';
 import { ProjectsService } from '../projects/projects.service';
 import { QueueService } from '../queue/queue.service';
@@ -31,6 +32,7 @@ const THEMES_CACHE_TTL = 3600;
 @Controller('generation')
 export class GenerationController {
   constructor(
+    private readonly prisma: PrismaService,
     private readonly projectsService: ProjectsService,
     private readonly queueService: QueueService,
     private readonly themeService: ThemeService,
@@ -109,9 +111,11 @@ export class GenerationController {
   @ApiOperation({ summary: 'Get generation job status' })
   @ApiResponse({ status: 200, description: 'Job status' })
   async getStatus(@Param('projectId') projectId: string) {
-    const project = await this.projectsService.findOne(projectId);
-    const projectRel = project as unknown as ProjectRelations;
-    const latestJob = projectRel.generationJobs?.[0];
+    // Query generation jobs directly — projectsService.findOne may not include them
+    const latestJob = await this.prisma.generationJob.findFirst({
+      where: { projectId, type: 'GENERATE_SITE' },
+      orderBy: { createdAt: 'desc' },
+    });
 
     if (!latestJob) {
       return { projectId, status: 'NO_JOB', message: 'No generation job found' };

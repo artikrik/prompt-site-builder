@@ -234,7 +234,7 @@
             <Card.Title>Site Preview</Card.Title>
           </Card.Header>
           <Card.Content>
-            <iframe src={project.publishedUrl} class="w-full h-96 border border-border rounded-md" title="Site Preview"></iframe>
+            <iframe src={`${project.publishedUrl}?v=${project.updatedAt}`} class="w-full h-96 border border-border rounded-md" title="Site Preview"></iframe>
           </Card.Content>
         </Card.Root>
       {/if}

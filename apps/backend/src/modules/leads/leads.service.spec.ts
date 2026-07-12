@@ -121,6 +121,57 @@ describe('LeadsService', () => {
         }),
       );
     });
+
+    it('should not apply search filter for empty string search', async () => {
+      prisma.lead.findMany.mockResolvedValue([]);
+      await service.findAll({ search: '' });
+      // Should treat empty search same as no filter → no where clause
+      expect(prisma.lead.findMany).toHaveBeenCalledWith({
+        orderBy: { createdAt: 'desc' },
+      });
+    });
+
+    it('should not apply search filter for whitespace-only search', async () => {
+      prisma.lead.findMany.mockResolvedValue([]);
+      await service.findAll({ search: '   ' });
+      // Whitespace-only should be normalized away → no where clause
+      expect(prisma.lead.findMany).toHaveBeenCalledWith({
+        orderBy: { createdAt: 'desc' },
+      });
+    });
+
+    it('should trim surrounding whitespace from search term', async () => {
+      prisma.lead.findMany.mockResolvedValue([]);
+      await service.findAll({ search: '  salon  ' });
+      // Should trim and use 'salon' as the search term
+      expect(prisma.lead.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: expect.arrayContaining([
+              expect.objectContaining({ businessName: expect.objectContaining({ contains: 'salon' }) }),
+            ]),
+          }),
+          orderBy: { createdAt: 'desc' },
+        }),
+      );
+    });
+
+    it('should combine valid search with status filter, ignoring empty params', async () => {
+      prisma.lead.findMany.mockResolvedValue([]);
+      // Mix: valid search + valid status + empty city should normalize properly
+      await service.findAll({ search: 'Beauty', status: 'NEW', city: '' });
+      expect(prisma.lead.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: expect.arrayContaining([
+              expect.objectContaining({ businessName: expect.objectContaining({ contains: 'Beauty' }) }),
+            ]),
+            status: 'NEW',
+          }),
+          orderBy: { createdAt: 'desc' },
+        }),
+      );
+    });
   });
 
   describe('findOne', () => {
@@ -165,6 +216,25 @@ describe('LeadsService', () => {
       prisma.lead.updateMany.mockResolvedValue({ count: 3 });
       const result = await service.bulkUpdateStatus(['l1', 'l2', 'l3'], 'CONTACTED');
       expect(result).toBe(3);
+    });
+  });
+
+  describe('generateSlug', () => {
+    it('should transliterate Cyrillic name to Latin slug', () => {
+      const slug = (service as any).generateSlug('Стоматологія Сяйво');
+      expect(slug).toBe('stomatolohiia-siaivo');
+      expect(slug.length).toBeGreaterThan(0);
+    });
+
+    it('should handle mixed Cyrillic-Latin names', () => {
+      const slug = (service as any).generateSlug('Beauty Studio Lux');
+      expect(slug).toBe('beauty-studio-lux');
+    });
+
+    it('should handle empty slug fallback with UUID', () => {
+      const slug = (service as any).generateSlug('日本語のみ');
+      // If name has no ASCII/Latin chars after transliteration, fall back to random
+      expect(slug.length).toBeGreaterThan(0);
     });
   });
 });
