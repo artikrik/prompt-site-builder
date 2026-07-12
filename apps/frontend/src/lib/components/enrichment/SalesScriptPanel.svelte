@@ -14,14 +14,14 @@
   ];
 
   function copyText(text: string) {
-    navigator.clipboard.writeText(text);
+    globalThis.navigator.clipboard.writeText(text);
   }
 </script>
 
 {#if script}
   <div class="sales-script rounded-lg border">
     <div class="flex border-b overflow-x-auto">
-      {#each tabs as tab}
+      {#each tabs as tab (tab.key)}
         <button
           class="px-3 py-2 text-sm font-medium whitespace-nowrap {activeTab === tab.key ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground'}"
           onclick={() => activeTab = tab.key}
@@ -39,7 +39,7 @@
 
       {:else if activeTab === 'discovery' && script.discovery}
         <h4 class="font-medium mb-2">Qualification Questions</h4>
-        {#each script.discovery.qualificationQuestions || [] as q}
+        {#each script.discovery.qualificationQuestions || [] as q (q.question)}
           <div class="mb-2 p-2 bg-muted rounded">
             <p class="font-medium text-sm">{q.question}</p>
             <p class="text-xs text-muted-foreground">{q.purpose}</p>
@@ -50,7 +50,7 @@
       {:else if activeTab === 'valueProposition' && script.valueProposition}
         {@render copyBlock({ label: 'Core Promise', text: script.valueProposition.corePromise, copyText })}
         {@render copyBlock({ label: 'Tailored', text: script.valueProposition.tailoredToBusiness, copyText })}
-        {#each script.valueProposition.roiExamples || [] as roi}
+        {#each script.valueProposition.roiExamples || [] as roi (roi.scenario)}
           <div class="p-2 bg-muted rounded mb-2">
             <p class="text-sm font-medium">{roi.scenario}</p>
             <p class="text-sm text-green-600">{roi.result}</p>
@@ -59,7 +59,7 @@
 
       {:else if activeTab === 'objections' && script.objections}
         <div class="space-y-3">
-          {#each script.objections || [] as obj}
+          {#each script.objections || [] as obj (obj.objection)}
             <div class="p-3 border rounded">
               <p class="font-semibold text-red-600">❌ "{obj.objection}"</p>
               <p class="text-xs text-muted-foreground">Root cause: {obj.rootCause}</p>
@@ -93,13 +93,13 @@
           <p><strong>Decision Maker:</strong> {script.strategy.targetDecisionMaker}</p>
           <p><strong>Best Time to Call:</strong> {script.strategy.bestTimeToCall}</p>
           <div><strong>Deal Breakers:</strong>
-            <ul class="list-disc pl-4">{#each script.strategy.dealBreakers || [] as d}<li>{d}</li>{/each}</ul>
+            <ul class="list-disc pl-4">{#each script.strategy.dealBreakers || [] as d (d)}<li>{d}</li>{/each}</ul>
           </div>
           <div><strong>Quick Wins:</strong>
-            <ul class="list-disc pl-4">{#each script.strategy.quickWins || [] as w}<li>{w}</li>{/each}</ul>
+            <ul class="list-disc pl-4">{#each script.strategy.quickWins || [] as w (w)}<li>{w}</li>{/each}</ul>
           </div>
           <div><strong>Competitive Advantages:</strong>
-            <ul class="list-disc pl-4">{#each script.strategy.competitiveAdvantages || [] as a}<li>{a}</li>{/each}</ul>
+            <ul class="list-disc pl-4">{#each script.strategy.competitiveAdvantages || [] as a (a)}<li>{a}</li>{/each}</ul>
           </div>
         </div>
       {/if}

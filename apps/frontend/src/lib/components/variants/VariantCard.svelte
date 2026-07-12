@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from '$app/paths';
   import type { VariantListItem } from '$lib/stores/variants';
   import Card from '$lib/components/ui/card/card.svelte';
   import CardContent from '$lib/components/ui/card/card-content.svelte';
@@ -35,7 +36,7 @@
     <div class="flex items-start justify-between">
       <div class="space-y-1 flex-1">
         <div class="flex items-center gap-2">
-          <a href="/dashboard/variants/{variant.id}" class="font-semibold text-sm hover:underline">{variant.variantName}</a>
+          <a href={resolve('/dashboard/variants/{variant.id}')} class="font-semibold text-sm hover:underline">{variant.variantName}</a>
           <Badge variant={statusVariant(variant.status)} class="text-xs">
             {variant.status}
           </Badge>

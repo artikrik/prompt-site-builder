@@ -18,7 +18,7 @@
       {/if}
     </div>
     {#if competitor.website}
-      <a href={competitor.website} target="_blank" rel="noopener" class="text-sm text-primary hover:underline">Website ↗</a>
+      <button onclick={() => globalThis.open(competitor.website, '_blank', 'noopener noreferrer')} class="text-sm text-primary hover:underline">Website ↗</button>
     {/if}
   </div>
 
@@ -47,7 +47,7 @@
         <div>
           <span class="text-xs font-medium text-green-600">Strengths</span>
           <ul class="text-sm list-disc pl-4">
-            {#each competitor.websiteAnalysis.strengths as s}<li>{s}</li>{/each}
+            {#each competitor.websiteAnalysis.strengths as s (s)}<li>{s}</li>{/each}
           </ul>
         </div>
       {/if}
@@ -55,7 +55,7 @@
         <div>
           <span class="text-xs font-medium text-red-600">Weaknesses</span>
           <ul class="text-sm list-disc pl-4">
-            {#each competitor.websiteAnalysis.weaknesses as w}<li>{w}</li>{/each}
+            {#each competitor.websiteAnalysis.weaknesses as w (w)}<li>{w}</li>{/each}
           </ul>
         </div>
       {/if}
@@ -64,7 +64,7 @@
 
   {#if competitor.services?.length}
     <div class="flex flex-wrap gap-2">
-      {#each competitor.services as service}
+      {#each competitor.services as service (service.name)}
         <Badge variant="outline">{service.name}{#if service.price} — {service.price}{/if}</Badge>
       {/each}
     </div>
@@ -76,7 +76,7 @@
 
   {#if competitor.uniqueSellingPoints?.length}
     <div class="flex flex-wrap gap-1">
-      {#each competitor.uniqueSellingPoints as usp}
+      {#each competitor.uniqueSellingPoints as usp (usp)}
         <Badge variant="secondary" class="text-xs">{usp}</Badge>
       {/each}
     </div>

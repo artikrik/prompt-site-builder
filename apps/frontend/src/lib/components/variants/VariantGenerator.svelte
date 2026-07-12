@@ -35,7 +35,7 @@
     <label class="space-y-1">
       <span class="text-sm">LLM Model</span>
       <select bind:value={selectedModel} class="w-full rounded border p-2 text-sm">
-        {#each models as model}
+        {#each models as model (model)}
           <option value={model}>{model}</option>
         {/each}
       </select>
@@ -44,7 +44,7 @@
     <label class="space-y-1">
       <span class="text-sm">Image Model</span>
       <select bind:value={selectedImageModel} class="w-full rounded border p-2 text-sm">
-        {#each imageModels as model}
+        {#each imageModels as model (model)}
           <option value={model}>{model}</option>
         {/each}
       </select>
@@ -53,7 +53,7 @@
     <label class="space-y-1">
       <span class="text-sm">Theme</span>
       <select bind:value={selectedTheme} class="w-full rounded border p-2 text-sm">
-        {#each themes as theme}
+        {#each themes as theme (theme.name)}
           <option value={theme.name}>{theme.label}</option>
         {/each}
       </select>

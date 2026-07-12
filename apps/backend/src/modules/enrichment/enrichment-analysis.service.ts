@@ -7,20 +7,6 @@ interface ProviderRawData {
   data: Record<string, unknown>;
 }
 
-interface SalesScript {
-  opening: { greeting: string; icebreaker: string; hook: string };
-  discovery: {
-    qualificationQuestions: { question: string; purpose: string }[];
-    painPointProbes: { question: string; target: string }[];
-    budgetSignals: string[];
-  };
-  valueProposition: { corePromise: string; tailoredToBusiness: string; roiExamples: { scenario: string; result: string }[] };
-  objections: { objection: string; rootCause: string; response: string; followUp: string; evidence?: string }[];
-  closing: { trialCloses: string[]; assumptiveClose: string; urgencyBuilder: string; alternativeClose: string };
-  followUp: { sameDaySms: string; nextDayEmail: string; threeDayCallback: string; referralAsk: string };
-  strategy: { targetDecisionMaker: string; bestTimeToCall: string; dealBreakers: string[]; quickWins: string[]; competitiveAdvantages: string[] };
-}
-
 @Injectable()
 export class EnrichmentAnalysisService {
   private readonly logger = new Logger(EnrichmentAnalysisService.name);
@@ -263,7 +249,7 @@ class SalesScriptGenerator {
     try {
       const response = await llm.generateContent(prompt, { temperature: 0.4, maxTokens: 2000 });
       return this.parseJson(response.content);
-    } catch (err) {
+    } catch {
       return {};
     }
   }

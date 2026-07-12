@@ -32,7 +32,7 @@
     {#if colors.length > 0}
       <div class="flex gap-2 items-center">
         <span class="text-sm text-muted-foreground">Colors:</span>
-        {#each colors as color}
+        {#each colors as color (color)}
           <div class="flex items-center gap-1">
             <div class="h-5 w-5 rounded border" style="background: {color}" title={color}></div>
             <span class="text-xs font-mono">{color}</span>
@@ -55,7 +55,7 @@
       </div>
       {#if data.toneOfVoice.keyPhrases?.length}
         <div class="flex flex-wrap gap-1">
-          {#each data.toneOfVoice.keyPhrases as phrase}
+          {#each data.toneOfVoice.keyPhrases as phrase (phrase)}
             <Badge variant="outline" class="text-xs">{phrase}</Badge>
           {/each}
         </div>
@@ -65,7 +65,7 @@
     <!-- Stats -->
     {#if stats.length > 0}
       <div class="grid grid-cols-2 gap-2 text-sm">
-        {#each stats as [key, value]}
+        {#each stats as [key, value] (key)}
           <div class="flex justify-between bg-muted rounded px-2 py-1">
             <span class="text-muted-foreground">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
             <span class="font-medium">{value}</span>
