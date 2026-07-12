@@ -46,6 +46,10 @@ export class EnrichmentFactory {
           logoUrl: result.logoUrl ?? undefined,
           toneOfVoice: result.toneOfVoice ?? undefined,
           customerJourney: result.customerJourney,
+          reviews: result.recentPostTexts?.map((text) => ({
+            author: 'Instagram follower',
+            text,
+          })) || [],
           stats: {
             instagramPosts: result.postsCount ?? undefined,
             instagramFollowers: result.followers ?? undefined,

@@ -25,6 +25,7 @@ interface FacebookPage {
 
 interface FacebookPost {
   message?: string;
+  full_picture?: string;
   created_time?: string;
 }
 
@@ -63,6 +64,11 @@ export class FacebookProvider implements IEnrichmentProvider {
         this.fetchRatings(page.id, token),
       ]);
 
+      const [photos, albumPhotos] = await Promise.all([
+        Promise.resolve(this.collectPostPhotos(posts)),
+        this.fetchAlbumPhotos(page.id, token),
+      ]);
+
       const services = this.extractServices(posts);
       const reviews = this.mapRatings(ratings);
       const workingHours = this.mapHours(page.hours);
@@ -71,6 +77,7 @@ export class FacebookProvider implements IEnrichmentProvider {
         services,
         reviews,
         workingHours,
+        photos: [...photos, ...albumPhotos],
         coverPhotoUrl: page.cover?.source,
         sourceUrls: { facebook: `https://www.facebook.com/${page.id}` },
         stats: { facebookReviews: page.rating_count ?? 0 },
@@ -143,7 +150,7 @@ export class FacebookProvider implements IEnrichmentProvider {
     try {
       const url =
         `https://graph.facebook.com/v18.0/${pageId}/posts` +
-        `?fields=message,created_time&limit=20&access_token=${token}`;
+        `?fields=message,full_picture,created_time&limit=50&access_token=${token}`;
       const response = await fetch(url);
       if (!response.ok) {
         this.logger.warn(`Facebook posts fetch failed: ${response.status}`);
@@ -160,7 +167,7 @@ export class FacebookProvider implements IEnrichmentProvider {
     try {
       const url =
         `https://graph.facebook.com/v18.0/${pageId}/ratings` +
-        `?fields=reviewer{name},review_text,rating,created_time&limit=20&access_token=${token}`;
+        `?fields=reviewer{name},review_text,rating,created_time&limit=100&access_token=${token}`;
       const response = await fetch(url);
       if (!response.ok) {
         this.logger.warn(`Facebook ratings fetch failed: ${response.status}`);
@@ -168,6 +175,40 @@ export class FacebookProvider implements IEnrichmentProvider {
       }
       const data = (await response.json()) as { data?: FacebookRating[] };
       return data.data || [];
+    } catch {
+      return [];
+    }
+  }
+
+  private collectPostPhotos(posts: FacebookPost[]): string[] {
+    return posts.map((p) => p.full_picture).filter((url): url is string => !!url);
+  }
+
+  private async fetchAlbumPhotos(pageId: string, token: string): Promise<string[]> {
+    try {
+      const albumsUrl =
+        `https://graph.facebook.com/v18.0/${pageId}/albums` +
+        `?fields=id,name&limit=10&access_token=${token}`;
+      const albumsResponse = await fetch(albumsUrl);
+      if (!albumsResponse.ok) return [];
+      const albums = (await albumsResponse.json()) as { data?: Array<{ id: string }> };
+      if (!albums.data?.length) return [];
+
+      const photos: string[] = [];
+      for (const album of albums.data.slice(0, 5)) {
+        const photosUrl =
+          `https://graph.facebook.com/v18.0/${album.id}/photos` +
+          `?fields=images&limit=20&access_token=${token}`;
+        const photosResponse = await fetch(photosUrl);
+        if (!photosResponse.ok) continue;
+        const photosData = (await photosResponse.json()) as { data?: Array<{ images?: Array<{ source: string }> }> };
+        for (const photo of photosData.data || []) {
+          if (photo.images?.[0]?.source) {
+            photos.push(photo.images[0].source);
+          }
+        }
+      }
+      return photos;
     } catch {
       return [];
     }
