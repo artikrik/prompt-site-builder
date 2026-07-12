@@ -1,5 +1,5 @@
 <script lang="ts">
-  /* global fetch, window */
+  /* global fetch, window, HTMLInputElement */
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
@@ -167,7 +167,7 @@
           <Card.Content class="space-y-4">
             <p class="text-sm text-muted-foreground">{t.scraping.selectPlatforms}</p>
             <div class="flex gap-4 flex-wrap">
-              {#each ['instagram', 'facebook', 'googleMaps'] as platform}
+              {#each ['instagram', 'facebook', 'googleMaps'] as platform (platform)}
                 <label class="flex items-center gap-2 cursor-pointer text-sm">
                   <input
                     type="checkbox"
