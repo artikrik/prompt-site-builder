@@ -15,6 +15,7 @@ import { EnrichmentModule } from './modules/enrichment/enrichment.module';
 import { QueueModule } from './modules/queue/queue.module';
 import { HealthModule } from './modules/health/health.module';
 import { SettingsModule } from './modules/settings/settings.module';
+import { CategoriesModule } from './modules/categories/categories.module';
 import { AddonModule } from './modules/addons/addon.module';
 import { PrismaModule } from './shared/prisma/prisma.module';
 import { RedisModule } from './shared/redis/redis.module';
@@ -48,6 +49,7 @@ import { RedisModule } from './shared/redis/redis.module';
     WidgetsModule,
     ScrapingModule,
     EnrichmentModule,
+    CategoriesModule,
     AddonModule,
     HealthModule,
     SettingsModule,

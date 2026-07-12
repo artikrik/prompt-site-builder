@@ -52,6 +52,11 @@ export class LeadsService {
       ...decrypted,
       enrichmentData: (decrypted.enrichmentData as any) ?? null,
       scrapedData: decrypted.scrapedData ?? {},
+      socialUrls: decrypted.socialUrls ?? [],
+      scrapedPhotos: decrypted.scrapedPhotos ?? [],
+      scrapedReviews: decrypted.scrapedReviews ?? [],
+      scrapedContacts: decrypted.scrapedContacts ?? {},
+      scrapedHours: decrypted.scrapedHours ?? {},
     } as Lead;
   }
 
@@ -200,6 +205,45 @@ export class LeadsService {
     });
 
     await this.cache.delByPrefix(CACHE_PREFIX);
+  }
+
+  async queueScrape(leadId: string, platforms: string[]): Promise<{ id: string }> {
+    await this.findOne(leadId);
+
+    // Queue scraping job via BullMQ
+    const job = await this.queueService.addScrapeJob(leadId, platforms);
+
+    // Mark scraping as enabled
+    await this.prisma.lead.update({
+      where: { id: leadId },
+      data: { scrapingEnabled: true },
+    });
+
+    return { id: job.id };
+  }
+
+  async getScrapeStatus(leadId: string): Promise<{
+    jobs: Array<{ id: string; status: string; result?: unknown; error?: string }>;
+  }> {
+    // Find projects for this lead, then find scrape jobs for those projects
+    const projects = await this.prisma.project.findMany({
+      where: { leadId },
+      select: { id: true },
+    });
+
+    const projectIds = projects.map(p => p.id);
+
+    const jobs = await this.prisma.generationJob.findMany({
+      where: {
+        projectId: { in: projectIds },
+        type: 'SCRAPE_LEAD',
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      select: { id: true, status: true, result: true, error: true },
+    });
+
+    return { jobs };
   }
 
   async bulkUpdateStatus(ids: string[], status: string): Promise<number> {

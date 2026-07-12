@@ -1,5 +1,6 @@
-import { Controller, Post, Get, Param, Body, HttpCode, HttpStatus, UseGuards, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, Query, HttpCode, HttpStatus, UseGuards, NotFoundException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { CacheService } from '../../shared/redis/cache.service';
@@ -38,6 +39,7 @@ export class GenerationController {
     private readonly themeService: ThemeService,
     private readonly themeSelector: ThemeSelector,
     private readonly cache: CacheService,
+    private readonly configService: ConfigService,
   ) {}
 
   @Post(':projectId/generate')
@@ -81,7 +83,7 @@ export class GenerationController {
       address: lead.address,
       phone: lead.phone,
       email: lead.email,
-      socialUrl: lead.socialUrl,
+      socialUrls: lead.socialUrl ? [lead.socialUrl] : [],
       theme: selectedTheme,
       variantId,
     });
@@ -105,6 +107,34 @@ export class GenerationController {
       async () => this.themeService.listAvailableThemes(),
       THEMES_CACHE_TTL,
     );
+  }
+
+  @Get('models')
+  @ApiOperation({ summary: 'List available LLM models' })
+  async listModels(@Query('provider') provider?: string): Promise<Array<{ id: string; name: string }>> {
+    if (provider === 'openrouter') {
+      const apiKey = this.configService.get<string>('OPENROUTER_API_KEY');
+      if (!apiKey) return [];
+
+      try {
+        const response = await fetch('https://openrouter.ai/api/v1/models', {
+          headers: { Authorization: `Bearer ${apiKey}` },
+        });
+        const data = await response.json() as { data: Array<{ id: string; name: string }> };
+        return data.data.map(m => ({ id: m.id, name: m.name }));
+      } catch {
+        return [];
+      }
+    }
+
+    return [
+      { id: 'gpt-4o', name: 'GPT-4o' },
+      { id: 'gpt-4-turbo', name: 'GPT-4 Turbo' },
+      { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4' },
+      { id: 'deepseek-v4-pro', name: 'DeepSeek V4 Pro' },
+      { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro' },
+      { id: 'tencent/hy3:free', name: 'Tencent HY3 (Free)' },
+    ];
   }
 
   @Get(':projectId/status')
