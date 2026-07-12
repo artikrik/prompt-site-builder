@@ -17,6 +17,11 @@ concurrency:
   group: cicd-${{ github.ref }}
   cancel-in-progress: true
 
+# Suppress Node.js 20 deprecation warnings (actions/checkout@v4, setup-node@v4)
+# Remove when actions update to Node.js 24 runtime
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: 'true'
+
 jobs:
   # ═══════════════════════════════════════════════════════════
   #  Quality Gates (push, PR checks, workflow_dispatch)
