@@ -3,6 +3,7 @@ import { ScrapingService } from './scraping.service';
 import { ApifyProvider } from './providers/apify.provider';
 import { InstagramProvider } from './providers/instagram.provider';
 import { LeadsService } from '../leads/leads.service';
+import { EnrichmentService } from '../enrichment/enrichment.service';
 
 describe('ScrapingService', () => {
   let service: ScrapingService;
@@ -15,6 +16,9 @@ describe('ScrapingService', () => {
     create: ReturnType<typeof vi.fn>;
     findOne: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
+  };
+  let enrichmentService: {
+    enrichLeadWithSources: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -30,11 +34,15 @@ describe('ScrapingService', () => {
       findOne: vi.fn(),
       update: vi.fn(),
     };
+    enrichmentService = {
+      enrichLeadWithSources: vi.fn(),
+    };
 
     service = new ScrapingService(
       apifyProvider as unknown as ApifyProvider,
       instagramProvider as unknown as InstagramProvider,
       leadsService as unknown as LeadsService,
+      enrichmentService as unknown as EnrichmentService,
     );
   });
 
@@ -143,6 +151,41 @@ describe('ScrapingService', () => {
 
       const result = await service.enrichLeadWithInstagram('lead-4');
       expect(result).toBe(false);
+    });
+  });
+
+  describe('scrapeLead', () => {
+    it('should enrich existing lead with selected platforms', async () => {
+      leadsService.findOne.mockResolvedValue({
+        id: 'lead-1',
+        businessName: 'Test Biz',
+        city: 'Kyiv',
+      });
+      enrichmentService.enrichLeadWithSources.mockResolvedValue(undefined);
+
+      await service.scrapeLead('lead-1', ['googleMaps', 'instagram']);
+
+      expect(leadsService.findOne).toHaveBeenCalledWith('lead-1');
+      expect(enrichmentService.enrichLeadWithSources).toHaveBeenCalledWith('lead-1', ['googleMaps', 'instagram']);
+    });
+
+    it('should throw NotFoundException if lead not found', async () => {
+      leadsService.findOne.mockRejectedValue(new Error('Lead not found'));
+
+      await expect(service.scrapeLead('nonexistent', ['googleMaps'])).rejects.toThrow();
+    });
+
+    it('should handle single platform', async () => {
+      leadsService.findOne.mockResolvedValue({
+        id: 'lead-2',
+        businessName: 'Salon',
+        city: 'Odesa',
+      });
+      enrichmentService.enrichLeadWithSources.mockResolvedValue(undefined);
+
+      await service.scrapeLead('lead-2', ['facebook']);
+
+      expect(enrichmentService.enrichLeadWithSources).toHaveBeenCalledWith('lead-2', ['facebook']);
     });
   });
 });

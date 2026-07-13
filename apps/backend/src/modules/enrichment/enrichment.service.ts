@@ -91,6 +91,54 @@ export class EnrichmentService {
     return { sources };
   }
 
+  async enrichLeadWithSources(leadId: string, sources: string[]): Promise<void> {
+    const lead = await this.prisma.lead.findUnique({ where: { id: leadId } });
+    if (!lead) {
+      this.logger.warn(`Lead ${leadId} not found`);
+      return;
+    }
+
+    this.logger.log(`Enriching lead ${leadId} with sources: ${sources.join(', ')}`);
+
+    const providerResults = await Promise.all(
+      sources.map(async (source) => {
+        const provider = this.factory.createForProvider(source as EnrichmentSource);
+        if (!provider) {
+          this.logger.warn(`No provider for source: ${source}`);
+          return null;
+        }
+        try {
+          this.logger.log(`Enriching lead ${leadId} from ${source}`);
+          const data = await provider.enrich(lead.businessName, lead.city || undefined);
+          return { source, data };
+        } catch (err) {
+          this.logger.warn(`Provider ${source} failed for lead ${leadId}: ${err}`);
+          return null;
+        }
+      }),
+    );
+
+    const validResults = providerResults.filter((r): r is { source: string; data: Partial<EnrichmentData> } => r !== null);
+
+    const merged = this.mergeResults(validResults.map((r) => r.data));
+    const analyzed = await this.analysisService.analyze(
+      validResults.map((r) => ({ source: r.source, data: r.data as Record<string, unknown> })),
+      merged,
+    );
+
+    const finalData = this.mergeResults([merged, analyzed]);
+
+    await this.prisma.lead.update({
+      where: { id: leadId },
+      data: {
+        enrichmentData: finalData as any,
+        enrichedAt: new Date(),
+      },
+    });
+
+    this.logger.log(`Enrichment complete for lead ${leadId} from ${sources.length} sources`);
+  }
+
   private mergeResults(results: Partial<EnrichmentData>[]): Partial<EnrichmentData> {
     if (results.length === 0) return {};
     return results.reduce((acc, curr) => ({
