@@ -28,6 +28,20 @@
       default: return '—';
     }
   }
+
+  let hasData = $derived(data && (
+    (data.services && data.services.length > 0) ||
+    (data.reviews && data.reviews.length > 0) ||
+    (data.photos && data.photos.length > 0) ||
+    (data.brandColors && Object.keys(data.brandColors).length > 0) ||
+    (data.toneOfVoice) ||
+    (data.competitors && data.competitors.length > 0) ||
+    (data.salesOpportunities && data.salesOpportunities.length > 0) ||
+    (data.salesScript) ||
+    (data.customerJourney) ||
+    (data.stats && Object.keys(data.stats).length > 0) ||
+    (data.businessHours && Object.keys(data.businessHours).length > 0)
+  ));
 </script>
 
 <Card>
@@ -40,11 +54,11 @@
     </div>
   </CardHeader>
   <CardContent>
-    {#if !data}
+    {#if !hasData}
       <p class="text-sm text-muted-foreground py-4 text-center">
         No enrichment data yet. Configure sources and click "Enrich".
       </p>
-    {:else}
+    {:else if data}
       <div class="grid gap-4">
         <!-- Tone of Voice -->
         {#if data.toneOfVoice}
