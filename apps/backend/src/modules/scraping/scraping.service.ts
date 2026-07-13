@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ApifyProvider } from './providers/apify.provider';
 import { InstagramProvider } from './providers/instagram.provider';
 import { LeadsService } from '../leads/leads.service';
@@ -103,10 +103,8 @@ export class ScrapingService {
   }
 
   async scrapeLead(leadId: string, platforms: string[]): Promise<void> {
+    // findOne throws NotFoundException if lead doesn't exist
     const lead = await this.leadsService.findOne(leadId);
-    if (!lead) {
-      throw new NotFoundException(`Lead ${leadId} not found`);
-    }
 
     this.logger.log(`Scraping lead ${leadId} (${lead.businessName}) for platforms: ${platforms.join(', ')}`);
 

@@ -80,4 +80,14 @@ describe('ScrapingProcessor', () => {
     expect(job.updateProgress).toHaveBeenCalledWith(10);
     expect(mockService.scrapeAndCreateLeads).toHaveBeenCalledWith(job.data);
   });
+
+  it('should rethrow errors from scrapeLead for per-lead jobs', async () => {
+    const job = makeJob('scrape-leads', { leadId: 'lead-1', platforms: ['googleMaps'] });
+    (mockService.scrapeLead as any).mockRejectedValue(new Error('Enrichment failed'));
+
+    await expect(processor.process(job)).rejects.toThrow('Enrichment failed');
+
+    expect(job.updateProgress).toHaveBeenCalledWith(10);
+    expect(mockService.scrapeLead).toHaveBeenCalledWith('lead-1', ['googleMaps']);
+  });
 });
