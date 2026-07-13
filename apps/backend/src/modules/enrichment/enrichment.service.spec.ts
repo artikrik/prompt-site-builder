@@ -5,6 +5,7 @@ import { IEnrichmentProvider } from './providers/types';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { EnrichmentAnalysisService } from './enrichment-analysis.service';
 import { EnrichmentData } from '@prompt-site-builder/shared';
+import { LogsService } from '../logs/logs.service';
 
 function makeMockFactory(providers: Record<string, IEnrichmentProvider>): EnrichmentFactory {
   return {
@@ -25,6 +26,13 @@ function makeMockAnalysisService(): EnrichmentAnalysisService {
   return {
     analyze: vi.fn().mockResolvedValue({}),
   } as unknown as EnrichmentAnalysisService;
+}
+
+function makeMockLogsService(): LogsService {
+  return {
+    logScraping: vi.fn().mockResolvedValue({}),
+    getScrapingLogs: vi.fn().mockResolvedValue({ logs: [], total: 0 }),
+  } as unknown as LogsService;
 }
 
 function makeProvider(
@@ -57,12 +65,14 @@ describe('EnrichmentService', () => {
   let mockPrisma: PrismaService;
   let mockFactory: EnrichmentFactory;
   let mockAnalysis: EnrichmentAnalysisService;
+  let mockLogs: LogsService;
 
   beforeEach(() => {
     mockPrisma = makeMockPrisma();
     mockFactory = makeMockFactory({});
     mockAnalysis = makeMockAnalysisService();
-    service = new EnrichmentService(mockFactory, mockPrisma, mockAnalysis);
+    mockLogs = makeMockLogsService();
+    service = new EnrichmentService(mockFactory, mockPrisma, mockAnalysis, mockLogs);
   });
 
   describe('enrichLead', () => {
@@ -87,7 +97,7 @@ describe('EnrichmentService', () => {
       });
 
       mockFactory = makeMockFactory({ facebook: facebookProvider, googleMaps: googleProvider });
-      service = new EnrichmentService(mockFactory, mockPrisma, mockAnalysis);
+      service = new EnrichmentService(mockFactory, mockPrisma, mockAnalysis, mockLogs);
 
       const lead = makeLead();
       (mockPrisma.lead.findUnique as any).mockResolvedValue(lead);
@@ -128,7 +138,7 @@ describe('EnrichmentService', () => {
       });
 
       mockFactory = makeMockFactory({ facebook: failingProvider, googleMaps: successProvider });
-      service = new EnrichmentService(mockFactory, mockPrisma, mockAnalysis);
+      service = new EnrichmentService(mockFactory, mockPrisma, mockAnalysis, mockLogs);
 
       const lead = makeLead();
       (mockPrisma.lead.findUnique as any).mockResolvedValue(lead);
