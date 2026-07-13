@@ -10,7 +10,7 @@
   import { Input } from '$lib/components/ui/input/index.js';
   import { RefreshCw, Search } from '@lucide/svelte';
 
-  let activeTab = $state<'generation' | 'system'>('generation');
+  let activeTab = $state<'generation' | 'system' | 'scraping'>('generation');
 
   // Generation logs
   let genJobs = $state<Array<Record<string, unknown>>>([]);
@@ -25,6 +25,30 @@
   let sysSearch = $state('');
   let sysOffset = $state(0);
   const PAGE_SIZE = 50;
+
+  // Scraping logs
+  let scrapeLogs = $state<Array<Record<string, unknown>>>([]);
+  let scrapeTotal = $state(0);
+  let scrapeLoading = $state(false);
+  let scrapeSource = $state('');
+  let scrapeStatus = $state('');
+  let scrapeOffset = $state(0);
+
+  const sourceOptions = [
+    { value: '', label: 'Усі джерела' },
+    { value: 'instagram', label: 'Instagram' },
+    { value: 'facebook', label: 'Facebook' },
+    { value: 'googleMaps', label: 'Google Maps' },
+    { value: 'apify', label: 'Apify' },
+    { value: 'enrichment', label: 'Enrichment' },
+  ];
+
+  const scrapeStatusOptions = [
+    { value: '', label: 'Усі статуси' },
+    { value: 'started', label: 'Розпочато' },
+    { value: 'completed', label: 'Завершено' },
+    { value: 'failed', label: 'Помилка' },
+  ];
 
   const statusOptions = [
     { value: '', label: t.logs.allStatuses },
@@ -71,6 +95,22 @@
     sysLoading = false;
   }
 
+  async function loadScrapingLogs() {
+    scrapeLoading = true;
+    try {
+      const parts: string[] = [];
+      if (scrapeSource) parts.push(`source=${encodeURIComponent(scrapeSource)}`);
+      if (scrapeStatus) parts.push(`status=${encodeURIComponent(scrapeStatus)}`);
+      parts.push(`limit=${PAGE_SIZE}`);
+      parts.push(`offset=${scrapeOffset}`);
+      const query = parts.join('&');
+      const data = await api.get<{ logs: Array<Record<string, unknown>>; total: number }>(`/logs/scraping?${query}`);
+      scrapeLogs = data.logs || [];
+      scrapeTotal = data.total || 0;
+    } catch { scrapeLogs = []; }
+    scrapeLoading = false;
+  }
+
   function getStatusBadge(status: string): "default" | "secondary" | "destructive" | "outline" {
     switch (status) {
       case 'COMPLETED': return 'default';
@@ -111,6 +151,11 @@
       {activeTab === 'system' ? 'border-blue-600 text-blue-600' : 'border-transparent text-muted-foreground hover:text-foreground'}"
       onclick={() => { activeTab = 'system'; loadSystemLogs(); }}>
       {t.logs.systemLogs}
+    </button>
+    <button class="px-4 py-2 text-sm font-medium border-b-2 transition-colors
+      {activeTab === 'scraping' ? 'border-blue-600 text-blue-600' : 'border-transparent text-muted-foreground hover:text-foreground'}"
+      onclick={() => { activeTab = 'scraping'; loadScrapingLogs(); }}>
+      {t.logs.scrapingLogs}
     </button>
   </div>
 
@@ -161,7 +206,7 @@
         {/if}
       </Card.Content>
     </Card.Root>
-  {:else}
+  {:else if activeTab === 'system'}
     <div class="flex items-center gap-4 mb-4">
       <Select.Root type="single" bind:value={sysLevel} onValueChange={() => { sysOffset = 0; loadSystemLogs(); }}>
         <Select.Trigger class="w-32">{levelLabel}</Select.Trigger>
@@ -208,6 +253,72 @@
           <div class="flex justify-between mt-4">
             <Button variant="outline" size="sm" disabled={sysOffset === 0} onclick={() => { sysOffset -= PAGE_SIZE; loadSystemLogs(); }}>{t.logs.prev}</Button>
             <Button variant="outline" size="sm" disabled={sysLogs.length < PAGE_SIZE} onclick={() => { sysOffset += PAGE_SIZE; loadSystemLogs(); }}>{t.logs.next}</Button>
+          </div>
+        {/if}
+      </Card.Content>
+    </Card.Root>
+  {:else if activeTab === 'scraping'}
+    <div class="flex items-center gap-4 mb-4">
+      <Select.Root type="single" bind:value={scrapeSource} onValueChange={() => { scrapeOffset = 0; loadScrapingLogs(); }}>
+        <Select.Trigger class="w-40">{sourceOptions.find(o => o.value === scrapeSource)?.label || 'Усі джерела'}</Select.Trigger>
+        <Select.Content>
+          {#each sourceOptions as o (o.value)}
+            <Select.Item value={o.value}>{o.label}</Select.Item>
+          {/each}
+        </Select.Content>
+      </Select.Root>
+      <Select.Root type="single" bind:value={scrapeStatus} onValueChange={() => { scrapeOffset = 0; loadScrapingLogs(); }}>
+        <Select.Trigger class="w-32">{scrapeStatusOptions.find(o => o.value === scrapeStatus)?.label || 'Усі статуси'}</Select.Trigger>
+        <Select.Content>
+          {#each scrapeStatusOptions as o (o.value)}
+            <Select.Item value={o.value}>{o.label}</Select.Item>
+          {/each}
+        </Select.Content>
+      </Select.Root>
+      <Button variant="outline" size="sm" onclick={loadScrapingLogs}>
+        <RefreshCw class="size-4 mr-1" /> {t.logs.refresh}
+      </Button>
+      <span class="text-sm text-muted-foreground">{t.logs.total} {scrapeTotal}</span>
+    </div>
+
+    <Card.Root>
+      <Card.Content class="pt-6">
+        {#if scrapeLoading}
+          <div class="text-center py-12 text-muted-foreground">{t.common.loading}</div>
+        {:else if scrapeLogs.length === 0}
+          <div class="text-center py-12 text-muted-foreground">{t.common.noResults}</div>
+        {:else}
+          <Table.Root>
+            <Table.Header>
+              <Table.Row>
+                <Table.Head>{t.logs.time}</Table.Head>
+                <Table.Head>{t.logs.source}</Table.Head>
+                <Table.Head>{t.logs.action}</Table.Head>
+                <Table.Head>{t.logs.status}</Table.Head>
+                <Table.Head>{t.logs.message}</Table.Head>
+                <Table.Head>{t.logs.duration}</Table.Head>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {#each scrapeLogs as log, i (i)}
+                <Table.Row>
+                  <Table.Cell class="text-sm">{formatDate(log.createdAt as string)}</Table.Cell>
+                  <Table.Cell><Badge variant="outline">{log.source as string}</Badge></Table.Cell>
+                  <Table.Cell class="text-sm">{log.action as string}</Table.Cell>
+                  <Table.Cell>
+                    <Badge variant={log.status === 'completed' ? 'default' : log.status === 'failed' ? 'destructive' : 'secondary'}>
+                      {log.status as string}
+                    </Badge>
+                  </Table.Cell>
+                  <Table.Cell class="text-sm max-w-64 truncate">{log.message as string || '—'}</Table.Cell>
+                  <Table.Cell class="text-sm">{log.duration ? `${log.duration}ms` : '—'}</Table.Cell>
+                </Table.Row>
+              {/each}
+            </Table.Body>
+          </Table.Root>
+          <div class="flex justify-between mt-4">
+            <Button variant="outline" size="sm" disabled={scrapeOffset === 0} onclick={() => { scrapeOffset -= PAGE_SIZE; loadScrapingLogs(); }}>{t.logs.prev}</Button>
+            <Button variant="outline" size="sm" disabled={scrapeLogs.length < PAGE_SIZE} onclick={() => { scrapeOffset += PAGE_SIZE; loadScrapingLogs(); }}>{t.logs.next}</Button>
           </div>
         {/if}
       </Card.Content>
