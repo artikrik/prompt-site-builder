@@ -6,9 +6,10 @@ import { ApifyProvider } from './providers/apify.provider';
 import { InstagramProvider } from './providers/instagram.provider';
 import { LeadsModule } from '../leads/leads.module';
 import { QueueModule } from '../queue/queue.module';
+import { EnrichmentModule } from '../enrichment/enrichment.module';
 
 @Module({
-  imports: [LeadsModule, QueueModule],
+  imports: [LeadsModule, QueueModule, EnrichmentModule],
   controllers: [ScrapingController],
   providers: [ScrapingService, ScrapingProcessor, ApifyProvider, InstagramProvider],
   exports: [ScrapingService],

@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ApifyProvider } from './providers/apify.provider';
 import { InstagramProvider } from './providers/instagram.provider';
 import { LeadsService } from '../leads/leads.service';
+import { EnrichmentService } from '../enrichment/enrichment.service';
 import { CreateLeadDto } from '@prompt-site-builder/shared';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class ScrapingService {
     private readonly apifyProvider: ApifyProvider,
     private readonly instagramProvider: InstagramProvider,
     private readonly leadsService: LeadsService,
+    private readonly enrichmentService: EnrichmentService,
   ) {}
 
   async scrapeAndCreateLeads(params: {
@@ -98,5 +100,18 @@ export class ScrapingService {
 
     this.logger.log(`Lead ${leadId} enriched with Instagram data`);
     return true;
+  }
+
+  async scrapeLead(leadId: string, platforms: string[]): Promise<void> {
+    // findOne throws NotFoundException if lead doesn't exist
+    const lead = await this.leadsService.findOne(leadId);
+
+    this.logger.log(`Scraping lead ${leadId} (${lead.businessName}) for platforms: ${platforms.join(', ')}`);
+
+    // Delegate to enrichment pipeline which handles Google Maps, Facebook, Instagram
+    // via official APIs (Google Places, Facebook Graph, Instagram web_profile_info)
+    await this.enrichmentService.enrichLeadWithSources(leadId, platforms);
+
+    this.logger.log(`Scraping complete for lead ${leadId}`);
   }
 }
