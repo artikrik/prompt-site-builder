@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
 import type { Request, Response, NextFunction } from 'express';
 import { AppModule } from './app.module';
+import { PrismaLogger } from './shared/logging/prisma-logger.service';
 
 /**
  * Build the list of allowed CORS origins from explicit config + static dev ports.
@@ -59,6 +60,10 @@ function deriveBaseDomainFromHost(apiHost: string, configBaseDomain: string): st
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
+
+  // Wire PrismaLogger as the global NestJS logger so all INFO/WARN/ERROR persist to DB
+  const prismaLogger = app.get(PrismaLogger);
+  app.useLogger(prismaLogger);
 
   app.use(cookieParser());
 
