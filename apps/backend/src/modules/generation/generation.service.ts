@@ -422,7 +422,7 @@ export class GenerationService {
     return `/* Reset & Base */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
-body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.7; color: #1a1a2e; background: #fafbfc; }
+body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.7; color: #1a1a2e; background: #fff; }
 img { max-width: 100%; height: auto; display: block; }
 a { color: #2563eb; text-decoration: none; transition: color .15s ease; }
 a:hover { color: #1d4ed8; }
@@ -494,10 +494,13 @@ strong { color: #0f172a; font-weight: 600; }
   .nav-toggle { display: block; }
   .nav-links { display: none; position: absolute; top: 60px; left: 0; right: 0; background: #0f172a; flex-direction: column; padding: 1rem 1.5rem; gap: 0; box-shadow: 0 4px 20px rgba(0,0,0,.3); border-top: 1px solid rgba(255,255,255,.05); }
   .nav-links.open { display: flex; }
-  .nav-links a { padding: .75rem 0; border-bottom: 1px solid rgba(255,255,255,.05); font-size: .9rem; }
+  .nav-links a { padding: .75rem 0; border-bottom: 1px solid rgba(255,255,255,.05); font-size: .9rem; min-height: 44px; display: flex; align-items: center; }
   .hero { padding: 4rem 1.25rem 3.5rem; }
   .container { padding: 2rem 1.25rem; }
   .footer-inner { grid-template-columns: 1fr; gap: 2rem; }
+  a, button { min-height: 44px; display: inline-flex; align-items: center; }
+  .btn { min-height: 48px; padding: .75rem 1.5rem; }
+  .content a { min-height: 44px; padding: .5rem 0; }
 }`;
   }
 
