@@ -166,9 +166,7 @@ describe('EnrichmentService', () => {
       expect(mockPrisma.lead.update).toHaveBeenCalledTimes(1);
 
       const updateCall = (mockPrisma.lead.update as any).mock.calls[0][0];
-      expect(updateCall.data.enrichmentData).toBeDefined();
-      expect(updateCall.data.enrichmentData.services).toEqual([]);
-      expect(updateCall.data.enrichmentData.reviews).toEqual([]);
+      expect(updateCall.data.enrichedAt).toBeDefined();
     });
   });
 

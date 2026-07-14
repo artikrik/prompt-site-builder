@@ -17,9 +17,7 @@ describe('ScrapingService', () => {
     create: ReturnType<typeof vi.fn>;
     findOne: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
-  };
-  let enrichmentService: {
-    enrichLeadWithSources: ReturnType<typeof vi.fn>;
+    findAll: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -37,9 +35,7 @@ describe('ScrapingService', () => {
       create: vi.fn(),
       findOne: vi.fn(),
       update: vi.fn(),
-    };
-    enrichmentService = {
-      enrichLeadWithSources: vi.fn(),
+      findAll: vi.fn().mockResolvedValue([]),
     };
 
     service = new ScrapingService(
@@ -52,6 +48,7 @@ describe('ScrapingService', () => {
 
   describe('scrapeAndCreateLeads', () => {
     it('should scrape businesses and create leads for those without websites', async () => {
+      googleMapsScraper.scrapeBusinesses.mockResolvedValue([]);
       apifyProvider.scrapeGoogleMaps.mockResolvedValue([
         { businessName: 'Biz A', website: null, phone: '+123', address: 'Addr A', city: 'Kyiv', category: 'Salon', placeId: 'p1', rating: 4.5, reviewCount: 10 },
         { businessName: 'Biz B', website: 'https://bizb.com', phone: '+456', address: 'Addr B', city: 'Kyiv', category: 'Salon', placeId: 'p2', rating: 4.0, reviewCount: 20 },
@@ -80,6 +77,7 @@ describe('ScrapingService', () => {
     });
 
     it('should skip businesses that already exist (duplicate leads)', async () => {
+      googleMapsScraper.scrapeBusinesses.mockResolvedValue([]);
       apifyProvider.scrapeGoogleMaps.mockResolvedValue([
         { businessName: 'Biz A', website: null, phone: '+123', address: 'Addr', city: 'Kyiv', category: 'Salon', placeId: 'p1', rating: 4.0, reviewCount: 10 },
       ]);
@@ -165,12 +163,14 @@ describe('ScrapingService', () => {
         businessName: 'Test Biz',
         city: 'Kyiv',
       });
-      enrichmentService.enrichLeadWithSources.mockResolvedValue(undefined);
+      googleMapsScraper.scrapeBusinesses.mockResolvedValue([]);
+      leadsService.update.mockResolvedValue(undefined);
 
-      await service.scrapeLead('lead-1', ['googleMaps', 'instagram']);
+      await service.scrapeLead('lead-1', ['googleMaps']);
 
       expect(leadsService.findOne).toHaveBeenCalledWith('lead-1');
-      expect(enrichmentService.enrichLeadWithSources).toHaveBeenCalledWith('lead-1', ['googleMaps', 'instagram']);
+      expect(googleMapsScraper.scrapeBusinesses).toHaveBeenCalled();
+      expect(leadsService.update).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException if lead not found', async () => {
@@ -184,12 +184,26 @@ describe('ScrapingService', () => {
         id: 'lead-2',
         businessName: 'Salon',
         city: 'Odesa',
+        socialUrls: ['https://instagram.com/salon'],
       });
-      enrichmentService.enrichLeadWithSources.mockResolvedValue(undefined);
+      instagramProvider.extractUsernameFromUrl.mockReturnValue('salon');
+      instagramProvider.enrichFromProfile.mockResolvedValue({
+        username: 'salon',
+        fullName: 'Salon',
+        bio: 'Test',
+        followers: 100,
+        postsCount: 10,
+        isVerified: false,
+        recentPosts: [],
+        profilePicUrl: 'pic.jpg',
+      });
+      leadsService.update.mockResolvedValue(undefined);
 
-      await service.scrapeLead('lead-2', ['facebook']);
+      await service.scrapeLead('lead-2', ['instagram']);
 
-      expect(enrichmentService.enrichLeadWithSources).toHaveBeenCalledWith('lead-2', ['facebook']);
+      expect(leadsService.findOne).toHaveBeenCalledWith('lead-2');
+      expect(instagramProvider.extractUsernameFromUrl).toHaveBeenCalled();
+      expect(leadsService.update).toHaveBeenCalled();
     });
   });
 });
