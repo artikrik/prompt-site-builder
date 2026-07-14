@@ -26,7 +26,7 @@ export class PromptBuilder {
 - Email: ${data.email || 'Contact form'}
 - Social: ${data.socialUrl || 'Not provided'}
 - Base Domain: ${baseDomain}
-DATA
+DATA>>>
 
 ## THEME: ${theme}
 ${themeGuide}
@@ -218,16 +218,28 @@ Best for: simple sites, content-focused pages. This theme is minimal — content
 
     const cat = category.toLowerCase();
 
+    // Map Ukrainian category names to English keys
+    const ukToEn: Record<string, string> = {
+      'салон': 'salon', 'краси': 'salon', 'перукарн': 'salon',
+      'медицина': 'medical', 'клінік': 'medical', 'стоматолог': 'medical', 'лікар': 'medical',
+      'будівництво': 'construction', 'ремонт': 'construction', 'будівельн': 'construction',
+      'ресторан': 'restaurant', 'кафе': 'restaurant', 'їдальн': 'restaurant',
+      'юрист': 'law', 'адвокат': 'law', 'правов': 'law', 'юридичн': 'law',
+      'авто': 'auto', 'автосервіс': 'auto', 'сто': 'auto', 'майстерн': 'auto',
+      'клінінг': 'cleaning', 'прибир': 'cleaning', 'уборк': 'cleaning',
+      'спортзал': 'gym', 'фітнес': 'gym', 'тренажерн': 'gym',
+      'логістика': 'logistics', 'транспорт': 'logistics', 'доставк': 'logistics', 'вантаж': 'logistics',
+      'ветеринар': 'vet', 'ветклінік': 'vet', 'зооклінік': 'vet',
+    };
+
+    // Normalize Ukrainian to English key
+    let normalizedCat = cat;
+    for (const [ukKey, enKey] of Object.entries(ukToEn)) {
+      if (cat.includes(ukKey)) { normalizedCat = enKey; break; }
+    }
+
     const guides: Record<string, string> = {
       'salon': `## SALON/SPA/BEAUTY SPECIFIC
-- Use elegant, sensory language ("відчуйте", "насолоджуйтесь", "перетворення")
-- Service categories: hair, nails, skincare, massage, makeup
-- Trust signals: licensed cosmetologists, professional products (name brands), hygiene standards
-- Pricing: show starting prices for each service
-- Booking: emphasize easy online booking, walk-ins welcome
-- Testimonials: before/after results (describe, no images needed), satisfaction guarantee
-- FAQ: preparation tips, contraindications, gift certificates, cancellation policy`,
-      'салон': `## SALON/SPA/BEAUTY SPECIFIC
 - Use elegant, sensory language ("відчуйте", "насолоджуйтесь", "перетворення")
 - Service categories: hair, nails, skincare, massage, makeup
 - Trust signals: licensed cosmetologists, professional products (name brands), hygiene standards
@@ -244,40 +256,8 @@ Best for: simple sites, content-focused pages. This theme is minimal — content
 - Booking: appointment scheduling, emergency contact, working hours
 - FAQ: insurance, preparation for procedures, test results timeline, children's appointments
 - Compliance: mention privacy policy, data protection`,
-      'медицина': `## MEDICAL/CLINIC SPECIFIC
-- Professional, trustworthy, reassuring tone
-- Services: list by specialty (therapist, cardiologist, dentist, etc.)
-- Trust signals: licensed doctors, modern equipment, sterile environment, years of practice
-- Pricing: consultation fees, insurance accepted (if applicable)
-- Booking: appointment scheduling, emergency contact, working hours
-- FAQ: insurance, preparation for procedures, test results timeline, children's appointments
-- Compliance: mention privacy policy, data protection`,
-      'стоматолог': `## MEDICAL/CLINIC SPECIFIC
-- Professional, trustworthy, reassuring tone
-- Services: list by specialty (therapist, cardiologist, dentist, etc.)
-- Trust signals: licensed doctors, modern equipment, sterile environment, years of practice
-- Pricing: consultation fees, insurance accepted (if applicable)
-- Booking: appointment scheduling, emergency contact, working hours
-- FAQ: insurance, preparation for procedures, test results timeline, children's appointments
-- Compliance: mention privacy policy, data protection`,
 
       'construction': `## CONSTRUCTION/REAL ESTATE SPECIFIC
-- Confident, reliable, experienced tone
-- Services: residential/commercial construction, renovation, design, engineering
-- Trust signals: completed projects count, licensed, insured, warranty periods
-- Portfolio: project types, square meters, completion timelines
-- Pricing: free estimate, transparent pricing, no hidden fees
-- FAQ: timeline, permits, materials, payment schedule, warranty
-- Showcase: describe project types (houses, apartments, offices, renovations)`,
-      'будівництво': `## CONSTRUCTION/REAL ESTATE SPECIFIC
-- Confident, reliable, experienced tone
-- Services: residential/commercial construction, renovation, design, engineering
-- Trust signals: completed projects count, licensed, insured, warranty periods
-- Portfolio: project types, square meters, completion timelines
-- Pricing: free estimate, transparent pricing, no hidden fees
-- FAQ: timeline, permits, materials, payment schedule, warranty
-- Showcase: describe project types (houses, apartments, offices, renovations)`,
-      'ремонт': `## CONSTRUCTION/REAL ESTATE SPECIFIC
 - Confident, reliable, experienced tone
 - Services: residential/commercial construction, renovation, design, engineering
 - Trust signals: completed projects count, licensed, insured, warranty periods
@@ -293,36 +273,8 @@ Best for: simple sites, content-focused pages. This theme is minimal — content
 - Features: delivery, takeaway, reservations, events/banquets
 - FAQ: dietary restrictions, parking, payment methods, private events
 - Imagery: describe food presentation, interior ambiance`,
-      'ресторан': `## RESTAURANT/CAFE SPECIFIC
-- Warm, inviting, sensory language ("смак", "аромат", "атмосфера")
-- Menu categories: breakfast, lunch, dinner, desserts, drinks
-- Trust signals: fresh ingredients, chef experience, hygiene rating
-- Features: delivery, takeaway, reservations, events/banquets
-- FAQ: dietary restrictions, parking, payment methods, private events
-- Imagery: describe food presentation, interior ambiance`,
-      'кафе': `## RESTAURANT/CAFE SPECIFIC
-- Warm, inviting, sensory language ("смак", "аромат", "атмосфера")
-- Menu categories: breakfast, lunch, dinner, desserts, drinks
-- Trust signals: fresh ingredients, chef experience, hygiene rating
-- Features: delivery, takeaway, reservations, events/banquets
-- FAQ: dietary restrictions, parking, payment methods, private events
-- Imagery: describe food presentation, interior ambiance`,
 
       'law': `## LEGAL SERVICES SPECIFIC
-- Authoritative, trustworthy, precise language
-- Services: civil law, criminal defense, corporate, family, real estate
-- Trust signals: bar association membership, years of practice, case success rate
-- Booking: free initial consultation, case evaluation
-- FAQ: consultation cost, case timeline, document requirements, confidentiality
-- Emergency: mention urgent legal assistance availability`,
-      'юрист': `## LEGAL SERVICES SPECIFIC
-- Authoritative, trustworthy, precise language
-- Services: civil law, criminal defense, corporate, family, real estate
-- Trust signals: bar association membership, years of practice, case success rate
-- Booking: free initial consultation, case evaluation
-- FAQ: consultation cost, case timeline, document requirements, confidentiality
-- Emergency: mention urgent legal assistance availability`,
-      'адвокат': `## LEGAL SERVICES SPECIFIC
 - Authoritative, trustworthy, precise language
 - Services: civil law, criminal defense, corporate, family, real estate
 - Trust signals: bar association membership, years of practice, case success rate
@@ -337,43 +289,8 @@ Best for: simple sites, content-focused pages. This theme is minimal — content
 - Pricing: diagnostic cost, typical repair ranges, free inspection offers
 - FAQ: service duration, parts quality, warranty terms, towing
 - Booking: online appointment, emergency repair, pick-up/drop-off`,
-      'авто': `## AUTO SERVICES SPECIFIC
-- Technical but accessible language
-- Services: repair, maintenance, diagnostics, body work, tires
-- Trust signals: certified mechanics, original parts, warranty on work
-- Pricing: diagnostic cost, typical repair ranges, free inspection offers
-- FAQ: service duration, parts quality, warranty terms, towing
-- Booking: online appointment, emergency repair, pick-up/drop-off`,
-      'автосервіс': `## AUTO SERVICES SPECIFIC
-- Technical but accessible language
-- Services: repair, maintenance, diagnostics, body work, tires
-- Trust signals: certified mechanics, original parts, warranty on work
-- Pricing: diagnostic cost, typical repair ranges, free inspection offers
-- FAQ: service duration, parts quality, warranty terms, towing
-- Booking: online appointment, emergency repair, pick-up/drop-off`,
-      'СТО': `## AUTO SERVICES SPECIFIC
-- Technical but accessible language
-- Services: repair, maintenance, diagnostics, body work, tires
-- Trust signals: certified mechanics, original parts, warranty on work
-- Pricing: diagnostic cost, typical repair ranges, free inspection offers
-- FAQ: service duration, parts quality, warranty terms, towing
-- Booking: online appointment, emergency repair, pick-up/drop-off`,
 
       'cleaning': `## CLEANING SERVICES SPECIFIC
-- Clean, fresh, reassuring tone
-- Services: regular cleaning, deep cleaning, post-renovation, office, industrial
-- Trust signals: insured staff, eco-friendly products, satisfaction guarantee
-- Pricing: per square meter or hourly, package deals, first-time discount
-- FAQ: what's included, staff vetting, pet-safe products, rescheduling
-- Booking: online calculator, instant quote, recurring schedule`,
-      'клінінг': `## CLEANING SERVICES SPECIFIC
-- Clean, fresh, reassuring tone
-- Services: regular cleaning, deep cleaning, post-renovation, office, industrial
-- Trust signals: insured staff, eco-friendly products, satisfaction guarantee
-- Pricing: per square meter or hourly, package deals, first-time discount
-- FAQ: what's included, staff vetting, pet-safe products, rescheduling
-- Booking: online calculator, instant quote, recurring schedule`,
-      'прибирання': `## CLEANING SERVICES SPECIFIC
 - Clean, fresh, reassuring tone
 - Services: regular cleaning, deep cleaning, post-renovation, office, industrial
 - Trust signals: insured staff, eco-friendly products, satisfaction guarantee
@@ -388,43 +305,8 @@ Best for: simple sites, content-focused pages. This theme is minimal — content
 - Pricing: membership tiers, day passes, family packages, first visit free
 - FAQ: trial period, equipment list, locker rooms, parking, class schedule
 - Booking: online membership signup, class reservation, personal trainer match`,
-      'спортзал': `## GYM/FITNESS SPECIFIC
-- Energetic, motivating, inclusive language
-- Services: gym access, personal training, group classes, nutrition coaching
-- Trust signals: certified trainers, modern equipment, clean facilities
-- Pricing: membership tiers, day passes, family packages, first visit free
-- FAQ: trial period, equipment list, locker rooms, parking, class schedule
-- Booking: online membership signup, class reservation, personal trainer match`,
-      'фітнес': `## GYM/FITNESS SPECIFIC
-- Energetic, motivating, inclusive language
-- Services: gym access, personal training, group classes, nutrition coaching
-- Trust signals: certified trainers, modern equipment, clean facilities
-- Pricing: membership tiers, day passes, family packages, first visit free
-- FAQ: trial period, equipment list, locker rooms, parking, class schedule
-- Booking: online membership signup, class reservation, personal trainer match`,
 
       'logistics': `## LOGISTICS/TRANSPORT SPECIFIC
-- Reliable, efficient, professional tone
-- Services: freight, warehousing, last-mile delivery, international shipping
-- Trust signals: fleet size, coverage area, tracking system, insurance coverage
-- Pricing: request quote, volume discounts, transparent calculations
-- FAQ: delivery times, tracking, packaging requirements, insurance claims
-- Features: online tracking, dedicated manager, 24/7 support`,
-      'логістика': `## LOGISTICS/TRANSPORT SPECIFIC
-- Reliable, efficient, professional tone
-- Services: freight, warehousing, last-mile delivery, international shipping
-- Trust signals: fleet size, coverage area, tracking system, insurance coverage
-- Pricing: request quote, volume discounts, transparent calculations
-- FAQ: delivery times, tracking, packaging requirements, insurance claims
-- Features: online tracking, dedicated manager, 24/7 support`,
-      'транспорт': `## LOGISTICS/TRANSPORT SPECIFIC
-- Reliable, efficient, professional tone
-- Services: freight, warehousing, last-mile delivery, international shipping
-- Trust signals: fleet size, coverage area, tracking system, insurance coverage
-- Pricing: request quote, volume discounts, transparent calculations
-- FAQ: delivery times, tracking, packaging requirements, insurance claims
-- Features: online tracking, dedicated manager, 24/7 support`,
-      'доставка': `## LOGISTICS/TRANSPORT SPECIFIC
 - Reliable, efficient, professional tone
 - Services: freight, warehousing, last-mile delivery, international shipping
 - Trust signals: fleet size, coverage area, tracking system, insurance coverage
@@ -439,20 +321,13 @@ Best for: simple sites, content-focused pages. This theme is minimal — content
 - FAQ: appointment needed, emergency protocol, payment, pet preparation
 - Booking: online appointment, emergency contact, home visits
 - Features: pet pharmacy, lab tests, X-ray/ultrasound`,
-      'ветеринар': `## VETERINARY SPECIFIC
-- Caring, professional, reassuring tone
-- Services: checkups, surgery, dentistry, grooming, emergency care
-- Trust signals: licensed veterinarians, modern clinic, pet-safe materials
-- FAQ: appointment needed, emergency protocol, payment, pet preparation
-- Booking: online appointment, emergency contact, home visits
-- Features: pet pharmacy, lab tests, X-ray/ultrasound`,
     };
 
-    // Try exact match first, then partial match
-    if (guides[cat]) return guides[cat];
+    // Try exact match on normalized key, then partial match
+    if (guides[normalizedCat]) return guides[normalizedCat];
 
     for (const [key, guide] of Object.entries(guides)) {
-      if (cat.includes(key)) return guide;
+      if (normalizedCat.includes(key)) return guide;
     }
 
     return `## GENERAL BUSINESS GUIDANCE
@@ -463,11 +338,21 @@ Best for: simple sites, content-focused pages. This theme is minimal — content
   }
 
   /**
-   * Extract JSON from LLM response, stripping markdown fences if present.
+   * Extract JSON from LLM response using balanced brace matching.
+   * Handles markdown fences and extra text around the JSON object.
    */
   static extractJson(raw: string): string {
-    const match = raw.match(/\{[\s\S]*\}/);
-    return match ? match[0] : raw;
+    const start = raw.indexOf('{');
+    if (start === -1) return raw;
+    let depth = 0;
+    for (let i = start; i < raw.length; i++) {
+      if (raw[i] === '{') depth++;
+      else if (raw[i] === '}') {
+        depth--;
+        if (depth === 0) return raw.slice(start, i + 1);
+      }
+    }
+    return raw.slice(start);
   }
 
   /**
