@@ -7,6 +7,7 @@
   import CardHeader from '$lib/components/ui/card/card-header.svelte';
   import CardTitle from '$lib/components/ui/card/card-title.svelte';
   import CardContent from '$lib/components/ui/card/card-content.svelte';
+  import { api } from '$lib/api/client';
 
   interface ScrapeItem {
     city: string;
@@ -17,6 +18,7 @@
   let items: ScrapeItem[] = $state([{ city: '', category: '', limit: 20 }]);
   let isSubmitting = $state(false);
   let result = $state<{ jobs: Array<{ jobId: string; city: string; category: string }> } | null>(null);
+  let error = $state('');
 
   function addItem() {
     items = [...items, { city: '', category: '', limit: 20 }];
@@ -31,15 +33,12 @@
     if (validItems.length === 0) return;
 
     isSubmitting = true;
+    error = '';
     try {
-      const response = await fetch('/api/scraping/batch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items: validItems }),
-      });
-      result = await response.json();
-    } catch (error) {
-      console.error('Batch scrape failed:', error);
+      result = await api.post<{ jobs: Array<{ jobId: string; city: string; category: string }> }>('/scraping/batch', { items: validItems });
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Batch scrape failed';
+      console.error('Batch scrape failed:', e);
     } finally {
       isSubmitting = false;
     }
@@ -83,6 +82,12 @@
         </Button>
       </div>
     </form>
+
+    {#if error}
+      <div class="mt-4 p-4 bg-red-50 dark:bg-red-950 rounded">
+        <p class="text-sm text-red-600">{error}</p>
+      </div>
+    {/if}
 
     {#if result}
       <div class="mt-4 p-4 bg-green-50 dark:bg-green-950 rounded">

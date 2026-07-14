@@ -1,5 +1,8 @@
 FROM node:22-alpine
 
+# Install Hugo and Git for site generation and theme cloning
+RUN apk add --no-cache hugo git
+
 WORKDIR /app
 
 # Copy monorepo root configs
