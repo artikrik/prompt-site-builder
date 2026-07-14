@@ -16,7 +16,7 @@
   import { Badge } from '$lib/components/ui/badge/index.js';
   import * as Card from '$lib/components/ui/card/index.js';
   import * as Select from '$lib/components/ui/select/index.js';
-  import { ArrowLeft, ExternalLink } from '@lucide/svelte';
+  import { ArrowLeft, ExternalLink, Trash2, Loader2 } from '@lucide/svelte';
 
   let project = $state<Project | null>(null);
   let isLoading = $state(true);
@@ -29,6 +29,7 @@
   let addonsLoading = $state(false);
   let showAdvancedGenerator = $state(false);
   let isGenerating = $state(false);
+  let deleting = $state(false);
 
   let themeLabel = $derived(
     selectedTheme === 'auto'
@@ -145,6 +146,19 @@
     }
   }
 
+  async function handleDeleteProject() {
+    if (!project) return;
+    if (!window.confirm(`Видалити проект "${project.lead?.businessName || project.slug}"? Це також видалить сайт та всі варіанти.`)) return;
+    deleting = true;
+    try {
+      await projects.remove(project.id);
+      goto(resolve('/dashboard/projects'));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed to delete project');
+    }
+    deleting = false;
+  }
+
   function getStatusVariant(status: string): 'default' | 'secondary' | 'destructive' | 'outline' {
     switch (status) {
       case 'PUBLISHED': return 'default';
@@ -177,6 +191,10 @@
       </div>
       <div class="flex items-center gap-3">
         <Badge variant={getStatusVariant(project.status)}>{project.status}</Badge>
+        <Button variant="ghost" size="sm" class="text-destructive hover:text-destructive" onclick={handleDeleteProject} disabled={deleting}>
+          {#if deleting}<Loader2 class="size-4 mr-2 animate-spin" />{:else}<Trash2 class="size-4 mr-2" />{/if}
+          Видалити
+        </Button>
         {#if project.status === 'DRAFT' || project.status === 'PUBLISHED' || project.status === 'GENERATED'}
           <div class="flex items-center gap-2">
             <Select.Root type="single" bind:value={selectedTheme}>

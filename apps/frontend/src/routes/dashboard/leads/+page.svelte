@@ -1,5 +1,5 @@
 <script lang="ts">
-  /* global console */
+  /* global console, window */
   import { onMount } from 'svelte';
   import { leads } from '$lib/stores/leads';
   import { projects } from '$lib/stores/projects';
@@ -15,11 +15,12 @@
   import * as Dialog from '$lib/components/ui/dialog/index.js';
   import * as Select from '$lib/components/ui/select/index.js';
   import * as Table from '$lib/components/ui/table/index.js';
-  import { Plus, Search, Trash2 } from '@lucide/svelte';
+  import { Plus, Search, Trash2, Loader2 } from '@lucide/svelte';
 
   let search = $state('');
   let statusFilter = $state('');
   let showCreateModal = $state(false);
+  let deletingId = $state<string | null>(null);
   let newLead = $state({
     businessName: '',
     source: 'manual',
@@ -80,6 +81,17 @@
     } catch {
       console.error('Failed to create project');
     }
+  }
+
+  async function handleDeleteLead(leadId: string, leadName: string) {
+    if (!window.confirm(`Видалити ліда "${leadName}"? Це також видалить пов'язані проекти.`)) return;
+    deletingId = leadId;
+    try {
+      await leads.remove(leadId);
+    } catch {
+      console.error('Failed to delete lead');
+    }
+    deletingId = null;
   }
 
   function getStatusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
@@ -236,6 +248,9 @@
                 </Table.Cell>
                 <Table.Cell class="text-right">
                   <Button variant="ghost" size="sm" onclick={(e) => { e.stopPropagation(); createProject(lead.id); }}>Створити сайт</Button>
+                  <Button variant="ghost" size="icon" class="text-destructive hover:text-destructive" onclick={(e) => { e.stopPropagation(); handleDeleteLead(lead.id, lead.businessName); }} disabled={deletingId === lead.id}>
+                    {#if deletingId === lead.id}<Loader2 class="size-4 animate-spin" />{:else}<Trash2 class="size-4" />{/if}
+                  </Button>
                 </Table.Cell>
               </Table.Row>
             {/each}

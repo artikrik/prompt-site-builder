@@ -1,5 +1,5 @@
 <script lang="ts">
-  /* global alert, window */
+  /* global alert, console, window */
   import { onMount } from 'svelte';
   import { projects } from '$lib/stores/projects';
   import { goto } from '$app/navigation';
@@ -8,9 +8,22 @@
   import { Badge } from '$lib/components/ui/badge/index.js';
   import * as Card from '$lib/components/ui/card/index.js';
   import * as Table from '$lib/components/ui/table/index.js';
-  import { ExternalLink, Eye } from '@lucide/svelte';
+  import { ExternalLink, Eye, Trash2, Loader2 } from '@lucide/svelte';
 
   onMount(() => { projects.fetchAll(); });
+
+  let deletingId = $state<string | null>(null);
+
+  async function handleDeleteProject(projectId: string, projectName: string) {
+    if (!window.confirm(`Видалити проект "${projectName}"? Це також видалить сайт та всі варіанти.`)) return;
+    deletingId = projectId;
+    try {
+      await projects.remove(projectId);
+    } catch {
+      console.error('Failed to delete project');
+    }
+    deletingId = null;
+  }
 
   function getStatusVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
     switch (status) {
@@ -72,6 +85,9 @@
                   {/if}
                   <Button variant="ghost" size="sm" onclick={() => goto(resolve(`/dashboard/projects/${project.id}`))}>
                     <Eye class="size-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" class="text-destructive hover:text-destructive" onclick={() => handleDeleteProject(project.id, project.lead?.businessName || project.slug)} disabled={deletingId === project.id}>
+                    {#if deletingId === project.id}<Loader2 class="size-4 animate-spin" />{:else}<Trash2 class="size-4" />{/if}
                   </Button>
                 </Table.Cell>
               </Table.Row>
