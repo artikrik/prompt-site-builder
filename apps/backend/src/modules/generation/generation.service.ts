@@ -333,38 +333,75 @@ export class GenerationService {
 
   private async generateStaticSite(slug: string, structure: GeneratedSiteStructure, request: SiteGenerationRequest): Promise<void> {
     const pages = [
-      { file: 'index.html', content: structure.content.find((c) => c.path.includes('index'))?.body || '' },
-      { file: 'about.html', content: structure.content.find((c) => c.path.includes('about'))?.body || '' },
-      { file: 'services.html', content: structure.content.find((c) => c.path.includes('services'))?.body || '' },
-      { file: 'contact.html', content: structure.content.find((c) => c.path.includes('contact'))?.body || '' },
+      { file: 'index.html', content: structure.content.find((c) => c.path.includes('index'))?.body || '', label: 'Головна' },
+      { file: 'about.html', content: structure.content.find((c) => c.path.includes('about'))?.body || '', label: 'Про нас' },
+      { file: 'services.html', content: structure.content.find((c) => c.path.includes('services'))?.body || '', label: 'Послуги' },
+      { file: 'contact.html', content: structure.content.find((c) => c.path.includes('contact'))?.body || '', label: 'Контакти' },
     ];
 
     const heroStatic = structure.static.find((s) => s.path.includes('hero'));
     const heroAsset = structure.assets.find((a) => a.path.includes('hero'));
+    const safeName = this.escapeHtml(request.businessName);
+    const safeCat = this.escapeHtml(request.category || 'Професійні послуги');
+    const safeAddr = this.escapeHtml(request.address || '');
+    const safePhone = this.escapeHtml(request.phone || '');
+    const safeEmail = this.escapeHtml(request.email || '');
 
     const navHtml = `
-      <nav style="background:#1e293b;color:white;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between">
-        <a href="/" style="color:white;text-decoration:none;font-size:1.25rem;font-weight:700">${this.escapeHtml(request.businessName)}</a>
-        <div style="display:flex;gap:1.5rem">
-          <a href="/${slug}/" style="color:#e2e8f0;text-decoration:none">Home</a>
-          <a href="/${slug}/about.html" style="color:#e2e8f0;text-decoration:none">About</a>
-          <a href="/${slug}/services.html" style="color:#e2e8f0;text-decoration:none">Services</a>
-          <a href="/${slug}/contact.html" style="color:#e2e8f0;text-decoration:none">Contact</a>
+      <nav class="nav">
+        <div class="nav-inner">
+          <a href="/${slug}/" class="nav-brand">${safeName}</a>
+          <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Меню">&#9776;</button>
+          <div class="nav-links">
+            ${pages.map((p) => `<a href="/${slug}/${p.file}">${p.label}</a>`).join('\n            ')}
+          </div>
         </div>
       </nav>`;
 
+    const heroHtml = `
+      <section class="hero">
+        <div class="hero-inner">
+          <h1>${safeName}</h1>
+          <p class="hero-sub">${safeCat} — професійний підхід до кожного клієнта</p>
+          <div class="hero-actions">
+            ${safePhone ? `<a href="tel:${safePhone.replace(/\s/g, '')}" class="btn btn-primary">Зателефонувати</a>` : ''}
+            <a href="/${slug}/contact.html" class="btn btn-outline">Безкоштовна консультація</a>
+          </div>
+        </div>
+      </section>`;
+
     const footerHtml = `
-      <footer style="background:#0f172a;color:#94a3b8;padding:2rem;text-align:center;margin-top:4rem">
-        <p>&copy; ${new Date().getFullYear()} ${this.escapeHtml(request.businessName)}. All rights reserved.</p>
-        ${request.phone ? `<p>Phone: ${this.escapeHtml(request.phone)}</p>` : ''}
-        ${request.email ? `<p>Email: ${this.escapeHtml(request.email)}</p>` : ''}
+      <footer class="footer">
+        <div class="footer-inner">
+          <div class="footer-brand">
+            <strong>${safeName}</strong>
+            <p>${safeCat}</p>
+          </div>
+          <div class="footer-links">
+            <strong>Навігація</strong>
+            ${pages.map((p) => `<a href="/${slug}/${p.file}">${p.label}</a>`).join('\n            ')}
+          </div>
+          <div class="footer-contact">
+            <strong>Контакти</strong>
+            ${safePhone ? `<p><a href="tel:${safePhone.replace(/\s/g, '')}">${safePhone}</a></p>` : ''}
+            ${safeEmail ? `<p><a href="mailto:${safeEmail}">${safeEmail}</a></p>` : ''}
+            ${safeAddr ? `<p>${safeAddr}</p>` : ''}
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; ${new Date().getFullYear()} ${safeName}. Усі права захищено.</p>
+        </div>
       </footer>`;
 
     for (const page of pages) {
+      const isHome = page.file === 'index.html';
       const html = this.wrapHtml(request.businessName, request.slug, `
         ${navHtml}
-        <main style="max-width:900px;margin:0 auto;padding:2rem">
-          ${this.mdToSimpleHtml(page.content)}
+        ${isHome ? heroHtml : ''}
+        <main class="container">
+          <article class="content">
+            ${this.mdToSimpleHtml(page.content)}
+          </article>
         </main>
         ${footerHtml}
       `);
@@ -380,17 +417,88 @@ export class GenerationService {
       await this.publisher.writeFileBinary(request.slug, 'images/hero.jpg', heroAsset.data);
     }
 
-    // Write CSS
-    await this.publisher.writeFile(request.slug, 'style.css', `
-      * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { font-family: Inter, system-ui, sans-serif; line-height: 1.6; color: #1e293b; }
-      h1 { font-size: 2.5rem; margin-bottom: 1rem; }
-      h2 { font-size: 1.75rem; margin: 2rem 0 1rem; }
-      p { margin-bottom: 1rem; }
-      ul { margin-left: 1.5rem; margin-bottom: 1rem; }
-      li { margin-bottom: 0.5rem; }
-      a { color: #2563eb; }
-    `);
+    // Write CSS — professional responsive stylesheet
+    await this.publisher.writeFile(request.slug, 'style.css', this.getStaticFallbackCss());
+  }
+
+  private getStaticFallbackCss(): string {
+    return `/* Reset & Base */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Inter', system-ui, -apple-system, sans-serif; line-height: 1.7; color: #1e293b; background: #fff; }
+img { max-width: 100%; height: auto; }
+a { color: #2563eb; text-decoration: none; transition: color .2s; }
+a:hover { color: #1d4ed8; }
+
+/* Typography */
+h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; color: #0f172a; margin-bottom: 1rem; }
+h2 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; color: #0f172a; margin: 2.5rem 0 1rem; padding-bottom: .5rem; border-bottom: 2px solid #e2e8f0; }
+h3 { font-size: 1.2rem; font-weight: 600; color: #1e293b; margin: 1.5rem 0 .75rem; }
+p { margin-bottom: 1rem; color: #475569; }
+ul, ol { margin: 0 0 1rem 1.5rem; color: #475569; }
+li { margin-bottom: .4rem; }
+blockquote { border-left: 4px solid #2563eb; padding: 1rem 1.5rem; margin: 1.5rem 0; background: #f8fafc; border-radius: 0 8px 8px 0; font-style: italic; color: #334155; }
+hr { border: none; height: 1px; background: #e2e8f0; margin: 2rem 0; }
+strong { color: #0f172a; }
+
+/* Layout */
+.container { max-width: 960px; margin: 0 auto; padding: 2rem 1.5rem; }
+.content { background: #fff; }
+
+/* Navigation */
+.nav { background: #0f172a; color: #fff; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+.nav-inner { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 64px; }
+.nav-brand { color: #fff; font-size: 1.2rem; font-weight: 700; text-decoration: none; }
+.nav-brand:hover { color: #93c5fd; }
+.nav-links { display: flex; gap: 2rem; align-items: center; }
+.nav-links a { color: #cbd5e1; font-size: .95rem; font-weight: 500; transition: color .2s; }
+.nav-links a:hover { color: #fff; }
+.nav-toggle { display: none; background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; padding: .5rem; }
+
+/* Hero */
+.hero { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%); color: #fff; padding: 5rem 1.5rem; text-align: center; position: relative; overflow: hidden; }
+.hero::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at 30% 50%, rgba(37,99,235,.15) 0%, transparent 50%), radial-gradient(circle at 70% 80%, rgba(59,130,246,.1) 0%, transparent 50%); pointer-events: none; }
+.hero-inner { max-width: 800px; margin: 0 auto; position: relative; z-index: 1; }
+.hero h1 { color: #fff; font-size: clamp(2.2rem, 6vw, 3.5rem); margin-bottom: 1rem; }
+.hero-sub { color: #94a3b8; font-size: clamp(1rem, 2.5vw, 1.3rem); margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto; }
+.hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; padding: .85rem 2rem; border-radius: 8px; font-size: 1rem; font-weight: 600; text-decoration: none; transition: all .2s; cursor: pointer; border: 2px solid transparent; }
+.btn-primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+.btn-primary:hover { background: #1d4ed8; border-color: #1d4ed8; color: #fff; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(37,99,235,.3); }
+.btn-outline { background: transparent; color: #fff; border-color: rgba(255,255,255,.3); }
+.btn-outline:hover { background: rgba(255,255,255,.1); border-color: #fff; color: #fff; }
+
+/* Cards (for services, features) */
+.content h3 { background: #f8fafc; padding: .75rem 1rem; border-radius: 6px; border-left: 4px solid #2563eb; }
+.content ul { list-style: none; margin-left: 0; }
+.content ul li { padding-left: 1.5rem; position: relative; }
+.content ul li::before { content: '✓'; position: absolute; left: 0; color: #2563eb; font-weight: 700; }
+
+/* Footer */
+.footer { background: #0f172a; color: #94a3b8; padding-top: 3rem; }
+.footer-inner { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; }
+.footer-brand strong { color: #fff; font-size: 1.1rem; }
+.footer-brand p { color: #94a3b8; margin-top: .5rem; font-size: .9rem; }
+.footer-links strong, .footer-contact strong { color: #e2e8f0; display: block; margin-bottom: .75rem; font-size: .95rem; }
+.footer-links a { display: block; color: #94a3b8; padding: .25rem 0; font-size: .9rem; }
+.footer-links a:hover { color: #fff; }
+.footer-contact p { font-size: .9rem; margin-bottom: .4rem; }
+.footer-contact a { color: #93c5fd; }
+.footer-contact a:hover { color: #bfdbfe; }
+.footer-bottom { border-top: 1px solid #1e293b; text-align: center; padding: 1.5rem; font-size: .85rem; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .nav-toggle { display: block; }
+  .nav-links { display: none; position: absolute; top: 64px; left: 0; right: 0; background: #0f172a; flex-direction: column; padding: 1rem 1.5rem; gap: 0; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+  .nav-links.open { display: flex; }
+  .nav-links a { padding: .75rem 0; border-bottom: 1px solid #1e293b; }
+  .hero { padding: 3rem 1rem; }
+  .container { padding: 1.5rem 1rem; }
+  .footer-inner { grid-template-columns: 1fr; }
+}`;
   }
 
   private wrapHtml(title: string, slug: string, body: string): string {
@@ -400,6 +508,10 @@ export class GenerationService {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${this.escapeHtml(title)}</title>
+  <meta name="description" content="${this.escapeHtml(title)} — професійні послуги">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/${slug}/style.css">
 </head>
 <body>

@@ -23,6 +23,20 @@ export const HUGO_THEMES: HugoTheme[] = [
     category: 'business',
   },
   {
+    name: 'hugo-fresh',
+    repoUrl: 'https://github.com/StefMa/hugo-fresh',
+    description: 'Fresh, modern landing page theme — ideal for medical, cleaning, vet clinics',
+    tags: ['landing', 'medical', 'clean', 'modern', 'responsive'],
+    category: 'landing',
+  },
+  {
+    name: 'hugo-hero-theme',
+    repoUrl: 'https://github.com/zerostaticthemes/hugo-hero-theme',
+    description: 'Hero-focused theme with bold visuals — perfect for salon, gym, fitness',
+    tags: ['hero', 'salon', 'gym', 'fitness', 'visual'],
+    category: 'landing',
+  },
+  {
     name: 'hugo-up-business',
     repoUrl: 'https://github.com/akshaybabloo/hugo-up-business',
     description: 'Professional business theme with landing page sections',
@@ -35,6 +49,13 @@ export const HUGO_THEMES: HugoTheme[] = [
     description: 'Universal business theme with multiple page layouts',
     tags: ['business', 'corporate', 'multipurpose', 'bootstrap'],
     category: 'business',
+  },
+  {
+    name: 'hugo-scroll',
+    repoUrl: 'https://github.com/janraasch/hugo-scroll',
+    description: 'Single-page scroll theme — great for plumbers, logistics, trade services',
+    tags: ['scroll', 'single-page', 'trades', 'logistics'],
+    category: 'landing',
   },
   {
     name: 'corporio',
