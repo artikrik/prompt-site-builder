@@ -4,10 +4,12 @@ import { ApifyProvider } from './apify.provider';
 describe('ApifyProvider', () => {
   let provider: ApifyProvider;
   let configService: { get: ReturnType<typeof vi.fn> };
+  let settingsService: { get: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     configService = { get: vi.fn().mockReturnValue('test-token') };
-    provider = new ApifyProvider(configService as any);
+    settingsService = { get: vi.fn().mockResolvedValue({ value: null }) };
+    provider = new ApifyProvider(configService as any, settingsService as any);
   });
 
   describe('scrapeGoogleMaps', () => {

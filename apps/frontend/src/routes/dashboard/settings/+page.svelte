@@ -122,6 +122,13 @@
           maskedPreview={settings.bflApiKey ?? ''}
           onChange={(v: string) => saveApiKey('bflApiKey', v)}
         />
+        <ApiKeyInput
+          label="Apify API Key"
+          placeholder="apify_api_..."
+          value=""
+          maskedPreview={settings.apifyApiKey ?? ''}
+          onChange={(v: string) => saveApiKey('apifyApiKey', v)}
+        />
       </div>
     </section>
 

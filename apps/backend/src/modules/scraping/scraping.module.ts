@@ -8,9 +8,10 @@ import { LeadsModule } from '../leads/leads.module';
 import { QueueModule } from '../queue/queue.module';
 import { EnrichmentModule } from '../enrichment/enrichment.module';
 import { LogsModule } from '../logs/logs.module';
+import { SettingsModule } from '../settings/settings.module';
 
 @Module({
-  imports: [LeadsModule, QueueModule, EnrichmentModule, LogsModule],
+  imports: [LeadsModule, QueueModule, EnrichmentModule, LogsModule, SettingsModule],
   controllers: [ScrapingController],
   providers: [ScrapingService, ScrapingProcessor, ApifyProvider, InstagramProvider],
   exports: [ScrapingService],
