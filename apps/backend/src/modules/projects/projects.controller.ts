@@ -6,11 +6,12 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   HttpCode,
   HttpStatus,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ProjectsService } from './projects.service';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
@@ -36,8 +37,9 @@ export class ProjectsController {
   @Get()
   @ApiOperation({ summary: 'Get all projects' })
   @ApiResponse({ status: 200, description: 'List of projects' })
-  async findAll(): Promise<Project[]> {
-    return this.projectsService.findAll();
+  @ApiQuery({ name: 'leadId', required: false, description: 'Filter by lead ID' })
+  async findAll(@Query('leadId') leadId?: string): Promise<Project[]> {
+    return this.projectsService.findAll(leadId);
   }
 
   @Get(':id')

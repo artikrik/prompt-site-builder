@@ -1,11 +1,12 @@
 <script lang="ts">
-  /* global console, fetch, window, HTMLInputElement */
+  /* global console, window, HTMLInputElement */
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
   import { onMount } from 'svelte';
   import { leads, type Lead } from '$lib/stores/leads';
   import { projects } from '$lib/stores/projects';
+  import { api } from '$lib/api/client';
   import { t } from '$lib/i18n/uk';
   import { Button } from '$lib/components/ui/button/index.js';
   import { Badge } from '$lib/components/ui/badge/index.js';
@@ -22,8 +23,7 @@
     try {
       lead = await leads.fetchOne($page.params.id!);
       try {
-        const res = await fetch(`/api/projects?leadId=${lead!.id}`);
-        if (res.ok) leadProjects = await res.json();
+        leadProjects = await api.get<Array<{ id: string; leadId: string; status: string; slug: string; createdAt: string }>>(`/projects?leadId=${lead!.id}`);
       } catch { leadProjects = []; }
     } finally {
       isLoading = false;

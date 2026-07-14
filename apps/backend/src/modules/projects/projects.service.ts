@@ -62,11 +62,13 @@ export class ProjectsService {
     return project;
   }
 
-  async findAll(): Promise<Project[]> {
+  async findAll(leadId?: string): Promise<Project[]> {
+    const cacheKey = leadId ? `${CACHE_PREFIX}:lead:${leadId}` : `${CACHE_PREFIX}:all`;
     return this.cache.getOrSet(
-      `${CACHE_PREFIX}:all`,
+      cacheKey,
       () =>
         this.prisma.project.findMany({
+          where: leadId ? { leadId } : undefined,
           include: { lead: true },
           orderBy: { createdAt: 'desc' },
         }),
