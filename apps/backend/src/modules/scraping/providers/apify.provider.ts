@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { SettingsService } from '../../settings/settings.service';
 
 export interface ApifyScrapeParams {
   city: string;
@@ -22,20 +23,32 @@ export interface ApifyScrapedBusiness {
 @Injectable()
 export class ApifyProvider {
   private readonly logger = new Logger(ApifyProvider.name);
-  private readonly apiToken: string;
 
-  constructor(private readonly configService: ConfigService) {
-    this.apiToken = this.configService.get<string>('APIFY_TOKEN', '');
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly settingsService: SettingsService,
+  ) {}
+
+  private async getApiToken(): Promise<string> {
+    const { value } = await this.settingsService.get('apify_api_key');
+    if (value) return value;
+    return this.configService.get<string>('APIFY_TOKEN', '');
   }
 
   async scrapeGoogleMaps(params: ApifyScrapeParams): Promise<ApifyScrapedBusiness[]> {
     const { city, category, limit = 20 } = params;
     this.logger.log(`Scraping Google Maps for "${category}" in "${city}" (limit: ${limit})`);
 
+    const apiToken = await this.getApiToken();
+    if (!apiToken) {
+      this.logger.warn('No Apify API token configured — using mock results');
+      return this.getMockResults(city, category, limit);
+    }
+
     try {
       const searchQuery = `${category} ${city}`;
       const response = await fetch(
-        `https://api.apify.com/v2/acts/apify~google-maps-scraper/run-sync-get-dataset-items?token=${this.apiToken}`,
+        `https://api.apify.com/v2/acts/apify~google-maps-scraper/run-sync-get-dataset-items?token=${apiToken}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

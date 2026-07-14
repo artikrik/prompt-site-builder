@@ -39,7 +39,7 @@ const envSchema = z.object({
   DALL_E_MODEL: z.string().default('dall-e-3'),
 
   // Scraper
-  APIFY_TOKEN: z.string().min(1),
+  APIFY_TOKEN: z.string().optional(),
 
   // Publishing
   HUGO_SITES_PATH: z.string().default('/var/www/client-sites'),

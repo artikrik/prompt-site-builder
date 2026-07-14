@@ -8,6 +8,7 @@ import { getDefaultModel } from '@prompt-site-builder/shared';
 const ENCRYPTED_KEYS = new Set([
   'openai_api_key', 'anthropic_api_key', 'google_api_key',
   'deepseek_api_key', 'mimo_api_key', 'bfl_api_key',
+  'apify_api_key',
   'facebook_app_secret', 'facebook_access_token',
   'google_maps_api_key', 'instagram_access_token',
 ]);
@@ -19,6 +20,7 @@ const ENV_KEY_MAP: Record<string, string> = {
   deepseek_api_key: 'DEEPSEEK_API_KEY',
   mimo_api_key: 'MIMO_API_KEY',
   bfl_api_key: 'BFL_API_KEY',
+  apify_api_key: 'APIFY_TOKEN',
   llm_provider: 'LLM_PROVIDER',
   image_provider: 'IMAGE_PROVIDER',
   facebook_app_id: 'FACEBOOK_APP_ID',
@@ -77,7 +79,7 @@ export class SettingsService {
     const keys = [
       'llm_provider', 'llm_model', 'image_provider', 'image_model',
       'openai_api_key', 'anthropic_api_key', 'google_api_key',
-      'deepseek_api_key', 'mimo_api_key', 'bfl_api_key',
+      'deepseek_api_key', 'mimo_api_key', 'bfl_api_key', 'apify_api_key',
       'facebook_app_id', 'facebook_app_secret', 'facebook_access_token',
       'google_maps_api_key', 'instagram_access_token',
       'enrichment_auto_run', 'enrichment_default_sources',
@@ -100,6 +102,7 @@ export class SettingsService {
       deepseekApiKey: maskApiKey(values.deepseek_api_key),
       mimoApiKey: maskApiKey(values.mimo_api_key),
       bflApiKey: maskApiKey(values.bfl_api_key),
+      apifyApiKey: maskApiKey(values.apify_api_key),
       facebookAppId: values.facebook_app_id ?? null,
       facebookAppSecret: maskApiKey(values.facebook_app_secret),
       facebookAccessToken: maskApiKey(values.facebook_access_token),

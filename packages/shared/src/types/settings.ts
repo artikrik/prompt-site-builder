@@ -11,6 +11,7 @@ export interface AppSettings {
   deepseekApiKey: string | null;
   mimoApiKey: string | null;
   bflApiKey: string | null;
+  apifyApiKey: string | null;
   // Enrichment API keys
   facebookAppId: string | null;
   facebookAppSecret: string | null;
@@ -40,6 +41,7 @@ export interface UpdateSettingsDto {
   deepseekApiKey?: string;
   mimoApiKey?: string;
   bflApiKey?: string;
+  apifyApiKey?: string;
   // Enrichment API keys
   facebookAppId?: string;
   facebookAppSecret?: string;
