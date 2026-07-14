@@ -11,6 +11,7 @@ import { LeadsService } from '../leads/leads.service';
 import { VariantsService } from '../projects/variants/variants.service';
 import { AddonInjectorService } from '../addons/addon-injector.service';
 import { SiteGenerationRequest, GeneratedSiteStructure, ProjectStatus, JobStatus } from '@prompt-site-builder/shared';
+import { DefaultContentBuilder } from './default-content.builder';
 
 @Injectable()
 export class GenerationService {
@@ -276,89 +277,19 @@ export class GenerationService {
   }
 
   private getDefaultHugoContent(request: SiteGenerationRequest): any {
-    const name = request.businessName;
-    const cat = request.category || 'Business';
-    const desc = request.description || `Professional ${cat.toLowerCase()} services`;
-    const addr = request.address || '';
-    const phone = request.phone || '';
-    const email = request.email || '';
-    const theme = request.theme || 'hugo-theme-zen';
-
-    return {
-      hugoToml: `baseURL = "/"
-languageCode = "uk"
-title = "${name}"
-theme = "${theme}"
-
-[params]
-  description = "${desc}"
-  businessName = "${name}"
-  phone = "${phone}"
-  email = "${email}"
-  address = "${addr}"
-  category = "${cat}"
-
-[markup]
-  [markup.goldmark]
-    [markup.goldmark.renderer]
-      unsafe = true`,
-      indexMd: `---
-title: "${name}"
-description: "${desc}"
----
-
-# ${name}
-
-${desc}
-
-## Чому обирають нас?
-
-- Професійна команда фахівців
-- Індивідуальний підхід до кожного клієнта
-- Гарантія якості на всі послуги
-
-## Наші послуги
-
-Ми пропонуємо широкий спектр послуг для вашого бізнесу.
-
-## Контакти
-
-Зателефонуйте або надішліть повідомлення для безкоштовної консультації.`,
-      aboutMd: `---
-title: "Про нас"
----
-
-# Про ${name}
-
-${name} — це команда професіоналів у сфері ${cat.toLowerCase()}.
-
-Наша місія — надавати якісні послуги та забезпечувати задоволення кожного клієнта.`,
-      servicesMd: `---
-title: "Послуги"
----
-
-# Наші послуги
-
-## Основні послуги
-
-- Консультація
-- Виконання робіт
-- Гарантійне обслуговування`,
-      contactMd: `---
-title: "Контакти"
----
-
-# Контакти
-
-## ${name}
-
-**Телефон:** ${phone || 'Не вказано'}
-**Email:** ${email || 'Не вказано'}
-**Адреса:** ${addr || 'Не вказано'}`,
-      heroImagePrompt: `Professional ${cat} services, modern design`,
-      seoTitle: `${name} | ${cat}`,
-      seoDescription: desc,
-    };
+    return DefaultContentBuilder.build(
+      {
+        businessName: request.businessName,
+        category: request.category,
+        description: request.description,
+        address: request.address,
+        phone: request.phone,
+        email: request.email,
+        socialUrl: request.socialUrl,
+        theme: request.theme,
+      },
+      this.configService.get<string>('BASE_DOMAIN', 'sitenow.pp.ua'),
+    );
   }
 
   private injectPaymentParams(
@@ -379,8 +310,14 @@ title: "Контакти"
     return hugoToml + insert;
   }
 
+  private escapeHtml(value: string): string {
+    return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
   private generatePlaceholderSvg(businessName: string, category: string | null): string {
     const cat = category || 'Business';
+    const safeName = this.escapeHtml(businessName);
+    const safeCat = this.escapeHtml(cat);
     return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -389,8 +326,8 @@ title: "Контакти"
     </linearGradient>
   </defs>
   <rect width="1200" height="600" fill="url(#bg)"/>
-  <text x="600" y="280" font-family="Inter, system-ui, sans-serif" font-size="48" font-weight="bold" fill="white" text-anchor="middle">${businessName}</text>
-  <text x="600" y="340" font-family="Inter, system-ui, sans-serif" font-size="24" fill="#94a3b8" text-anchor="middle">${cat}</text>
+  <text x="600" y="280" font-family="Inter, system-ui, sans-serif" font-size="48" font-weight="bold" fill="white" text-anchor="middle">${safeName}</text>
+  <text x="600" y="340" font-family="Inter, system-ui, sans-serif" font-size="24" fill="#94a3b8" text-anchor="middle">${safeCat}</text>
 </svg>`;
   }
 
@@ -407,7 +344,7 @@ title: "Контакти"
 
     const navHtml = `
       <nav style="background:#1e293b;color:white;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between">
-        <a href="/" style="color:white;text-decoration:none;font-size:1.25rem;font-weight:700">${request.businessName}</a>
+        <a href="/" style="color:white;text-decoration:none;font-size:1.25rem;font-weight:700">${this.escapeHtml(request.businessName)}</a>
         <div style="display:flex;gap:1.5rem">
           <a href="/${slug}/" style="color:#e2e8f0;text-decoration:none">Home</a>
           <a href="/${slug}/about.html" style="color:#e2e8f0;text-decoration:none">About</a>
@@ -418,9 +355,9 @@ title: "Контакти"
 
     const footerHtml = `
       <footer style="background:#0f172a;color:#94a3b8;padding:2rem;text-align:center;margin-top:4rem">
-        <p>&copy; ${new Date().getFullYear()} ${request.businessName}. All rights reserved.</p>
-        ${request.phone ? `<p>Phone: ${request.phone}</p>` : ''}
-        ${request.email ? `<p>Email: ${request.email}</p>` : ''}
+        <p>&copy; ${new Date().getFullYear()} ${this.escapeHtml(request.businessName)}. All rights reserved.</p>
+        ${request.phone ? `<p>Phone: ${this.escapeHtml(request.phone)}</p>` : ''}
+        ${request.email ? `<p>Email: ${this.escapeHtml(request.email)}</p>` : ''}
       </footer>`;
 
     for (const page of pages) {
@@ -462,7 +399,7 @@ title: "Контакти"
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
+  <title>${this.escapeHtml(title)}</title>
   <link rel="stylesheet" href="/${slug}/style.css">
 </head>
 <body>
@@ -479,16 +416,25 @@ ${body}
     html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
     html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
     html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+    // Horizontal rules
+    html = html.replace(/^---+$/gm, '<hr>');
+    // Blockquotes
+    html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+    // Links
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
     // Bold
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    // Italic
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
     // Lists
     html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
     html = html.replace(/(<li>.*<\/li>\n?)+/g, (match) => `<ul>${match}</ul>`);
     // Paragraphs
     html = html.replace(/\n\n+/g, '</p><p>');
     html = `<p>${html}</p>`;
-    html = html.replace(/<p>\s*<(h[1-3]|ul|li)/g, '<$1');
-    html = html.replace(/<\/(h[1-3]|ul|li)>\s*<\/p>/g, '</$1>');
+    html = html.replace(/<p>\s*<(h[1-3]|ul|li|hr|blockquote)/g, '<$1');
+    html = html.replace(/<\/(h[1-3]|ul|li|blockquote)>\s*<\/p>/g, '</$1>');
+    html = html.replace(/<p>\s*<hr>\s*<\/p>/g, '<hr>');
     html = html.replace(/<p>\s*<\/p>/g, '');
     return html;
   }
