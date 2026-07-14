@@ -170,6 +170,10 @@ export const t = {
     total: 'Всього:',
     prev: 'Попередні',
     next: 'Наступні',
+    scrapingLogs: 'Логи скрапингу',
+    source: 'Джерело',
+    action: 'Дія',
+    duration: 'Тривалість',
   },
   notifications: {
     generationStarted: 'Генерацію розпочато',

@@ -4,6 +4,7 @@ import { EnrichmentSource } from './providers/types';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { EnrichmentAnalysisService } from './enrichment-analysis.service';
 import { EnrichmentData } from '@prompt-site-builder/shared';
+import { LogsService } from '../logs/logs.service';
 
 @Injectable()
 export class EnrichmentService {
@@ -13,6 +14,7 @@ export class EnrichmentService {
     private readonly factory: EnrichmentFactory,
     private readonly prisma: PrismaService,
     private readonly analysisService: EnrichmentAnalysisService,
+    private readonly logsService: LogsService,
   ) {}
 
   async enrichLead(leadId: string): Promise<void> {
@@ -68,11 +70,37 @@ export class EnrichmentService {
           this.logger.warn(`No provider for source: ${source}`);
           return null;
         }
+
+        const start = Date.now();
+        await this.logsService.logScraping({
+          leadId,
+          source,
+          action: 'api_call',
+          status: 'started',
+        });
+
         try {
           this.logger.log(`Enriching lead ${leadId} from ${source}`);
           const data = await provider.enrich(lead.businessName, lead.city || undefined);
+          const duration = Date.now() - start;
+          await this.logsService.logScraping({
+            leadId,
+            source,
+            action: 'api_call',
+            status: 'completed',
+            duration,
+          });
           return { source, data };
         } catch (err) {
+          const duration = Date.now() - start;
+          await this.logsService.logScraping({
+            leadId,
+            source,
+            action: 'api_call',
+            status: 'failed',
+            message: String(err),
+            duration,
+          });
           this.logger.warn(`Provider ${source} failed for lead ${leadId}: ${err}`);
           return null;
         }

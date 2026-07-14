@@ -11,9 +11,10 @@ import { InstagramProvider } from '../scraping/providers/instagram.provider';
 import { PrismaModule } from '../../shared/prisma/prisma.module';
 import { QueueModule } from '../queue/queue.module';
 import { GenerationModule } from '../generation/generation.module';
+import { LogsModule } from '../logs/logs.module';
 
 @Module({
-  imports: [PrismaModule, QueueModule, GenerationModule],
+  imports: [PrismaModule, QueueModule, GenerationModule, LogsModule],
   controllers: [EnrichmentController],
   providers: [
     EnrichmentService,

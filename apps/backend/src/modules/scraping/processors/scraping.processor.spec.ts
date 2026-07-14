@@ -1,10 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ScrapingProcessor } from './scraping.processor';
 import { ScrapingService } from '../scraping.service';
+import { LogsService } from '../../logs/logs.service';
 
 describe('ScrapingProcessor', () => {
   let processor: ScrapingProcessor;
   let mockService: ScrapingService;
+  let mockLogs: LogsService;
 
   function makeJob(name: string, data: Record<string, unknown> = {}): any {
     return {
@@ -20,7 +22,11 @@ describe('ScrapingProcessor', () => {
       scrapeAndCreateLeads: vi.fn().mockResolvedValue({ scraped: 5, created: 3, skipped: 2 }),
       scrapeLead: vi.fn().mockResolvedValue(undefined),
     } as unknown as ScrapingService;
-    processor = new ScrapingProcessor(mockService);
+    mockLogs = {
+      logScraping: vi.fn().mockResolvedValue({}),
+      getScrapingLogs: vi.fn().mockResolvedValue({ logs: [], total: 0 }),
+    } as unknown as LogsService;
+    processor = new ScrapingProcessor(mockService, mockLogs);
   });
 
   it('should call scrapeLead for per-lead jobs with leadId and platforms', async () => {
@@ -28,8 +34,9 @@ describe('ScrapingProcessor', () => {
 
     await processor.process(job);
 
-    expect(job.updateProgress).toHaveBeenCalledWith(10);
-    expect(mockService.scrapeLead).toHaveBeenCalledWith('lead-1', ['googleMaps', 'instagram']);
+    expect(mockService.scrapeLead).toHaveBeenCalledTimes(2);
+    expect(mockService.scrapeLead).toHaveBeenCalledWith('lead-1', ['googleMaps']);
+    expect(mockService.scrapeLead).toHaveBeenCalledWith('lead-1', ['instagram']);
     expect(mockService.scrapeAndCreateLeads).not.toHaveBeenCalled();
     expect(job.updateProgress).toHaveBeenCalledWith(100);
   });

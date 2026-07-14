@@ -7,6 +7,7 @@ export class PrismaLogger implements LoggerService {
 
   log(message: string, context?: string) {
     console.log(`[${context || 'App'}] ${message}`);
+    this.saveLog('INFO', message, context).catch(() => {});
   }
 
   warn(message: string, context?: string) {
