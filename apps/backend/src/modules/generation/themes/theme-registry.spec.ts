@@ -7,8 +7,8 @@ import {
 } from './theme-registry';
 
 describe('ThemeRegistry', () => {
-  it('should contain 10 curated themes', () => {
-    expect(HUGO_THEMES).toHaveLength(10);
+  it('should contain 13 curated themes', () => {
+    expect(HUGO_THEMES).toHaveLength(13);
   });
 
   it('should find theme by name', () => {
@@ -30,9 +30,12 @@ describe('ThemeRegistry', () => {
 
   it('should return all theme names', () => {
     const names = getThemeNames();
-    expect(names).toHaveLength(10);
+    expect(names).toHaveLength(13);
     expect(names).toContain('hugo-theme-zen');
     expect(names).toContain('PaperMod');
+    expect(names).toContain('hugo-fresh');
+    expect(names).toContain('hugo-hero-theme');
+    expect(names).toContain('hugo-scroll');
   });
 
   it('should have all required fields for each theme', () => {

@@ -160,6 +160,19 @@ Features: hero area, feature grid, team section, blog support, contact form layo
 Frontmatter: use "featured_image" for hero background, "omit_header_text" to control hero text overlay.
 Best for: professional services, consulting, law firms.`,
 
+      'hugo-fresh': `Hugo Fresh — clean, modern landing page theme.
+Features: hero with image background, feature cards with icons, pricing table, testimonials, contact section, FAQ.
+Frontmatter: "image" for hero background, "weight" for section ordering.
+Params: hero_title, hero_subtitle, hero_button_text, hero_button_link.
+Best for: medical clinics, cleaning services, vet clinics, health businesses.
+IMPORTANT: Use medical/health-specific language. Include doctor credentials, clinic certifications, treatment descriptions.`,
+
+      'hugo-hero-theme': `Hugo Hero Theme — bold hero-focused theme.
+Features: full-screen hero image, feature grid, about section, testimonials, CTA banners, contact.
+Frontmatter: "hero_image", "hero_title", "hero_subtitle".
+Best for: salons, gyms, fitness centers, beauty studios, visual businesses.
+IMPORTANT: Use sensory, aspirational language. Emphasize transformation, results, experience.`,
+
       'hugo-up-business': `Hugo UP Business — corporate theme with landing page sections.
 Features: hero with CTA, services grid, about section, team, contact, footer widgets.
 Frontmatter: use "hero_image", "hero_cta", "hero_cta_link" for hero customization.
@@ -169,12 +182,18 @@ Best for: corporate sites, B2B services, agencies.`,
 Features: carousel/slider hero, feature bar, testimonials carousel, portfolio grid, contact form, Google Maps widget, blog.
 Frontmatter: "banner" for hero image, custom params for each section.
 Menus: main menu, top bar menu.
-Best for: construction, real estate, auto services, multipurpose.`,
+Best for: construction, real estate, auto services, medical, multipurpose.`,
+
+      'hugo-scroll': `Hugo Scroll — single-page scroll theme.
+Features: single-page layout with scroll sections, hero, features, about, contact — all on one page.
+Frontmatter: "image" for section backgrounds, "weight" for ordering.
+Best for: plumbers, logistics, trades, delivery services, single-page sites.
+IMPORTANT: Keep content concise. Each section should be self-contained. Focus on CTA and phone number.`,
 
       'corporio': `Corporio — clean corporate theme for business and agency.
 Features: hero section, services grid, about block, CTA banner, testimonials, contact.
 Frontmatter: "hero_title", "hero_subtitle", "hero_image".
-Best for: agencies, consulting, professional services.`,
+Best for: agencies, consulting, professional services, salons.`,
 
       'hugoplate': `Hugoplate — modern SaaS/startup landing page theme.
 Features: hero with video/image, feature tabs, pricing tables, testimonial cards, FAQ accordion, CTA, footer.
@@ -248,14 +267,19 @@ Best for: simple sites, content-focused pages. This theme is minimal — content
 - Testimonials: before/after results (describe, no images needed), satisfaction guarantee
 - FAQ: preparation tips, contraindications, gift certificates, cancellation policy`,
 
-      'medical': `## MEDICAL/CLINIC SPECIFIC
-- Professional, trustworthy, reassuring tone
-- Services: list by specialty (therapist, cardiologist, dentist, etc.)
-- Trust signals: licensed doctors, modern equipment, sterile environment, years of practice
-- Pricing: consultation fees, insurance accepted (if applicable)
-- Booking: appointment scheduling, emergency contact, working hours
-- FAQ: insurance, preparation for procedures, test results timeline, children's appointments
-- Compliance: mention privacy policy, data protection`,
+      'medical': `## MEDICAL/CLINIC SPECIFIC (UKRAINIAN MARKET)
+- Professional, trustworthy, reassuring tone — patients need to feel safe
+- Services: list by specialty (терапевт, кардіолог, стоматолог, гінеколог, УЗД, аналізи)
+- Trust signals: ліцензовані лікарі, сучасне обладнання, стерильне середовище, роки практики
+- Include: doctor names with credentials (кандидат медичних наук, лікар вищої категорії)
+- Pricing: вартість прийому, абонементи, безкоштовна перша консультація
+- Booking: онлайн-запис, запис по телефону, екстрений виклик
+- Working hours: графік роботи, черговий лікар
+- FAQ: підготовка до аналізів, страховка, результати обстежень, дитячий прийом
+- Compliance: конфіденційність даних, політика приватності
+- Address the #1 fear: "чи можна довіряти цій клініці?" — show licenses, reviews, years in business
+- Include specific treatments with prices (e.g., "Консультація терапевта — від 350 грн")
+- Mention convenient location, parking, comfortable waiting area`,
 
       'construction': `## CONSTRUCTION/REAL ESTATE SPECIFIC
 - Confident, reliable, experienced tone
