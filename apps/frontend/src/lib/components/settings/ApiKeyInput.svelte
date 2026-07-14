@@ -9,6 +9,7 @@
   }
 
   let { label, placeholder, maskedPreview, onChange }: Props = $props();
+  const inputId = `input-${Math.random().toString(36).slice(2, 9)}`;
 
   let isEditing = $state(false);
   let inputValue = $state('');
@@ -30,10 +31,11 @@
 </script>
 
 <div class="space-y-2">
-  <label class="text-sm font-medium">{label}</label>
+  <label for={inputId} class="text-sm font-medium">{label}</label>
   {#if isEditing}
     <div class="flex gap-2">
       <input
+        id={inputId}
         type="password"
         bind:value={inputValue}
         placeholder={placeholder}
@@ -51,6 +53,7 @@
   {:else}
     <div class="flex gap-2">
       <input
+        id={inputId}
         type="password"
         bind:value={inputValue}
         placeholder={placeholder}

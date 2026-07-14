@@ -23,7 +23,7 @@ export class LLMStrategyFactory {
   ) {}
 
   create(): ILLMStrategy {
-    const provider = this.configService.get<string>('LLM_PROVIDER', 'anthropic');
+    const provider = this.configService.get<string>('LLM_PROVIDER', 'openai');
     this.logger.log(`Creating LLM strategy for provider: ${provider}`);
 
     switch (provider) {
@@ -40,8 +40,8 @@ export class LLMStrategyFactory {
       case 'openrouter':
         return this.openRouterStrategy;
       default:
-        this.logger.warn(`Unknown provider "${provider}", falling back to anthropic`);
-        return this.anthropicStrategy;
+        this.logger.warn(`Unknown provider "${provider}", falling back to openai`);
+        return this.openaiStrategy;
     }
   }
 }

@@ -15,9 +15,15 @@
     generating: boolean;
   } = $props();
 
-  let selectedModel = $state(models[0] || 'gpt-4o');
-  let selectedImageModel = $state(imageModels[0] || 'dall-e-3');
-  let selectedTheme = $state(themes[0]?.name || '');
+  let selectedModel = $state('gpt-4o');
+  let selectedImageModel = $state('dall-e-3');
+  let selectedTheme = $state('');
+
+  $effect(() => {
+    selectedModel = models[0] || 'gpt-4o';
+    selectedImageModel = imageModels[0] || 'dall-e-3';
+    selectedTheme = themes[0]?.name || '';
+  });
 
   async function handleGenerate() {
     await onGenerate({

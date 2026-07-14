@@ -63,6 +63,8 @@ export class EnrichmentService {
 
     this.logger.log(`Enriching lead ${leadId} with sources: ${sources.join(', ')}`);
 
+    const PROVIDER_TIMEOUT = 30000; // 30 seconds per provider
+
     const providerResults = await Promise.all(
       sources.map(async (source) => {
         const provider = this.factory.createForProvider(source as EnrichmentSource);
@@ -81,7 +83,15 @@ export class EnrichmentService {
 
         try {
           this.logger.log(`Enriching lead ${leadId} from ${source}`);
-          const data = await provider.enrich(lead.businessName, lead.city || undefined);
+          
+          // Add timeout for provider call
+          const data = await Promise.race([
+            provider.enrich(lead.businessName, lead.city || undefined),
+            new Promise<never>((_, reject) => 
+              setTimeout(() => reject(new Error(`Provider ${source} timed out after ${PROVIDER_TIMEOUT}ms`)), PROVIDER_TIMEOUT)
+            ),
+          ]);
+          
           const duration = Date.now() - start;
           await this.logsService.logScraping({
             leadId,
@@ -90,6 +100,13 @@ export class EnrichmentService {
             status: 'completed',
             duration,
           });
+          
+          // Check if provider returned empty data
+          const hasData = data && Object.keys(data).length > 0;
+          if (!hasData) {
+            this.logger.warn(`Provider ${source} returned empty data for lead ${leadId}`);
+          }
+          
           return { source, data };
         } catch (err) {
           const duration = Date.now() - start;
@@ -109,11 +126,31 @@ export class EnrichmentService {
 
     const validResults = providerResults.filter((r): r is { source: string; data: Partial<EnrichmentData> } => r !== null);
 
+    if (validResults.length === 0) {
+      this.logger.warn(`No enrichment data obtained for lead ${leadId} from any source`);
+      // Still update enrichedAt to show we tried
+      await this.prisma.lead.update({
+        where: { id: leadId },
+        data: { enrichedAt: new Date() },
+      });
+      return;
+    }
+
     const merged = this.mergeResults(validResults.map((r) => r.data));
-    const analyzed = await this.analysisService.analyze(
-      validResults.map((r) => ({ source: r.source, data: r.data as Record<string, unknown> })),
-      merged,
-    );
+    
+    // Only run analysis if we have meaningful data
+    let analyzed: Partial<EnrichmentData> = {};
+    if (validResults.length > 0) {
+      try {
+        analyzed = await this.analysisService.analyze(
+          validResults.map((r) => ({ source: r.source, data: r.data as Record<string, unknown> })),
+          merged,
+        );
+      } catch (err) {
+        this.logger.warn(`LLM analysis failed for lead ${leadId}: ${err}`);
+        // Continue with merged data without analysis
+      }
+    }
 
     const finalData = this.mergeResults([merged, analyzed]);
 
@@ -125,7 +162,7 @@ export class EnrichmentService {
       },
     });
 
-    this.logger.log(`Enrichment complete for lead ${leadId} from ${sources.length} sources`);
+    this.logger.log(`Enrichment complete for lead ${leadId}: ${validResults.length}/${sources.length} sources returned data`);
   }
 
   private mergeResults(results: Partial<EnrichmentData>[]): Partial<EnrichmentData> {

@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { mkdir, writeFile, rm } from 'fs/promises';
+import { mkdir, writeFile, rm, access } from 'fs/promises';
 import { join } from 'path';
 import { HugoBuildResult, GeneratedSiteStructure } from '@prompt-site-builder/shared';
 import { getThemeByName } from '../themes/theme-registry';
@@ -14,6 +14,7 @@ export class HugoCompilerService {
   private readonly logger = new Logger(HugoCompilerService.name);
   private readonly hugoBinary: string;
   private readonly sitesPath: string;
+  private readonly themeCache = new Map<string, boolean>();
 
   constructor(private readonly configService: ConfigService) {
     this.hugoBinary = this.configService.get<string>('HUGO_BINARY_PATH', 'hugo');
@@ -36,7 +37,7 @@ export class HugoCompilerService {
       // Run Hugo build
       const { stdout, stderr } = await execFileAsync(this.hugoBinary, ['--minify'], {
         cwd: tempDir,
-        timeout: 60000,
+        timeout: 120000, // 120 seconds for large themes
       });
 
       this.logger.log(`Hugo build output for ${outputSlug}: ${stdout}`);
@@ -89,51 +90,84 @@ export class HugoCompilerService {
     try {
       await mkdir(themesDir, { recursive: true });
 
-      // Try git clone first
-      try {
-        await execFileAsync('git', ['clone', '--depth', '1', theme.repoUrl, themeDir], {
-          timeout: 30000,
-        });
-        this.logger.log(`Theme "${themeName}" installed via git clone`);
-        return;
-      } catch (gitError) {
-        this.logger.warn(`Git clone failed for "${themeName}": ${gitError}`);
-      }
-
-      // Fallback: download tarball
-      try {
-        const tarUrl = `${theme.repoUrl}/archive/refs/heads/main.tar.gz`;
-        const response = await fetch(tarUrl);
-        if (response.ok) {
-          const tarPath = join(themesDir, `${theme.name}.tar.gz`);
-          const buffer = Buffer.from(await response.arrayBuffer());
-          await writeFile(tarPath, buffer);
-
-          await execFileAsync('tar', ['-xzf', tarPath, '-C', themesDir], { timeout: 15000 });
-          await rm(tarPath, { force: true });
-
-          // Rename extracted directory
-          const extractedDirs = await import('fs/promises').then((fs) =>
-            fs.readdir(themesDir, { withFileTypes: true }),
-          );
-          const extractedDir = extractedDirs.find(
-            (d) => d.isDirectory() && d.name !== theme.name && d.name.startsWith(theme.name.replace('hugo-', '')),
-          );
-          if (extractedDir) {
-            const { rename } = await import('fs/promises');
-            await rename(join(themesDir, extractedDir.name), themeDir);
-          }
-
-          this.logger.log(`Theme "${themeName}" installed via tarball`);
+      // Check if theme is already cached
+      const cacheKey = `${theme.name}-${theme.repoUrl}`;
+      if (this.themeCache.has(cacheKey)) {
+        this.logger.log(`Theme "${themeName}" found in cache`);
+        // Copy from cache if available
+        const cacheDir = join(this.sitesPath, '.theme-cache', theme.name);
+        try {
+          await access(cacheDir);
+          await this.copyDirectory(cacheDir, themeDir);
+          this.logger.log(`Theme "${themeName}" restored from cache`);
           return;
+        } catch {
+          // Cache not available, continue with download
         }
-      } catch (tarError) {
-        this.logger.warn(`Tarball download failed for "${themeName}": ${tarError}`);
       }
 
-      // Final fallback: create minimal theme stub
-      this.logger.warn(`Creating minimal theme stub for "${themeName}"`);
-      await this.createMinimalThemeStub(themeDir, themeName);
+      // Try git clone with retry (3 attempts)
+      let gitSuccess = false;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          await execFileAsync('git', ['clone', '--depth', '1', theme.repoUrl, themeDir], {
+            timeout: 45000, // 45 seconds per attempt
+          });
+          this.logger.log(`Theme "${themeName}" installed via git clone (attempt ${attempt})`);
+          gitSuccess = true;
+
+          // Cache the theme for future use
+          const cacheDir = join(this.sitesPath, '.theme-cache', theme.name);
+          await mkdir(cacheDir, { recursive: true });
+          await this.copyDirectory(themeDir, cacheDir);
+          this.themeCache.set(cacheKey, true);
+
+          return;
+        } catch (gitError) {
+          this.logger.warn(`Git clone attempt ${attempt} failed for "${themeName}": ${gitError}`);
+          if (attempt < 3) {
+            // Wait before retry (exponential backoff)
+            await new Promise((resolve) => setTimeout(resolve, attempt * 2000));
+          }
+        }
+      }
+
+      if (!gitSuccess) {
+        // Fallback: download tarball
+        try {
+          const tarUrl = `${theme.repoUrl}/archive/refs/heads/main.tar.gz`;
+          const response = await fetch(tarUrl);
+          if (response.ok) {
+            const tarPath = join(themesDir, `${theme.name}.tar.gz`);
+            const buffer = Buffer.from(await response.arrayBuffer());
+            await writeFile(tarPath, buffer);
+
+            await execFileAsync('tar', ['-xzf', tarPath, '-C', themesDir], { timeout: 15000 });
+            await rm(tarPath, { force: true });
+
+            // Rename extracted directory
+            const extractedDirs = await import('fs/promises').then((fs) =>
+              fs.readdir(themesDir, { withFileTypes: true }),
+            );
+            const extractedDir = extractedDirs.find(
+              (d) => d.isDirectory() && d.name !== theme.name && d.name.startsWith(theme.name.replace('hugo-', '')),
+            );
+            if (extractedDir) {
+              const { rename } = await import('fs/promises');
+              await rename(join(themesDir, extractedDir.name), themeDir);
+            }
+
+            this.logger.log(`Theme "${themeName}" installed via tarball`);
+            return;
+          }
+        } catch (tarError) {
+          this.logger.warn(`Tarball download failed for "${themeName}": ${tarError}`);
+        }
+
+        // Final fallback: create minimal theme stub
+        this.logger.warn(`Creating minimal theme stub for "${themeName}"`);
+        await this.createMinimalThemeStub(themeDir, themeName);
+      }
     } catch (error) {
       this.logger.error(`Theme installation failed for "${themeName}": ${error}`);
       // Create minimal stub so Hugo doesn't fail

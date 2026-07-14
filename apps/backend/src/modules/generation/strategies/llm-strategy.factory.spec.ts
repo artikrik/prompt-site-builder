@@ -50,9 +50,9 @@ describe('LLMStrategyFactory', () => {
     expect(result).toBe(geminiStrategy);
   });
 
-  it('should return AnthropicStrategy for unknown provider', () => {
+  it('should return OpenAIStrategy for unknown provider (fallback)', () => {
     configService.get.mockReturnValue('unknown');
     const result = factory.create();
-    expect(result).toBe(anthropicStrategy);
+    expect(result).toBe(openaiStrategy);
   });
 });

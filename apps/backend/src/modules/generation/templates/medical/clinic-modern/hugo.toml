@@ -1,0 +1,19 @@
+baseURL = '{{baseUrl}}'
+languageCode = 'uk'
+title = '{{businessName}}'
+
+[params]
+  description = '{{description}}'
+  phone = '{{phone}}'
+  email = '{{email}}'
+  address = '{{address}}'
+  category = 'medical'
+  theme = 'clinic-modern'
+
+[params.social]
+  instagram = '{{socialUrl}}'
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true

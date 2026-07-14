@@ -11,6 +11,7 @@ const ENCRYPTED_KEYS = new Set([
   'apify_api_key',
   'facebook_app_secret', 'facebook_access_token',
   'google_maps_api_key', 'instagram_access_token',
+  'easyweek_api_key', 'wayforpay_secret', 'monobank_api_key',
 ]);
 
 const ENV_KEY_MAP: Record<string, string> = {
@@ -83,6 +84,9 @@ export class SettingsService {
       'facebook_app_id', 'facebook_app_secret', 'facebook_access_token',
       'google_maps_api_key', 'instagram_access_token',
       'enrichment_auto_run', 'enrichment_default_sources',
+      'easyweek_enabled', 'easyweek_api_key',
+      'wayforpay_enabled', 'wayforpay_merchant', 'wayforpay_secret',
+      'monobank_enabled', 'monobank_api_key',
     ];
 
     const results = await Promise.all(keys.map((k) => this.get(k)));
@@ -110,13 +114,13 @@ export class SettingsService {
       instagramAccessToken: maskApiKey(values.instagram_access_token),
       enrichmentAutoRun: values.enrichment_auto_run === 'true',
       enrichmentDefaultSources: values.enrichment_default_sources ?? 'instagram,facebook,googleMaps',
-      easyweekEnabled: false,
-      easyweekApiKey: null,
-      wayforpayEnabled: false,
-      wayforpayMerchant: null,
-      wayforpaySecret: null,
-      monobankEnabled: false,
-      monobankApiKey: null,
+      easyweekEnabled: values.easyweek_enabled === 'true',
+      easyweekApiKey: maskApiKey(values.easyweek_api_key),
+      wayforpayEnabled: values.wayforpay_enabled === 'true',
+      wayforpayMerchant: values.wayforpay_merchant ?? null,
+      wayforpaySecret: maskApiKey(values.wayforpay_secret),
+      monobankEnabled: values.monobank_enabled === 'true',
+      monobankApiKey: maskApiKey(values.monobank_api_key),
     };
   }
 
