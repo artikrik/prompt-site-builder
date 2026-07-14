@@ -1,5 +1,5 @@
 <script lang="ts">
-  /* global fetch, window, HTMLInputElement */
+  /* global console, fetch, window, HTMLInputElement */
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
@@ -11,7 +11,7 @@
   import { Badge } from '$lib/components/ui/badge/index.js';
   import * as Card from '$lib/components/ui/card/index.js';
   import EnrichmentPanel from '$lib/components/enrichment/EnrichmentPanel.svelte';
-  import { ArrowLeft, Plus, Loader2, Play } from '@lucide/svelte';
+  import { ArrowLeft, Plus, Loader2, Play, Trash2 } from '@lucide/svelte';
 
   let lead = $state<Lead | null>(null);
   let leadProjects = $state<Array<{ id: string; status: string; slug: string; createdAt: string }>>([]);
@@ -50,6 +50,20 @@
   let scrapePlatforms = $state({ instagram: true, facebook: true, googleMaps: true });
   let scrapingBusy = $state(false);
   let scrapeResult = $state<Record<string, unknown> | null>(null);
+  let deleting = $state(false);
+
+  async function handleDeleteLead() {
+    if (!lead) return;
+    if (!window.confirm(`Видалити ліда "${lead.businessName}"? Це також видалить пов'язані проекти.`)) return;
+    deleting = true;
+    try {
+      await leads.remove(lead.id);
+      goto(resolve('/dashboard/leads'));
+    } catch {
+      console.error('Failed to delete lead');
+    }
+    deleting = false;
+  }
 
   async function handleStartScraping() {
     if (!lead || scrapingBusy) return;
@@ -73,9 +87,15 @@
 <svelte:head><title>{lead?.businessName || t.leads.title} - {t.app.name}</title></svelte:head>
 
 <div class="space-y-6">
-  <Button variant="ghost" size="sm" onclick={() => goto(resolve('/dashboard/leads'))}>
-    <ArrowLeft class="size-4 mr-2" /> {t.common.back}
-  </Button>
+  <div class="flex items-center justify-between">
+    <Button variant="ghost" size="sm" onclick={() => goto(resolve('/dashboard/leads'))}>
+      <ArrowLeft class="size-4 mr-2" /> {t.common.back}
+    </Button>
+    <Button variant="ghost" size="sm" class="text-destructive hover:text-destructive" onclick={handleDeleteLead} disabled={deleting}>
+      {#if deleting}<Loader2 class="size-4 mr-2 animate-spin" />{:else}<Trash2 class="size-4 mr-2" />{/if}
+      Видалити
+    </Button>
+  </div>
 
   {#if isLoading}
     <div class="text-center py-12 text-muted-foreground">{t.common.loading}</div>
