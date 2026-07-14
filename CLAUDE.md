@@ -28,6 +28,22 @@ Monorepo: Turborepo (apps/backend, apps/frontend, packages/shared)
 - Squash merge only. Status checks: lint, typecheck, test-backend, test-frontend.
 - No force pushes, no deletions.
 
+## Pre-Commit/Pre-Push Rule (MANDATORY)
+Before ANY commit or push, run full CI locally:
+1. `npm run lint` — ESLint 0 errors
+2. `npm run typecheck` — tsc + svelte-check 0 errors
+3. `npm run test` — vitest all passing
+4. `npm run build` — production build exit 0
+Also: `bash scripts/ci-local.sh`
+
+## PR Review → Fix → Merge Rule (MANDATORY)
+After every PR is opened:
+1. **Code Review**: invoke `superpowers:requesting-code-review` skill → dispatch review agent against PR diff
+2. **Fix**: address all Critical and Important findings. Push fixes to same branch.
+3. **Re-run CI**: confirm green after fixes.
+4. **Merge**: squash merge to main via `gh pr merge --squash --delete-branch`
+No PR merges without review. No skipping fixes.
+
 ## Hugo Theme Engine (CRITICAL)
 
 ### Directory Structure
@@ -95,3 +111,21 @@ Before ANY commit or push, run full CI locally:
 3. `npm run test` — vitest all passing
 4. `npm run build` — production build exit 0
 Also: `bash scripts/ci-local.sh`
+
+## QA Framework
+
+Standalone mode (no .qa submodule). QA context lives in `docs/qa/`.
+
+### Project specifics
+Stack: NestJS 11 + SvelteKit 2 monorepo
+Test runner: vitest (backend unit), Playwright (frontend E2E)
+E2E: Playwright (`apps/frontend/tests/e2e/`)
+Staging URL: TODO — fill in local/project_config.md
+Jira project key: TODO — fill in local/project_config.md
+
+### docs/qa/ (lives in this repo)
+test-cases/   — manual TCs per ticket/module
+bug-reports/  — structured bug reports
+test-reports/ — session results, CI runs, audits
+requirements/ — AC snapshots from Jira
+coverage/     — coverage reports and analysis

@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { SettingsService } from '../../settings/settings.service';
 import Anthropic from '@anthropic-ai/sdk';
 import { ILLMStrategy, LLMGenerateOptions, LLMResponse, BusinessData, HugoGeneratedContent } from './llm-strategy.interface';
+import { PromptBuilder } from '../prompt-builder';
+import { DefaultContentBuilder } from '../default-content.builder';
 
 @Injectable()
 export class AnthropicStrategy implements ILLMStrategy {
@@ -44,121 +46,31 @@ export class AnthropicStrategy implements ILLMStrategy {
   }
 
   async generateHugoStructure(businessData: BusinessData): Promise<HugoGeneratedContent> {
+    const baseDomain = this.configService.get<string>('BASE_DOMAIN', 'sitenow.pp.ua');
     const prompt = this.buildHugoPrompt(businessData);
-    const response = await this.generateContent(prompt, { maxTokens: 8192 });
+    const response = await this.generateContent(prompt, { maxTokens: 16384 });
 
     try {
-      const parsed = JSON.parse(response.content);
+      const parsed = JSON.parse(PromptBuilder.extractJson(response.content));
+      if (!PromptBuilder.hasAllRequiredFields(parsed)) {
+        return DefaultContentBuilder.build(businessData, baseDomain);
+      }
       return {
-        hugoToml: parsed.hugoToml || this.getDefaultHugoToml(businessData),
-        indexMd: parsed.indexMd || '',
-        aboutMd: parsed.aboutMd || '',
-        servicesMd: parsed.servicesMd || '',
-        contactMd: parsed.contactMd || '',
-        heroImagePrompt: parsed.heroImagePrompt || `Professional ${businessData.category || 'business'} services, modern and clean design`,
+        hugoToml: parsed.hugoToml,
+        indexMd: parsed.indexMd,
+        aboutMd: parsed.aboutMd,
+        servicesMd: parsed.servicesMd,
+        contactMd: parsed.contactMd,
+        heroImagePrompt: parsed.heroImagePrompt || `Professional ${businessData.category || 'business'} environment, modern interior, warm lighting, clean composition, no text, no logos`,
         seoTitle: parsed.seoTitle || businessData.businessName,
         seoDescription: parsed.seoDescription || businessData.description || '',
       };
     } catch {
-      return this.generateDefaultStructure(businessData);
+      return DefaultContentBuilder.build(businessData, baseDomain);
     }
   }
 
   private buildHugoPrompt(data: BusinessData): string {
-    return `Generate a complete Hugo static website structure for a B2B business. Return ONLY a JSON object with these keys:
-
-{
-  "hugoToml": "TOML config string",
-  "indexMd": "Markdown content for homepage",
-  "aboutMd": "Markdown content for about page",
-  "servicesMd": "Markdown content for services page",
-  "contactMd": "Markdown content for contact page",
-  "heroImagePrompt": "DALL-E 3 prompt for hero background image",
-  "seoTitle": "SEO optimized title",
-  "seoDescription": "Meta description (max 160 chars)"
-}
-
-Business details:
-- Name: ${data.businessName}
-- Category: ${data.category || 'General business'}
-- Description: ${data.description || 'Professional services'}
-- Address: ${data.address || 'Ukraine'}
-- Phone: ${data.phone || 'Contact us'}
-- Email: ${data.email || 'Contact form'}
-
-Requirements:
-1. Write SEO-optimized Ukrainian text (if business is in Ukraine) or English
-2. Include structured data (JSON-LD) in the index page
-3. Make the hero image prompt specific and professional
-4. Include meta tags for social sharing (Open Graph)
-5. The Hugo config should use the '${data.theme || 'hugo-theme-zen'}' theme
-6. Base URL should be https://{slug}.${this.configService.get<string>('BASE_DOMAIN', 'sitenow.pp.ua')}`;
-  }
-
-  private getDefaultHugoToml(data: BusinessData): string {
-    return `baseURL = "https://${data.businessName.toLowerCase().replace(/\s+/g, '-')}.${this.configService.get<string>('BASE_DOMAIN', 'sitenow.pp.ua')}"
-languageCode = "uk"
-title = "${data.businessName}"
-theme = "${data.theme || 'hugo-theme-zen'}"
-
-[params]
-  description = "${data.description || data.businessName}"
-  businessName = "${data.businessName}"
-  phone = "${data.phone || ''}"
-  email = "${data.email || ''}"
-  address = "${data.address || ''}"
-
-[markup]
-  [markup.goldmark]
-    [markup.goldmark.renderer]
-      unsafe = true`;
-  }
-
-  private generateDefaultStructure(data: BusinessData): HugoGeneratedContent {
-    return {
-      hugoToml: this.getDefaultHugoToml(data),
-      indexMd: `---
-title: "${data.businessName}"
-description: "${data.description || data.businessName}"
----
-
-# ${data.businessName}
-
-${data.description || 'Professional services you can trust.'}
-
-## Why Choose Us?
-
-- Professional team
-- Quality service
-- Customer satisfaction
-
-[Contact Us](/contact/)`,
-      aboutMd: `---
-title: "About Us"
----
-
-# About ${data.businessName}
-
-We are a professional ${data.category || 'service'} provider dedicated to delivering exceptional results.`,
-      servicesMd: `---
-title: "Our Services"
----
-
-# Our Services
-
-Professional ${data.category || 'services'} tailored to your needs.`,
-      contactMd: `---
-title: "Contact"
----
-
-# Contact Us
-
-**Phone:** ${data.phone || 'Contact us'}
-**Email:** ${data.email || 'Contact form'}
-**Address:** ${data.address || 'Ukraine'}`,
-      heroImagePrompt: `Professional ${data.category || 'business'} services, modern clean design, ${data.businessName}`,
-      seoTitle: `${data.businessName} | ${data.category || 'Professional Services'}`,
-      seoDescription: data.description || `${data.businessName} - professional ${data.category || 'services'}`,
-    };
+    return new PromptBuilder(this.configService).buildHugoPrompt(data);
   }
 }
