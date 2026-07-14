@@ -37,6 +37,7 @@ RUN cd apps/backend && npm run build
 FROM node:24-alpine AS production
 
 # Install Hugo and curl for healthcheck
+# Hugo version: 0.145.0
 ARG HUGO_VERSION=0.145.0
 RUN apk add --no-cache wget curl && \
     wget -q https://github.com/gohugoio/hugo/releases/download/v${HUGO_VERSION}/hugo_extended_${HUGO_VERSION}_linux-amd64.tar.gz && \
