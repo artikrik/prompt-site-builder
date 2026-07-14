@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ScrapingService } from './scraping.service';
 import { ApifyProvider } from './providers/apify.provider';
 import { InstagramProvider } from './providers/instagram.provider';
+import { GoogleMapsScraperProvider } from './providers/google-maps-scraper.provider';
 import { LeadsService } from '../leads/leads.service';
-import { EnrichmentService } from '../enrichment/enrichment.service';
 
 describe('ScrapingService', () => {
   let service: ScrapingService;
@@ -12,6 +12,7 @@ describe('ScrapingService', () => {
     extractUsernameFromUrl: ReturnType<typeof vi.fn>;
     enrichFromProfile: ReturnType<typeof vi.fn>;
   };
+  let googleMapsScraper: { scrapeBusinesses: ReturnType<typeof vi.fn> };
   let leadsService: {
     create: ReturnType<typeof vi.fn>;
     findOne: ReturnType<typeof vi.fn>;
@@ -29,6 +30,9 @@ describe('ScrapingService', () => {
       extractUsernameFromUrl: vi.fn(),
       enrichFromProfile: vi.fn(),
     };
+    googleMapsScraper = {
+      scrapeBusinesses: vi.fn(),
+    };
     leadsService = {
       create: vi.fn(),
       findOne: vi.fn(),
@@ -41,8 +45,8 @@ describe('ScrapingService', () => {
     service = new ScrapingService(
       apifyProvider as unknown as ApifyProvider,
       instagramProvider as unknown as InstagramProvider,
+      googleMapsScraper as unknown as GoogleMapsScraperProvider,
       leadsService as unknown as LeadsService,
-      enrichmentService as unknown as EnrichmentService,
     );
   });
 

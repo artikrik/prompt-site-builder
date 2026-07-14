@@ -14,7 +14,6 @@
   }
 
   let {
-    projectId,
     addons = [],
     isLoading = false,
     onActivate,
@@ -25,10 +24,6 @@
   function getAddon(type: AddonType): ProjectAddon | null {
     return addons.find((a) => a.addonType === type) || null;
   }
-
-  // expose projectId for event handlers — unused directly but useful for debugging
-  let _pid = $derived(projectId);
-  void _pid;
 </script>
 
 <div class="space-y-3">

@@ -101,7 +101,7 @@ describe('GoogleMapsProvider', () => {
 
   beforeEach(() => {
     process.env = { ...originalEnv, GOOGLE_MAPS_API_KEY: 'test-api-key-123' };
-    provider = new GoogleMapsProvider();
+    provider = new GoogleMapsProvider({ get: (key: string) => process.env[key] || '' } as any);
   });
 
   afterEach(() => {
@@ -142,7 +142,7 @@ describe('GoogleMapsProvider', () => {
 
     it('should return empty object when no GOOGLE_MAPS_API_KEY', async () => {
       delete process.env.GOOGLE_MAPS_API_KEY;
-      provider = new GoogleMapsProvider();
+      provider = new GoogleMapsProvider({ get: (key: string) => process.env[key] || '' } as any);
       globalThis.fetch = vi.fn();
 
       const result = await provider.enrich('Test Salon', 'Kyiv');

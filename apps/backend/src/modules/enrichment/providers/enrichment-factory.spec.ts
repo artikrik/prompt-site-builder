@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { EnrichmentFactory } from './enrichment-factory';
 import { InstagramProvider } from '../../scraping/providers/instagram.provider';
 import { FacebookProvider } from './facebook.provider';
@@ -13,7 +13,7 @@ describe('EnrichmentFactory', () => {
   beforeEach(() => {
     instagramProvider = new InstagramProvider();
     facebookProvider = new FacebookProvider();
-    googleMapsProvider = new GoogleMapsProvider();
+    googleMapsProvider = new GoogleMapsProvider({ get: vi.fn() } as any);
     factory = new EnrichmentFactory(instagramProvider, facebookProvider, googleMapsProvider);
   });
 

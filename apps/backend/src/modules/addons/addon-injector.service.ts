@@ -31,38 +31,22 @@ export class AddonInjectorService {
   }
 
   private injectPayment(structure: GeneratedSiteStructure): void {
-    // Add payment shortcode partial
+    // Add payment shortcode partial using official WayForPay widget
     structure.partials.push({
       path: 'layouts/partials/payment-widget.html',
-      body: `<div class="payment-widget" id="payment-form">
-  <h3>Online Payment</h3>
-  <form id="wayforpay-form" class="payment-form">
-    <label>Amount (UAH) <input type="number" name="amount" min="1" required /></label>
-    <label>Description <input type="text" name="description" /></label>
-    <button type="submit" class="btn btn-primary">Pay Now</button>
-  </form>
-  <div id="payment-status" class="mt-2"></div>
+      body: `<div class="payment-widget" id="payment-widget">
+  <h3>Онлайн-оплата</h3>
+  <p>Для оплати натисніть кнопку нижче</p>
+  <div id="wayforpay-container"></div>
 </div>
+<script src="https://secure.wayforpay.com/checkout.js"></script>
 <script>
-  document.getElementById('wayforpay-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    const data = new FormData(form);
-    document.getElementById('payment-status')!.textContent = 'Processing...';
-    try {
-      const res = await fetch('/api/payment/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(Object.fromEntries(data)),
-      });
-      if (res.ok) {
-        const invoice = await res.json();
-        window.location.href = invoice.checkoutUrl;
-      } else {
-        document.getElementById('payment-status')!.textContent = 'Payment failed. Please try again.';
-      }
-    } catch {
-      document.getElementById('payment-status')!.textContent = 'Network error. Please try again.';
+  // WayForPay widget will be initialized with merchant config
+  // This is a placeholder - actual merchant account should be configured in addon settings
+  document.addEventListener('DOMContentLoaded', function() {
+    var container = document.getElementById('wayforpay-container');
+    if (container) {
+      container.innerHTML = '<p style="color: #666; font-style: italic;">Оплата онлайн стане доступна після налаштування merchant-рахунку</p>';
     }
   });
 </script>`,
@@ -76,52 +60,21 @@ export class AddonInjectorService {
   }
 
   private injectBooking(structure: GeneratedSiteStructure): void {
-    // Add booking widget partial
+    // Add booking widget partial using official EasyWeek widget
     structure.partials.push({
       path: 'layouts/partials/booking-widget.html',
-      body: `<div class="booking-widget" id="booking-form">
-  <h3>Book an Appointment</h3>
-  <form id="easyweek-form" class="booking-form">
-    <label>Service <select name="service" id="booking-service">
-      <option value="">Loading services...</option>
-    </select></label>
-    <label>Date <input type="date" name="date" id="booking-date" required /></label>
-    <label>Time <select name="time" id="booking-time">
-      <option value="">Select time</option>
-    </select></label>
-    <label>Name <input type="text" name="name" required /></label>
-    <label>Phone <input type="tel" name="phone" required /></label>
-    <button type="submit" class="btn btn-primary">Book Now</button>
-  </form>
-  <div id="booking-status" class="mt-2"></div>
+      body: `<div class="booking-widget" id="booking-widget">
+  <h3>Онлайн-запис</h3>
+  <p>Запишіться на прийом онлайн</p>
+  <div id="easyweek-container"></div>
 </div>
 <script>
-  (async () => {
-    try {
-      const res = await fetch('/api/booking/services');
-      const services = await res.json();
-      const sel = document.getElementById('booking-service');
-      if (sel) services.forEach((s) => { sel.innerHTML += '<option value="' + s.id + '">' + s.name + '</option>'; });
-    } catch {}
-  })();
-  document.getElementById('easyweek-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    const data = new FormData(form);
-    document.getElementById('booking-status')!.textContent = 'Booking...';
-    try {
-      const res = await fetch('/api/booking/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(Object.fromEntries(data)),
-      });
-      if (res.ok) {
-        document.getElementById('booking-status')!.textContent = 'Booking confirmed! We will contact you shortly.';
-      } else {
-        document.getElementById('booking-status')!.textContent = 'Booking failed. Please try again.';
-      }
-    } catch {
-      document.getElementById('booking-status')!.textContent = 'Network error. Please try again.';
+  // EasyWeek widget will be initialized with company config
+  // This is a placeholder - actual company ID should be configured in addon settings
+  document.addEventListener('DOMContentLoaded', function() {
+    var container = document.getElementById('easyweek-container');
+    if (container) {
+      container.innerHTML = '<p style="color: #666; font-style: italic;">Онлайн-запис стане доступний після налаштування акаунту EasyWeek</p>';
     }
   });
 </script>`,

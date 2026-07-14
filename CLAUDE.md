@@ -34,7 +34,6 @@ Before ANY commit or push, run full CI locally:
 2. `npm run typecheck` — tsc + svelte-check 0 errors
 3. `npm run test` — vitest all passing
 4. `npm run build` — production build exit 0
-Also: `bash scripts/ci-local.sh`
 
 ## PR Review → Fix → Merge Rule (MANDATORY)
 After every PR is opened:
@@ -43,6 +42,38 @@ After every PR is opened:
 3. **Re-run CI**: confirm green after fixes.
 4. **Merge**: squash merge to main via `gh pr merge --squash --delete-branch`
 No PR merges without review. No skipping fixes.
+
+## Behavioral Guidelines
+
+### 1. Think Before Coding
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+- State assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them — don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+### 2. Simplicity First
+**Minimum code that solves the problem. Nothing speculative.**
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+### 3. Surgical Changes
+**Touch only what you must. Clean up only your own mess.**
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it — don't delete it.
+- Remove imports/variables/functions that YOUR changes made unused.
+
+### 4. Goal-Driven Execution
+**Define success criteria. Loop until verified.**
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+- For multi-step tasks, state a brief plan with verification steps.
 
 ## Hugo Theme Engine (CRITICAL)
 
@@ -64,8 +95,6 @@ No PR merges without review. No skipping fixes.
 | hugo-universal-theme | Construction, Real Estate, Auto |
 | hugo-scroll | Plumbers, Logistics |
 
-Git URLs: github.com/theNewDynamic/gohugo-theme-ananke, /StefMa/hugo-fresh, /zerostaticthemes/hugo-hero-theme, /devcows/hugo-universal-theme, /janraasch/hugo-scroll
-
 ### Key Rules
 - NEVER raw HTML. ALWAYS hugo.toml + Markdown Front Matter matching theme schema.
 - System prompt MUST include theme's config schema (params, sections, front matter).
@@ -82,7 +111,8 @@ Git URLs: github.com/theNewDynamic/gohugo-theme-ananke, /StefMa/hugo-fresh, /zer
 ## MCP Servers
 | Server | Transport | Purpose |
 |--------|-----------|---------|
-| `context-mode` | plugin | Context-aware execution, batch commands, search |
+| `filesystem` | local | Local file access (Projects, Documents, Desktop) |
+| `sequentialthinking` | local | Structured reasoning sessions |
 | `playwright` | stdio | Browser automation, E2E testing, screenshots |
 | `ssh-mcp` | stdio | Remote SSH to production (192.168.31.22, user: redage) |
 
@@ -104,28 +134,8 @@ Git URLs: github.com/theNewDynamic/gohugo-theme-ananke, /StefMa/hugo-fresh, /zer
 | `webapp-testing` | local (.claude/skills) | Web app testing workflows |
 | `openwiki` | npm global | Knowledge management (`openwiki code --init`) |
 
-## Pre-Commit/Pre-Push Rule (MANDATORY)
-Before ANY commit or push, run full CI locally:
-1. `npm run lint` — ESLint 0 errors
-2. `npm run typecheck` — tsc + svelte-check 0 errors
-3. `npm run test` — vitest all passing
-4. `npm run build` — production build exit 0
-Also: `bash scripts/ci-local.sh`
-
 ## QA Framework
-
-Standalone mode (no .qa submodule). QA context lives in `docs/qa/`.
-
-### Project specifics
-Stack: NestJS 11 + SvelteKit 2 monorepo
-Test runner: vitest (backend unit), Playwright (frontend E2E)
-E2E: Playwright (`apps/frontend/tests/e2e/`)
-Staging URL: TODO — fill in local/project_config.md
-Jira project key: TODO — fill in local/project_config.md
-
-### docs/qa/ (lives in this repo)
-test-cases/   — manual TCs per ticket/module
-bug-reports/  — structured bug reports
-test-reports/ — session results, CI runs, audits
-requirements/ — AC snapshots from Jira
-coverage/     — coverage reports and analysis
+- Stack: NestJS 11 + SvelteKit 2 monorepo
+- Test runner: vitest (backend unit), Playwright (frontend E2E)
+- E2E: Playwright (`apps/frontend/tests/e2e/`)
+- QA context lives in `docs/qa/`

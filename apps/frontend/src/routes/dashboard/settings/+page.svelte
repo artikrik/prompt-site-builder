@@ -255,22 +255,132 @@
       </div>
     </section>
 
-    <!-- Section 3: Integrations Status -->
+    <!-- Section 4: Integrations Configuration -->
     <section class="space-y-4">
-      <h2 class="text-lg font-semibold">Integrations Status</h2>
-      <div class="grid gap-4 md:grid-cols-3">
-        <div class="rounded-lg border p-4">
-          <h3 class="font-medium">EasyWeek</h3>
-          <p class="text-sm text-muted-foreground">Per-lead configuration</p>
+      <h2 class="text-lg font-semibold">Integrations</h2>
+      <p class="text-sm text-muted-foreground">Configure payment and booking integrations for client sites</p>
+
+      <!-- EasyWeek (Booking) -->
+      <div class="rounded-lg border p-4 space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="font-medium">EasyWeek (Online Booking)</h3>
+            <p class="text-sm text-muted-foreground">Allow clients to book appointments online</p>
+          </div>
+          <label class="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={settings.easyweekEnabled}
+              onchange={(e: any) => saveApiKey('easyweekEnabled', e.target.checked ? 'true' : 'false')}
+              class="h-4 w-4"
+            />
+            <span class="text-sm">Enabled</span>
+          </label>
         </div>
-        <div class="rounded-lg border p-4">
-          <h3 class="font-medium">WayForPay</h3>
-          <p class="text-sm text-muted-foreground">Per-lead configuration</p>
+        {#if settings.easyweekEnabled}
+          <div class="grid gap-4 md:grid-cols-2">
+            <ApiKeyInput
+              label="EasyWeek Company ID"
+              placeholder="your-company-id"
+              value=""
+              maskedPreview={settings.easyweekApiKey ?? ''}
+              onChange={(v: string) => saveApiKey('easyweekApiKey', v)}
+            />
+          </div>
+          <details class="text-sm text-muted-foreground">
+            <summary class="cursor-pointer">How to get EasyWeek Company ID</summary>
+            <ol class="list-decimal pl-4 mt-2 space-y-1">
+              <li>Go to <a href="https://app.easyweek.io/" target="_blank" class="text-primary underline">app.easyweek.io</a> and create an account</li>
+              <li>Settings → Company → copy your Company ID</li>
+              <li>Paste it in the field above</li>
+            </ol>
+          </details>
+        {/if}
+      </div>
+
+      <!-- WayForPay (Payment) -->
+      <div class="rounded-lg border p-4 space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="font-medium">WayForPay (Online Payment)</h3>
+            <p class="text-sm text-muted-foreground">Accept online payments via cards, Apple Pay, Google Pay</p>
+          </div>
+          <label class="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={settings.wayforpayEnabled}
+              onchange={(e: any) => saveApiKey('wayforpayEnabled', e.target.checked ? 'true' : 'false')}
+              class="h-4 w-4"
+            />
+            <span class="text-sm">Enabled</span>
+          </label>
         </div>
-        <div class="rounded-lg border p-4">
-          <h3 class="font-medium">Monobank</h3>
-          <p class="text-sm text-muted-foreground">Per-lead configuration</p>
+        {#if settings.wayforpayEnabled}
+          <div class="grid gap-4 md:grid-cols-2">
+            <ApiKeyInput
+              label="Merchant Account"
+              placeholder="your_merchant_account"
+              value=""
+              maskedPreview={settings.wayforpayMerchant ?? ''}
+              onChange={(v: string) => saveApiKey('wayforpayMerchant', v)}
+            />
+            <ApiKeyInput
+              label="Merchant Secret Key"
+              placeholder="..."
+              value=""
+              maskedPreview={settings.wayforpaySecret ?? ''}
+              onChange={(v: string) => saveApiKey('wayforpaySecret', v)}
+            />
+          </div>
+          <details class="text-sm text-muted-foreground">
+            <summary class="cursor-pointer">How to get WayForPay credentials</summary>
+            <ol class="list-decimal pl-4 mt-2 space-y-1">
+              <li>Go to <a href="https://merchant.wayforpay.com/" target="_blank" class="text-primary underline">merchant.wayforpay.com</a> and register</li>
+              <li>Settings → Merchant Account → copy your Account name</li>
+              <li>Settings → Secret Key → copy your Secret Key</li>
+              <li>Configure callback URL: https://your-domain/api/payment/wayforpay-callback</li>
+            </ol>
+          </details>
+        {/if}
+      </div>
+
+      <!-- MonoBank (Payment Link) -->
+      <div class="rounded-lg border p-4 space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="font-medium">MonoBank (Payment Link)</h3>
+            <p class="text-sm text-muted-foreground">Generate payment links via MonoBank API</p>
+          </div>
+          <label class="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={settings.monobankEnabled}
+              onchange={(e: any) => saveApiKey('monobankEnabled', e.target.checked ? 'true' : 'false')}
+              class="h-4 w-4"
+            />
+            <span class="text-sm">Enabled</span>
+          </label>
         </div>
+        {#if settings.monobankEnabled}
+          <div class="grid gap-4 md:grid-cols-2">
+            <ApiKeyInput
+              label="MonoBank API Token"
+              placeholder="u..."
+              value=""
+              maskedPreview={settings.monobankApiKey ?? ''}
+              onChange={(v: string) => saveApiKey('monobankApiKey', v)}
+            />
+          </div>
+          <details class="text-sm text-muted-foreground">
+            <summary class="cursor-pointer">How to get MonoBank API Token</summary>
+            <ol class="list-decimal pl-4 mt-2 space-y-1">
+              <li>Go to <a href="https://monobank.ua/" target="_blank" class="text-primary underline">monobank.ua</a> and log in</li>
+              <li>API tab → Generate new token</li>
+              <li>Copy the token (starts with "u")</li>
+              <li>Note: MonoBank API has limits - 10 requests/minute for production</li>
+            </ol>
+          </details>
+        {/if}
       </div>
     </section>
 

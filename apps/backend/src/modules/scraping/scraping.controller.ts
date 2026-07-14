@@ -7,6 +7,12 @@ import { UserRole } from '@prompt-site-builder/shared';
 import { ScrapingService } from './scraping.service';
 import { QueueService } from '../queue/queue.service';
 
+interface BatchScrapeItem {
+  city: string;
+  category: string;
+  limit?: number;
+}
+
 @ApiTags('Scraping')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -45,6 +51,56 @@ export class ScrapingController {
       city,
       category,
       limit: limit || 20,
+    };
+  }
+
+  @Post('batch')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @ApiOperation({ summary: 'Batch scrape multiple cities/categories' })
+  @ApiBody({
+    schema: {
+      properties: {
+        items: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              city: { type: 'string' },
+              category: { type: 'string' },
+              limit: { type: 'number' },
+            },
+            required: ['city', 'category'],
+          },
+        },
+      },
+      required: ['items'],
+    },
+  })
+  @ApiResponse({ status: 202, description: 'Batch scraping queued' })
+  async batchScrape(@Body('items') items: BatchScrapeItem[]) {
+    const maxConcurrent = 5;
+    const itemsToProcess = items.slice(0, maxConcurrent);
+
+    const jobs = await Promise.all(
+      itemsToProcess.map(async (item) => {
+        const job = await this.queueService.addScrapingJob({
+          city: item.city,
+          category: item.category,
+          limit: item.limit || 20,
+        });
+        return {
+          jobId: job.id,
+          city: item.city,
+          category: item.category,
+          limit: item.limit || 20,
+        };
+      }),
+    );
+
+    return {
+      message: `${jobs.length} scraping jobs queued`,
+      jobs,
+      skipped: items.length - itemsToProcess.length,
     };
   }
 

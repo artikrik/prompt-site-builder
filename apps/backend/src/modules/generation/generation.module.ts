@@ -17,6 +17,8 @@ import { HugoCompilerService } from './hugo/hugo-compiler.service';
 import { HugoValidatorService } from './hugo/hugo-validator.service';
 import { ThemeService } from './themes/theme.service';
 import { ThemeSelector } from './themes/theme-selector';
+import { TemplateService } from './templates/template.service';
+import { TemplateController } from './templates/template.controller';
 import { PublishingModule } from '../publishing/publishing.module';
 import { ProjectsModule } from '../projects/projects.module';
 import { PrismaModule } from '../../shared/prisma/prisma.module';
@@ -27,7 +29,7 @@ import { AddonModule } from '../addons/addon.module';
 
 @Module({
   imports: [PublishingModule, ProjectsModule, PrismaModule, QueueModule, SettingsModule, LeadsModule, AddonModule],
-  controllers: [GenerationController],
+  controllers: [GenerationController, TemplateController],
   providers: [
     GenerationService,
     GenerationProcessor,
@@ -46,7 +48,8 @@ import { AddonModule } from '../addons/addon.module';
     HugoValidatorService,
     ThemeService,
     ThemeSelector,
+    TemplateService,
   ],
-  exports: [GenerationService, HugoCompilerService, ThemeService, ThemeSelector, LLMStrategyFactory],
+  exports: [GenerationService, HugoCompilerService, ThemeService, ThemeSelector, LLMStrategyFactory, TemplateService],
 })
 export class GenerationModule {}

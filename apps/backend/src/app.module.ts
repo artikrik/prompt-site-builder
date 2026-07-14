@@ -21,12 +21,17 @@ import { LogsModule } from './modules/logs/logs.module';
 import { PrismaModule } from './shared/prisma/prisma.module';
 import { RedisModule } from './shared/redis/redis.module';
 import { PrismaLogger } from './shared/logging/prisma-logger.service';
+import { RolesGuard } from './shared/guards/roles.guard';
 
 @Module({
   providers: [
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
     PrismaLogger,
   ],

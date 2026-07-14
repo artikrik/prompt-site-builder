@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { IEnrichmentProvider } from './types';
 import type {
   EnrichmentData,
@@ -70,8 +71,8 @@ export class GoogleMapsProvider implements IEnrichmentProvider {
   private readonly logger = new Logger(GoogleMapsProvider.name);
   private readonly apiKey: string;
 
-  constructor() {
-    this.apiKey = process.env.GOOGLE_MAPS_API_KEY || '';
+  constructor(private readonly configService: ConfigService) {
+    this.apiKey = this.configService.get<string>('GOOGLE_MAPS_API_KEY', '');
   }
 
   async enrich(
