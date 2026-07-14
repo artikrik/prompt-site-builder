@@ -274,3 +274,21 @@ model SystemLog {
   @@index([createdAt])
   @@index([module])
 }
+
+model ScrapingLog {
+  id          String   @id @default(uuid())
+  leadId      String?
+  jobId       String?
+  source      String
+  action      String
+  status      String
+  message     String?
+  details     Json?
+  duration    Int?
+  createdAt   DateTime @default(now())
+
+  @@index([leadId])
+  @@index([source])
+  @@index([createdAt])
+  @@index([status])
+}

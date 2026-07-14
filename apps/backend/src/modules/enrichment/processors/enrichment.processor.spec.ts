@@ -1,10 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { EnrichmentProcessor } from './enrichment.processor';
 import { EnrichmentService } from '../enrichment.service';
+import { LogsService } from '../../logs/logs.service';
 
 describe('EnrichmentProcessor', () => {
   let processor: EnrichmentProcessor;
   let mockService: EnrichmentService;
+  let mockLogs: LogsService;
 
   function makeJob(data: { leadId: string; type: string }): any {
     return {
@@ -18,7 +20,11 @@ describe('EnrichmentProcessor', () => {
     mockService = {
       enrichLead: vi.fn().mockResolvedValue(undefined),
     } as unknown as EnrichmentService;
-    processor = new EnrichmentProcessor(mockService);
+    mockLogs = {
+      logScraping: vi.fn().mockResolvedValue({}),
+      getScrapingLogs: vi.fn().mockResolvedValue({ logs: [], total: 0 }),
+    } as unknown as LogsService;
+    processor = new EnrichmentProcessor(mockService, mockLogs);
   });
 
   it('should process ENRICH_LEAD job and call enrichmentService.enrichLead', async () => {
