@@ -1,5 +1,5 @@
 <script lang="ts">
-  /* global console, window, HTMLInputElement */
+  /* global console, setInterval, clearInterval, setTimeout, window, HTMLInputElement */
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { resolve } from '$app/paths';
@@ -12,6 +12,7 @@
   import { Badge } from '$lib/components/ui/badge/index.js';
   import * as Card from '$lib/components/ui/card/index.js';
   import EnrichmentPanel from '$lib/components/enrichment/EnrichmentPanel.svelte';
+  import EnrichButton from '$lib/components/enrichment/EnrichButton.svelte';
   import { ArrowLeft, Plus, Loader2, Play, Trash2 } from '@lucide/svelte';
 
   let lead = $state<Lead | null>(null);
@@ -72,6 +73,17 @@
       const selected = Object.entries(scrapePlatforms).filter(([, v]) => v).map(([k]) => k);
       const result = await leads.scrape(lead.id, selected as Array<'instagram' | 'facebook' | 'googleMaps'>);
       scrapeResult = result as unknown as Record<string, unknown> || { jobId: 'started' };
+      // Poll for lead data updates after scraping starts
+      const pollInterval = setInterval(async () => {
+        try {
+          lead = await leads.fetchOne($page.params.id!);
+          if (lead && (lead.scrapedPhotos?.length || lead.scrapedReviews?.length || lead.scrapedContacts)) {
+            clearInterval(pollInterval);
+          }
+        } catch { /* ignore */ }
+      }, 5000);
+      // Stop polling after 60 seconds
+      setTimeout(() => clearInterval(pollInterval), 60000);
     } catch { scrapeResult = { error: 'Failed to start scraping' }; }
     scrapingBusy = false;
   }
@@ -149,11 +161,17 @@
         </Card.Content>
       </Card.Root>
     {:else if activeTab === 'enrichment'}
-      <EnrichmentPanel
-        data={lead.enrichmentData as any}
-        sources={lead.enrichmentSources || []}
-        enrichedAt={lead.enrichedAt || null}
-      />
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold">{t.leads.tabs.enrichment}</h2>
+          <EnrichButton leadId={lead.id} sources={lead.enrichmentSources || []} />
+        </div>
+        <EnrichmentPanel
+          data={lead.enrichmentData as any}
+          sources={lead.enrichmentSources || []}
+          enrichedAt={lead.enrichedAt || null}
+        />
+      </div>
     {:else if activeTab === 'projects'}
       <div class="space-y-4">
         <div class="flex justify-between items-center">
