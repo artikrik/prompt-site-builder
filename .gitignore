@@ -48,3 +48,5 @@ skills-lock.json
 
 # Frontend build output (committed during deploy, not in git)
 apps/frontend/build/
+
+ssh-mcp
