@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* eslint-disable no-undef */
   import { onMount } from 'svelte';
   import { t } from '$lib/i18n/uk';
   import { api } from '$lib/api/client';
@@ -8,9 +9,13 @@
   import * as Table from '$lib/components/ui/table/index.js';
   import * as Select from '$lib/components/ui/select/index.js';
   import { Input } from '$lib/components/ui/input/index.js';
-  import { RefreshCw, Search } from '@lucide/svelte';
+  import * as Dialog from '$lib/components/ui/dialog/index.js';
+  import { RefreshCw, Search, Copy, Check } from '@lucide/svelte';
 
   let activeTab = $state<'generation' | 'system' | 'scraping'>('generation');
+  let selectedLog = $state<Record<string, unknown> | null>(null);
+  let detailOpen = $state(false);
+  let copied = $state(false);
 
   // Generation logs
   let genJobs = $state<Array<Record<string, unknown>>>([]);
@@ -111,6 +116,20 @@
     scrapeLoading = false;
   }
 
+  function openDetail(log: Record<string, unknown>) {
+    selectedLog = log;
+    detailOpen = true;
+    copied = false;
+  }
+
+  async function copyLog() {
+    if (!selectedLog) return;
+    const text = JSON.stringify(selectedLog, null, 2);
+    await navigator.clipboard.writeText(text);
+    copied = true;
+    setTimeout(() => { copied = false; }, 2000);
+  }
+
   function getStatusBadge(status: string): "default" | "secondary" | "destructive" | "outline" {
     switch (status) {
       case 'COMPLETED': return 'default';
@@ -130,6 +149,12 @@
 
   function formatDate(date: string) {
     return new Date(date).toLocaleString('uk-UA');
+  }
+
+  function formatJson(obj: unknown): string {
+    if (!obj) return '—';
+    if (typeof obj === 'string') return obj;
+    return JSON.stringify(obj, null, 2);
   }
 
   let statusLabel = $derived(statusOptions.find(o => o.value === genStatus)?.label ?? t.logs.allStatuses);
@@ -193,12 +218,12 @@
             </Table.Header>
             <Table.Body>
               {#each genJobs as job, i (i)}
-                <Table.Row>
+                <Table.Row class="cursor-pointer hover:bg-muted/50" onclick={() => openDetail(job)}>
                   <Table.Cell class="font-medium text-sm">{(job.project as any)?.slug || job.projectId as string}</Table.Cell>
                   <Table.Cell class="text-sm">{job.type as string}</Table.Cell>
                   <Table.Cell><Badge variant={getStatusBadge(job.status as string)}>{job.status as string}</Badge></Table.Cell>
                   <Table.Cell class="text-sm">{formatDate(job.createdAt as string)}</Table.Cell>
-                  <Table.Cell class="text-sm text-red-600 max-w-48 truncate">{job.error as string || '—'}</Table.Cell>
+                  <Table.Cell class="text-sm text-red-600">{job.error as string || '—'}</Table.Cell>
                 </Table.Row>
               {/each}
             </Table.Body>
@@ -241,10 +266,10 @@
             </Table.Header>
             <Table.Body>
               {#each sysLogs as log, i (i)}
-                <Table.Row>
+                <Table.Row class="cursor-pointer hover:bg-muted/50" onclick={() => openDetail(log)}>
                   <Table.Cell><Badge variant={getLevelBadge(log.level as string)}>{log.level as string}</Badge></Table.Cell>
                   <Table.Cell class="text-sm">{log.module as string}</Table.Cell>
-                  <Table.Cell class="text-sm max-w-96 truncate">{log.message as string}</Table.Cell>
+                  <Table.Cell class="text-sm">{log.message as string}</Table.Cell>
                   <Table.Cell class="text-sm">{formatDate(log.createdAt as string)}</Table.Cell>
                 </Table.Row>
               {/each}
@@ -301,7 +326,7 @@
             </Table.Header>
             <Table.Body>
               {#each scrapeLogs as log, i (i)}
-                <Table.Row>
+                <Table.Row class="cursor-pointer hover:bg-muted/50" onclick={() => openDetail(log)}>
                   <Table.Cell class="text-sm">{formatDate(log.createdAt as string)}</Table.Cell>
                   <Table.Cell><Badge variant="outline">{log.source as string}</Badge></Table.Cell>
                   <Table.Cell class="text-sm">{log.action as string}</Table.Cell>
@@ -310,7 +335,7 @@
                       {log.status as string}
                     </Badge>
                   </Table.Cell>
-                  <Table.Cell class="text-sm max-w-64 truncate">{log.message as string || '—'}</Table.Cell>
+                  <Table.Cell class="text-sm">{log.message as string || '—'}</Table.Cell>
                   <Table.Cell class="text-sm">{log.duration ? `${log.duration}ms` : '—'}</Table.Cell>
                 </Table.Row>
               {/each}
@@ -325,3 +350,46 @@
     </Card.Root>
   {/if}
 </div>
+
+<!-- Log Detail Dialog -->
+<Dialog.Root bind:open={detailOpen}>
+  <Dialog.Content class="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+    <Dialog.Header>
+      <Dialog.Title class="flex items-center justify-between">
+        <span>Деталі логу</span>
+        <Button variant="ghost" size="sm" onclick={copyLog}>
+          {#if copied}
+            <Check class="size-4 mr-1" /> Скопійовано
+          {:else}
+            <Copy class="size-4 mr-1" /> Копіювати JSON
+          {/if}
+        </Button>
+      </Dialog.Title>
+    </Dialog.Header>
+    <div class="flex-1 overflow-auto">
+      {#if selectedLog}
+        <!-- Key-value pairs -->
+        <div class="space-y-3">
+          {#each Object.entries(selectedLog) as [key, value] (key)}
+            <div class="border rounded-lg p-3">
+              <div class="text-xs font-medium text-muted-foreground uppercase mb-1">{key}</div>
+              {#if value === null || value === undefined}
+                <div class="text-sm text-muted-foreground">—</div>
+              {:else if typeof value === 'object'}
+                <pre class="text-sm whitespace-pre-wrap break-words font-mono bg-muted/50 p-2 rounded">{formatJson(value)}</pre>
+              {:else}
+                <div class="text-sm whitespace-pre-wrap break-words">{String(value)}</div>
+              {/if}
+            </div>
+          {/each}
+        </div>
+
+        <!-- Raw JSON -->
+        <details class="mt-4">
+          <summary class="cursor-pointer text-sm text-muted-foreground hover:text-foreground">Сирий JSON</summary>
+          <pre class="text-xs whitespace-pre-wrap break-words font-mono bg-muted/50 p-3 rounded mt-2 max-h-96 overflow-auto">{JSON.stringify(selectedLog, null, 2)}</pre>
+        </details>
+      {/if}
+    </div>
+  </Dialog.Content>
+</Dialog.Root>
