@@ -13,6 +13,10 @@ export class DefaultContentBuilder {
     return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
   }
 
+  private static escapeYaml(value: string): string {
+    return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  }
+
   static build(data: BusinessData, baseDomain: string): HugoGeneratedContent {
     const name = data.businessName;
     const cat = data.category || 'Бізнес';
@@ -82,9 +86,11 @@ theme = "${e(theme)}"
   }
 
   private static buildIndexMd(name: string, cat: string, desc: string, phone: string, email: string, addr: string): string {
+    const yn = this.escapeYaml(name);
+    const yd = this.escapeYaml(desc);
     return `---
-title: "${name}"
-description: "${desc}"
+title: "${yn}"
+description: "${yd}"
 date: ${new Date().toISOString().split('T')[0]}
 type: "home"
 ---
@@ -182,7 +188,7 @@ ${addr ? `**Адреса:** ${addr}` : ''}
 
   private static buildAboutMd(name: string, cat: string): string {
     return `---
-title: "Про ${name}"
+title: "Про ${this.escapeYaml(name)}"
 description: "Дізнайтесь більше про нашу компанію, команду та цінності"
 date: ${new Date().toISOString().split('T')[0]}
 ---
@@ -213,7 +219,7 @@ ${name} була заснована з однією метою — надава�
 
   private static buildServicesMd(name: string, cat: string): string {
     return `---
-title: "Послуги ${name}"
+title: "Послуги ${this.escapeYaml(name)}"
 description: "Повний спектр професійних послуг ${cat.toLowerCase()} для приватних клієнтів та бізнесу"
 date: ${new Date().toISOString().split('T')[0]}
 ---
@@ -276,7 +282,7 @@ ${name} пропонує повний спектр послуг ${cat.toLowerCas
 
   private static buildContactMd(name: string, phone: string, email: string, addr: string): string {
     return `---
-title: "Контакти ${name}"
+title: "Контакти ${this.escapeYaml(name)}"
 description: "Зв'яжіться з нами — безкоштовна консультація, швидка відповідь, зручний зв'язок"
 date: ${new Date().toISOString().split('T')[0]}
 ---
