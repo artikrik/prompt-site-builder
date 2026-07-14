@@ -22,8 +22,11 @@ export class ScrapingProcessor extends WorkerHost {
     if (job.data.leadId && job.data.platforms?.length > 0) {
       this.logger.log(`Processing per-lead scraping job ${job.id} for lead ${job.data.leadId}, platforms: ${job.data.platforms.join(', ')}`);
 
-      for (const platform of job.data.platforms) {
+      const platforms = job.data.platforms;
+      for (let i = 0; i < platforms.length; i++) {
+        const platform = platforms[i];
         const start = Date.now();
+        await job.updateProgress(Math.round(((i) / platforms.length) * 80) + 10);
         await this.logsService.logScraping({
           leadId: job.data.leadId,
           jobId: String(job.id),
@@ -33,8 +36,7 @@ export class ScrapingProcessor extends WorkerHost {
         });
 
         try {
-          await job.updateProgress(10);
-          await this.scrapingService.scrapeLead(job.data.leadId, job.data.platforms);
+          await this.scrapingService.scrapeLead(job.data.leadId, [platform]);
           const duration = Date.now() - start;
           await this.logsService.logScraping({
             leadId: job.data.leadId,
@@ -44,8 +46,7 @@ export class ScrapingProcessor extends WorkerHost {
             status: 'completed',
             duration,
           });
-          await job.updateProgress(100);
-          this.logger.log(`Per-lead scraping job ${job.id} completed for lead ${job.data.leadId}`);
+          await job.updateProgress(Math.round(((i + 1) / platforms.length) * 80) + 10);
         } catch (error) {
           const duration = Date.now() - start;
           await this.logsService.logScraping({
@@ -57,10 +58,12 @@ export class ScrapingProcessor extends WorkerHost {
             message: String(error),
             duration,
           });
-          this.logger.error(`Per-lead scraping job ${job.id} failed: ${error}`);
+          this.logger.error(`Per-lead scraping job ${job.id} failed for platform ${platform}: ${error}`);
           throw error;
         }
       }
+      await job.updateProgress(100);
+      this.logger.log(`Per-lead scraping job ${job.id} completed for lead ${job.data.leadId}`);
       return;
     }
 

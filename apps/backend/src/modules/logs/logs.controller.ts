@@ -28,7 +28,7 @@ export class LogsController {
     const jobs = await this.prisma.generationJob.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      take: limit ? parseInt(limit, 10) : 50,
+      take: Math.min(limit ? parseInt(limit, 10) : 50, 200),
       include: { project: { select: { slug: true } } },
     });
 
@@ -56,7 +56,7 @@ export class LogsController {
       this.prisma.systemLog.findMany({
         where,
         orderBy: { createdAt: 'desc' },
-        take: limit ? parseInt(limit, 10) : 50,
+        take: Math.min(limit ? parseInt(limit, 10) : 50, 200),
         skip: offset ? parseInt(offset, 10) : 0,
       }),
       this.prisma.systemLog.count({ where }),
@@ -78,7 +78,7 @@ export class LogsController {
       leadId,
       source,
       status,
-      limit: limit ? parseInt(limit, 10) : 50,
+      limit: Math.min(limit ? parseInt(limit, 10) : 50, 200),
       offset: offset ? parseInt(offset, 10) : 0,
     });
   }

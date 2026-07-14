@@ -18,7 +18,12 @@ export class LogsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async logScraping(data: CreateScrapingLogDto) {
-    return this.prisma.scrapingLog.create({ data });
+    return this.prisma.scrapingLog.create({
+      data: {
+        ...data,
+        message: data.message?.slice(0, 1000),
+      },
+    });
   }
 
   async getScrapingLogs(params: {

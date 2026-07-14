@@ -34,8 +34,9 @@ describe('ScrapingProcessor', () => {
 
     await processor.process(job);
 
-    expect(job.updateProgress).toHaveBeenCalledWith(10);
-    expect(mockService.scrapeLead).toHaveBeenCalledWith('lead-1', ['googleMaps', 'instagram']);
+    expect(mockService.scrapeLead).toHaveBeenCalledTimes(2);
+    expect(mockService.scrapeLead).toHaveBeenCalledWith('lead-1', ['googleMaps']);
+    expect(mockService.scrapeLead).toHaveBeenCalledWith('lead-1', ['instagram']);
     expect(mockService.scrapeAndCreateLeads).not.toHaveBeenCalled();
     expect(job.updateProgress).toHaveBeenCalledWith(100);
   });
