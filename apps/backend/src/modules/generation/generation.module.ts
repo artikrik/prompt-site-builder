@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { GenerationService } from './generation.service';
 import { GenerationController } from './generation.controller';
 import { GenerationProcessor } from './processors/generation.processor';
@@ -28,7 +28,7 @@ import { LeadsModule } from '../leads/leads.module';
 import { AddonModule } from '../addons/addon.module';
 
 @Module({
-  imports: [PublishingModule, ProjectsModule, PrismaModule, QueueModule, SettingsModule, LeadsModule, AddonModule],
+  imports: [PublishingModule, forwardRef(() => ProjectsModule), PrismaModule, QueueModule, SettingsModule, LeadsModule, AddonModule],
   controllers: [GenerationController, TemplateController],
   providers: [
     GenerationService,
